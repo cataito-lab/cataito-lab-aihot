@@ -1,4 +1,4 @@
-import { EnvHttpProxyAgent, fetch as undiciFetch, setGlobalDispatcher } from "undici";
+import { ProxyAgent, fetch as undiciFetch, setGlobalDispatcher } from "undici";
 
 let configured = false;
 
@@ -10,7 +10,7 @@ function ensureDispatcher(): void {
     process.env.HTTP_PROXY ??
     process.env.http_proxy;
   if (proxy) {
-    setGlobalDispatcher(new EnvHttpProxyAgent());
+    setGlobalDispatcher(new ProxyAgent(proxy));
   }
   configured = true;
 }

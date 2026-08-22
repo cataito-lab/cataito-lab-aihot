@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Star } from "@phosphor-icons/react";
 import { SearchBox } from "./search-box";
