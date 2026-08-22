@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const db = getDb();
+    const db = await getDb();
     const placeholders = ids.map(() => "?").join(",");
     const sql = `
       SELECT a.id, a.source_id, s.name AS source_name, s.category, s.lang,

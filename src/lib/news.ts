@@ -112,7 +112,7 @@ export async function listArticles(
     LIMIT ?`;
 
   args.push(limit + 1);
-  const rs = await getDb().execute({ sql, args });
+  const rs = await (await getDb()).execute({ sql, args });
   const rows = rs.rows.map((row) => toArticle(row as unknown as Row));
   const hasMore = rows.length > limit;
   const items = hasMore ? rows.slice(0, limit) : rows;
@@ -134,7 +134,8 @@ export interface SourceInfo {
 }
 
 export async function listSources(): Promise<SourceInfo[]> {
-  const rs = await getDb().execute(`
+  const db = await getDb();
+  const rs = await db.execute(`
     SELECT s.id, s.name, s.category, s.lang, s.site_url, s.enabled,
            COUNT(a.id) AS article_count
     FROM sources s
@@ -153,7 +154,7 @@ export async function listSources(): Promise<SourceInfo[]> {
 }
 
 export async function getBriefMeta(): Promise<BriefMeta> {
-  const db = getDb();
+  const db = await getDb();
 
   const totalRs = await db.execute("SELECT COUNT(*) AS n FROM articles");
   const dayRs = await db.execute({
