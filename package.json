@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "pages:build": "npx @cloudflare/next-on-pages",
+    "pages:build": "npx @cloudflare/next-on-pages@1.13.16",
     "pipeline": "tsx pipeline/src/index.ts",
     "pipeline:dry": "tsx pipeline/src/index.ts --dry-run",
     "db:init": "tsx pipeline/scripts/init-db.ts"
@@ -24,7 +24,6 @@
     "undici": "^8.10.0"
   },
   "devDependencies": {
-    "@cloudflare/next-on-pages": "^1.13.16",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
