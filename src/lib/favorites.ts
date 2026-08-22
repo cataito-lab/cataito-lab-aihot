@@ -50,3 +50,7 @@ export function subscribeFavorites(callback: () => void): () => void {
     window.removeEventListener("storage", onStorage);
   };
 }
+
+export function readFavorites(): string[] {
+  return read();
+}
