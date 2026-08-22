@@ -6,21 +6,32 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "pipeline": "tsx pipeline/src/index.ts",
+    "pipeline:dry": "tsx pipeline/src/index.ts --dry-run",
+    "db:init": "tsx pipeline/scripts/init-db.ts"
   },
   "dependencies": {
+    "@libsql/client": "^0.17.4",
+    "@phosphor-icons/react": "^2.1.10",
+    "geist": "^1.7.2",
     "next": "16.3.2",
+    "p-limit": "^7.3.1",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "rss-parser": "^3.13.0",
+    "undici": "^8.10.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.2",
     "tailwindcss": "^4",
+    "tsx": "^4.23.12",
     "typescript": "^5"
   }
 }

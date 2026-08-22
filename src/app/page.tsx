@@ -1,69 +1,113 @@
-import Image from "next/image";
+import { cookies, headers } from "next/headers";
+import { Header } from "@/components/header";
+import { BriefingPanel } from "@/components/briefing-panel";
+import { NewsFeed } from "@/components/news-feed";
+import { getBriefMeta, listArticles } from "@/lib/news";
+import { withFreshness } from "@/lib/article-utils";
+import type { FeedFilters } from "@/lib/types";
 
-export default function Home() {
+interface HomeSearchParams {
+  category?: string | string[];
+  source?: string | string[];
+  q?: string | string[];
+  hours?: string | string[];
+}
+
+function pick(value: string | string[] | undefined): string | undefined {
+  if (typeof value === "string" && value.length > 0) return value;
+  return undefined;
+}
+
+async function readPrefCats(): Promise<string[]> {
+  const cookieStore = await cookies();
+  const raw = cookieStore.get("radar_cats")?.value;
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(decodeURIComponent(raw)) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    const valid = new Set(["official", "media-cn", "media-en", "community"]);
+    return parsed.filter(
+      (x): x is string => typeof x === "string" && valid.has(x),
+    );
+  } catch {
+    return [];
+  }
+}
+
+export default async function HomePage(props: PageProps<"/">) {
+  const sp = (await props.searchParams) as HomeSearchParams;
+  const [prefCats] = await Promise.all([readPrefCats(), headers()]);
+
+  const urlCategory = pick(sp.category);
+  const filters: FeedFilters = {
+    categories: urlCategory ? [] : prefCats,
+    category: urlCategory,
+    sourceId: pick(sp.source),
+    q: pick(sp.q),
+    hours: Number(pick(sp.hours)) || 72,
+  };
+
+  const [page, meta] = await Promise.all([listArticles(filters), getBriefMeta()]);
+  const items = withFreshness(page.items);
+  const feedKey = `${filters.categories?.join(",") ?? ""}|${urlCategory ?? ""}|${filters.sourceId ?? ""}|${filters.q ?? ""}|${filters.hours ?? ""}`;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <>
+      <Header activeCategory={urlCategory} q={filters.q} />
+      <main className="mx-auto w-full max-w-[720px] px-4 pb-16">
+        <BriefingPanel meta={meta} activeCategories={filters.categories ?? []} />
+
+        {(filters.q || filters.sourceId || filters.categories!.length > 0) && (
+          <div className="mb-2 flex flex-wrap gap-1.5 animate-fade-up">
+            {filters.q && (
+              <span className="px-2.5 py-0.5 rounded-md bg-neon-soft text-accent font-mono text-[11px]">
+                Q={filters.q}
+              </span>
+            )}
+            {filters.sourceId && (
+              <span className="px-2.5 py-0.5 rounded-md bg-neon-soft text-accent font-mono text-[11px]">
+                SRC={filters.sourceId}
+              </span>
+            )}
+            {filters.categories!.map((c) => (
+              <span
+                key={c}
+                className="px-2.5 py-0.5 rounded-md bg-neon-soft text-accent font-mono text-[11px]"
+              >
+                CAT={c.toUpperCase()}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <section className="animate-fade-up">
+          <div className="flex items-center gap-3 pb-3">
+            <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-fg-muted">
+              Timeline
+            </span>
+            <span aria-hidden className="h-px flex-1 bg-line" />
+            <span className="font-mono text-[11px] tabular-nums text-fg-muted">
+              {items.length} entries
+            </span>
+          </div>
+          <NewsFeed
+            key={feedKey}
+            initialItems={items}
+            initialCursor={page.nextCursor}
+            filters={filters}
+          />
+        </section>
       </main>
-    </div>
+      <footer className="pb-12 pt-8 border-t border-line/60">
+        <p className="text-center text-xs text-fg-muted">
+          <span className="brand-gradient-text font-semibold">AI 热点简报</span>
+          {" "}— part of{" "}
+          <a href="https://cataito.com" className="hover:text-accent transition-colors">
+            Cataito
+          </a>
+          {" "}· 数据聚合自公开信源，点击信源可查证原文
+        </p>
+      </footer>
+    </>
   );
 }
