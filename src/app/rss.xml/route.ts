@@ -1,5 +1,7 @@
 import { listArticles } from "@/lib/news";
 
+export const runtime = "edge";
+
 const RSS_LIMIT = 50;
 const SITE_NAME = "AI 热点简报 · aihot.cataito.com";
 const SITE_URL = "https://aihot.cataito.com";

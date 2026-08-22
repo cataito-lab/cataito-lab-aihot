@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 import { listArticles } from "@/lib/news";
 
+export const runtime = "edge";
+
 export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
   const limitRaw = Number(sp.get("limit"));

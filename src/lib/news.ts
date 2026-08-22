@@ -36,14 +36,27 @@ function toArticle(row: Row): FeedArticle {
   };
 }
 
+function toBase64Url(bytes: Uint8Array): string {
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
 export function encodeCursor(publishedAt: string, id: string): string {
-  return Buffer.from(`${publishedAt}|${id}`, "utf-8").toString("base64url");
+  return toBase64Url(new TextEncoder().encode(`${publishedAt}|${id}`));
 }
 
 function decodeCursor(cursor: string | undefined): { at: string; id: string } | null {
   if (!cursor) return null;
   try {
-    const raw = Buffer.from(cursor, "base64url").toString("utf-8");
+    const b64 = cursor.replace(/-/g, "+").replace(/_/g, "/");
+    const bin = atob(b64);
+    const raw = new TextDecoder().decode(
+      Uint8Array.from(bin, (c) => c.charCodeAt(0)),
+    );
     const idx = raw.indexOf("|");
     if (idx <= 0 || idx === raw.length - 1) return null;
     return { at: raw.slice(0, idx), id: raw.slice(idx + 1) };

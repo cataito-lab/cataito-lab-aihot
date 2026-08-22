@@ -1,15 +1,20 @@
 import "server-only";
-import type { Client } from "@libsql/client";
+import type { Client } from "@libsql/client/web";
 
-// Dynamic import so webpack doesn't try to bundle @libsql/client's C++ native deps.
-// At runtime (CF Pages / Vercel), the native module resolves against the
-// deployed Node runtime, which supports it.
+// Use the web (fetch-based) entry of @libsql/client so it runs on the Edge
+// Runtime (Cloudflare Workers/Pages). Requires a remote libsql:// or https:// URL.
 let client: Client | null = null;
 
 async function createClient(): Promise<Client> {
-  const { createClient: makeClient } = await import("@libsql/client");
+  const url = process.env.TURSO_DATABASE_URL;
+  if (!url) {
+    throw new Error(
+      "TURSO_DATABASE_URL is not set (the edge-compatible client only supports remote URLs)",
+    );
+  }
+  const { createClient: makeClient } = await import("@libsql/client/web");
   return makeClient({
-    url: process.env.TURSO_DATABASE_URL || "file:./data/local.db",
+    url,
     authToken: process.env.TURSO_AUTH_TOKEN || undefined,
   });
 }

@@ -1,5 +1,7 @@
 import { listSources } from "@/lib/news";
 
+export const runtime = "edge";
+
 export async function GET() {
   try {
     const sources = await listSources();

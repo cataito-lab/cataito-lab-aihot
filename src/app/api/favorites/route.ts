@@ -2,6 +2,8 @@ import type { NextRequest } from "next/server";
 import { getDb } from "@/lib/db";
 import type { FeedArticle } from "@/lib/types";
 
+export const runtime = "edge";
+
 interface Row {
   id: unknown;
   source_id: unknown;
