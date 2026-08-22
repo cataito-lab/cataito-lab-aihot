@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "pages:build": "npx @cloudflare/next-on-pages --force && npx wrangler pages deploy .vercel/output/static --project-name aihot-cataito",
+    "pages:build": "npx @cloudflare/next-on-pages",
     "pipeline": "tsx pipeline/src/index.ts",
     "pipeline:dry": "tsx pipeline/src/index.ts --dry-run",
     "db:init": "tsx pipeline/scripts/init-db.ts"
@@ -34,7 +34,6 @@
     "eslint-config-next": "15.5.2",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
-    "typescript": "^5",
-    "wrangler": "^4"
+    "typescript": "^5"
   }
 }
