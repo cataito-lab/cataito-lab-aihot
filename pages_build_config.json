@@ -1,0 +1,6 @@
+{
+  "build": {
+    "command": "npm run build && npx @cloudflare/next-on-pages",
+    "output_directory": ".vercel/output/static"
+  }
+}
