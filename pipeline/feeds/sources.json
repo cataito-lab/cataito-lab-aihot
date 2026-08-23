@@ -110,7 +110,8 @@
     "feedUrl": "https://www.qbitai.com/feed",
     "fetcher": "rss",
     "dedicated": true,
-    "enabled": true
+    "enabled": true,
+    "publishedAtTz": "Asia/Shanghai"
   },
   {
     "id": "infoq-cn",
@@ -121,7 +122,8 @@
     "feedUrl": "https://www.infoq.cn/feed",
     "fetcher": "rss",
     "dedicated": false,
-    "enabled": true
+    "enabled": true,
+    "publishedAtTz": "Asia/Shanghai"
   },
   {
     "id": "xinzhiyuan",

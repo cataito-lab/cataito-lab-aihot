@@ -49,7 +49,9 @@ export async function fetchRss(source: SourceDef, windowHours: number): Promise<
     if (!entry.title || !entry.link) continue;
     const published = entry.isoDate ? new Date(entry.isoDate) : null;
     if (published && Number.isNaN(published.getTime())) continue;
-    const publishedAt = (published ?? new Date()).toISOString();
+    // 将 publishedAt 换算为真正的 UTC：部分源把源站本地时间错标成 GMT，
+    // 通过 publishedAtTz 声明实际时区，这里重贴时区偏移后转 UTC。
+    const publishedAt = normalizePublishedAt(entry.isoDate ?? "", source.publishedAtTz, published);
     if (published && published.getTime() < cutoffMs) continue;
     items.push({
       sourceId: source.id,
@@ -61,4 +63,36 @@ export async function fetchRss(source: SourceDef, windowHours: number): Promise<
     if (items.length >= MAX_PER_SOURCE) break;
   }
   return items;
+}
+
+/** 计算 IANA 时区相对 UTC 的偏移秒数。用年中 UTC 时刻，取该时区下对应的 local 分量，
+ *  反算出 true UTC 与 local UTC 的差，即为时区偏移。 */
+function tzOffsetSeconds(tz: string, refYear = 2026): number {
+  const utcMs = Date.UTC(refYear, 6, 1, 12, 0, 0);
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    year: "numeric", month: "numeric", day: "numeric",
+    hour: "numeric", minute: "numeric", second: "numeric",
+    hour12: false,
+  }).formatToParts(new Date(utcMs));
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
+  const localMs = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+  return Math.round((localMs - utcMs) / 1000);
+}
+
+/** 把源站时间按声明时区换算成真正的 UTC ISO 字符串。
+ * 例：pubDate="Sun, 23 Aug 2026 14:09:00 GMT"（实为北京时间）+ publishedAtTz="Asia/Shanghai"
+ *     → 视 14:09 为 CST(+8) → 真正 UTC 是 06:09 → 返回 "2026-08-23T06:09:00.000Z"
+ * 前端 toLocaleString('Asia/Shanghai') 换算 +8 → 14:09 ✓ */
+function normalizePublishedAt(
+  rawIso: string,
+  tz?: string,
+  parsedDate?: Date | null,
+): string {
+  if (!tz || !rawIso || !parsedDate) return (parsedDate ?? new Date()).toISOString();
+  // JS 把 "14:09:00 GMT" 解析成 14:09 UTC。我们要把它当作"来源时区 t 的 14:09"，
+  // 算出真正的 UTC：trueUTC = parsedUTC - tzOffset(t)。
+  const offsetSec = tzOffsetSeconds(tz, parsedDate.getUTCFullYear());
+  const trueUtcMs = parsedDate.getTime() - offsetSec * 1000;
+  return new Date(trueUtcMs).toISOString();
 }
