@@ -3,12 +3,13 @@ import { httpFetch } from "./net";
 
 const API_BASE = "https://api.cloudflare.com/client/v4/accounts";
 
-const MODEL = process.env.CF_AI_MODEL ?? "@cf/meta/llama-3.1-8b-instruct";
+const MODEL = process.env.CF_AI_MODEL ?? "@cf/meta/llama-3.1-70b-instruct";
 const DAILY_QUOTA = 500;
 const MAX_PER_RUN = 30;
 
+// 70b 对简洁指令服从度更高；8b 自动降级不遵守指令，已弃用
 const SYSTEM_PROMPT =
-  "你是新闻编辑。根据给定的新闻标题，用简体中文写一句不超过80字的摘要，概括事件本身。只输出摘要文字，不要任何前缀、引号或解释。如果标题信息不足以摘要，输出：暂无摘要。";
+  "你是中文新闻编辑。只输出中文摘要，不要任何前缀、引号或说明。不超过60字。如果标题信息不足，输出：暂无摘要。";
 
 export interface SummarizableRow {
   id: string;
