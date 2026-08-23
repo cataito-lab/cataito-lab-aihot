@@ -104,10 +104,10 @@ export function NewsFeed({
 
   return (
     <div className="relative pl-8">
-      <span aria-hidden className="absolute left-[7px] top-0 bottom-0 w-[1px] border-l border-dashed border-line" />
+      <span aria-hidden className="absolute left-[7px] top-0 bottom-0 w-[1px] border-l border-dashed border-line/50" />
       {indexedGroups.map((group) => (
         <section key={group.key} className="relative pt-6 pb-8 last:pb-0">
-          <span className="absolute left-[-8px] top-[22px] bg-bg pl-2 font-mono text-[11px] font-medium tabular-nums text-neon tracking-[0.02em]">
+          <span className="absolute left-[-8px] top-[8px] bg-bg pl-2 font-mono text-[11px] font-medium tabular-nums text-neon tracking-[0.02em]">
             <span className="text-neon/50 mr-1">//</span>{group.label}
           </span>
           <ol className="flex flex-col gap-2">

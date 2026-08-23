@@ -90,7 +90,7 @@ export function ArticleItem({
   const t = useTranslations("article");
   const locale = useLocale();
   const starred = useFavorite(article.id);
-  const [summaryOpen, setSummaryOpen] = useState(Boolean(article.summary));
+  const [summaryOpen, setSummaryOpen] = useState(false);
 
   let primary: string;
   let secondary: string | null;

@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslations, useLocale } from "next-intl";
-import { RadarDisc } from "./radar-disc";
 import type { BriefMeta } from "@/lib/types";
 
 interface Props {
@@ -46,15 +45,12 @@ export function BriefingPanel({ meta, activeCategories }: Props) {
 
       <div className="flex items-start justify-between gap-6">
         <div className="min-w-0">
-          <h1 className="text-[30px] sm:text-[40px] font-black tracking-[-0.035em] leading-[1.04]">
+          <h1 className="text-[40px] sm:text-[52px] font-black tracking-[-0.04em] leading-[1.02]">
             {t("title")} <span className="text-fg-muted">{t("titleAccent")}</span>
           </h1>
           <p className="mt-3 text-[14px] leading-relaxed text-fg-secondary max-w-[54ch]">
             {t("lead")}
           </p>
-        </div>
-        <div className="hidden sm:block pt-2 opacity-85">
-          <RadarDisc size={152} />
         </div>
       </div>
 

@@ -7,6 +7,8 @@ import { getBriefMeta, listArticles } from "@/lib/news";
 import { withFreshness } from "@/lib/article-utils";
 import type { FeedFilters } from "@/lib/types";
 
+export const runtime = "edge";
+
 interface HomeSearchParams {
   category?: string | string[];
   source?: string | string[];
