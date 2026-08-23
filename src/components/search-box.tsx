@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
 
 export function SearchBox({ initialQuery = "" }: { initialQuery?: string }) {
+  const t = useTranslations("header");
   const router = useRouter();
   const [value, setValue] = useState(initialQuery);
   const [prevUrlQ, setPrevUrlQ] = useState(initialQuery);
@@ -40,10 +42,7 @@ export function SearchBox({ initialQuery = "" }: { initialQuery?: string }) {
 
   return (
     <div className="relative w-36 sm:w-52">
-      <MagnifyingGlass
-        size={14}
-        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-fg-muted pointer-events-none"
-      />
+      <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-fg-muted pointer-events-none" />
       <input
         ref={inputRef}
         type="search"
@@ -55,8 +54,8 @@ export function SearchBox({ initialQuery = "" }: { initialQuery?: string }) {
             navigate(value);
           }
         }}
-        placeholder="搜索 ⌘K"
-        aria-label="搜索新闻标题"
+        placeholder={t("searchPlaceholder")}
+        aria-label={t("searchAria")}
         className="w-full h-9 pl-8 pr-7 rounded-xl border border-line bg-surface/70 text-[13px] placeholder:text-fg-muted outline-none focus:border-accent/50 focus:ring-4 focus:ring-accent/10 focus:bg-surface transition-all"
       />
       {value && (
@@ -68,7 +67,7 @@ export function SearchBox({ initialQuery = "" }: { initialQuery?: string }) {
             navigate("");
             inputRef.current?.focus();
           }}
-          aria-label="清除搜索"
+          aria-label={t("searchAria")}
           className="absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full text-fg-muted hover:text-fg cursor-pointer"
         >
           <X size={12} />

@@ -99,7 +99,7 @@ export async function httpFetch(
   };
 
   try {
-    return wrap(await fetchWith(dispatcher));
+    return wrap(await fetchWith(dispatcher as Dispatcher));
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     // If the proxy is dead, retry once directly (per-request direct agent).

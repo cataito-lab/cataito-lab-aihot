@@ -1,0 +1,84 @@
+{
+  "site": {
+    "title": "AI Hot Takes - Global AI News Timeline",
+    "titleSuffix": "AI Hot Takes",
+    "description": "Real-time aggregation and summaries of global AI news from official blogs, English and Chinese media, and community discussions, ordered as a chronological timeline with verifiable sources."
+  },
+  "brand": { "name": "AI Hot Takes" },
+  "header": {
+    "all": "All",
+    "official": "Official",
+    "mediaCn": "CN Media",
+    "mediaEn": "EN Media",
+    "community": "Community",
+    "favorites": "Saved",
+    "toggleTheme": "Switch theme",
+    "light": "Switch to light mode",
+    "dark": "Switch to dark mode",
+    "searchPlaceholder": "Search ⌘K",
+    "searchAria": "Search headlines"
+  },
+  "article": {
+    "justNow": "just now",
+    "minutesAgo": "{n}m ago",
+    "yesterday": "Yesterday",
+    "verify": "Open original source",
+    "event": "Event",
+    "discussion": "Discussion",
+    "savedAt": "Saved",
+    "aiSummary": "AI_SUMMARY",
+    "showSummary": "AI_SUMMARY",
+    "hideSummary": "Hide summary",
+    "star": "Save",
+    "unstar": "Remove save"
+  },
+  "briefing": {
+    "signal": "SIGNAL // BRIEFING",
+    "title": "AI Hot",
+    "titleAccent": "Takes",
+    "lead": "Real-time aggregation and summaries of global AI activity, ordered by event time. Every entry links to its source for verification.",
+    "updated": "Briefing updated",
+    "last24h": "Last 24h",
+    "total": "Total items",
+    "sources": "Live sources",
+    "covered": "Categories covered",
+    "loadMore": "LOAD_MORE",
+    "loading": "LOADING..."
+  },
+  "feed": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "emptyTitle": "No briefing for the current filters",
+    "emptyHint": "Try adjusting your category preferences or clearing the search."
+  },
+  "filters": { "query": "Q", "source": "SRC", "category": "CAT" },
+  "prefs": {
+    "label": "Prefs",
+    "aria": "Category preference settings",
+    "header": "Show only what interests me",
+    "all": "All categories",
+    "apply": "Apply",
+    "applyAria": "Apply preferences"
+  },
+  "home": {
+    "timeline": "Timeline",
+    "entries": "entries",
+    "footerBrand": "AI Hot Takes",
+    "footerNote": "— part of",
+    "footerSource": "Aggregated from public sources; click a source to verify the original."
+  },
+  "favorites": {
+    "heading": "My Favorites",
+    "saved": "saved",
+    "refresh": "Refresh",
+    "refreshAria": "Refresh favorites",
+    "empty": "No favorites yet",
+    "emptyHint": "Star items in the timeline to save them here.",
+    "browse": "Browse AI Hot Takes",
+    "loading": "Loading...",
+    "error": "Failed to load: {error}"
+  },
+  "footer": {
+    "copyright": "© 2026 AI Hot Takes — a Cataito project"
+  }
+}

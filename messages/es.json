@@ -1,0 +1,84 @@
+{
+  "site": {
+    "title": "AI Noticias - Cronología de noticias sobre IA",
+    "titleSuffix": "AI Noticias",
+    "description": "Agregación y resúmenes en tiempo real de las noticias globales de IA: blogs oficiales, medios en inglés y chino y discusiones comunitarias, en formato cronológico con fuentes verificables."
+  },
+  "brand": { "name": "AI Noticias" },
+  "header": {
+    "all": "Todo",
+    "official": "Oficial",
+    "mediaCn": "Medios CN",
+    "mediaEn": "Medios EN",
+    "community": "Comunidad",
+    "favorites": "Guardados",
+    "toggleTheme": "Cambiar tema",
+    "light": "Cambiar a modo claro",
+    "dark": "Cambiar a modo oscuro",
+    "searchPlaceholder": "Buscar ⌘K",
+    "searchAria": "Buscar titulares"
+  },
+  "article": {
+    "justNow": "ahora mismo",
+    "minutesAgo": "hace {n}m",
+    "yesterday": "Ayer",
+    "verify": "Abrir fuente original",
+    "event": "Evento",
+    "discussion": "Debate",
+    "savedAt": "Guardado",
+    "aiSummary": "RESUMEN IA",
+    "showSummary": "RESUMEN IA",
+    "hideSummary": "Ocultar resumen",
+    "star": "Guardar",
+    "unstar": "Quitar guardado"
+  },
+  "briefing": {
+    "signal": "SIGNAL // BRIEFING",
+    "title": "AI Noticias",
+    "titleAccent": "Hot",
+    "lead": "Agregación y resúmenes en tiempo real de la actividad global de IA, ordenados por hora del evento. Cada entrada enlaza a su fuente para verificarla.",
+    "updated": "Última actualización",
+    "last24h": "Últimas 24h",
+    "total": "Total de entradas",
+    "sources": "Fuentes activas",
+    "covered": "Categorías cubiertas",
+    "loadMore": "CARGAR MÁS",
+    "loading": "CARGANDO…"
+  },
+  "feed": {
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "emptyTitle": "No hay noticias con los filtros actuales",
+    "emptyHint": "Prueba a ajustar tus categorías o borrar la búsqueda."
+  },
+  "filters": { "query": "Q", "source": "SRC", "category": "CAT" },
+  "prefs": {
+    "label": "Prefs",
+    "aria": "Configuración de categorías",
+    "header": "Mostrar solo lo que me interesa",
+    "all": "Todas las categorías",
+    "apply": "Aplicar",
+    "applyAria": "Aplicar preferencias"
+  },
+  "home": {
+    "timeline": "Cronología",
+    "entries": "entradas",
+    "footerBrand": "AI Noticias",
+    "footerNote": "— parte de",
+    "footerSource": " · Agregado de fuentes públicas; haz clic en una fuente para verificar el original."
+  },
+  "favorites": {
+    "heading": "Mis favoritos",
+    "saved": "guardados",
+    "refresh": "Actualizar",
+    "refreshAria": "Actualizar favoritos",
+    "empty": "Aún no tienes favoritos",
+    "emptyHint": "Marca con una estrella en la cronología para guardarlos aquí.",
+    "browse": "Ver AI Noticias",
+    "loading": "Cargando…",
+    "error": "Error al cargar: {error}"
+  },
+  "footer": {
+    "copyright": "© 2026 AI Noticias — un proyecto de Cataito"
+  }
+}

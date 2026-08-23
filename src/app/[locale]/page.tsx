@@ -1,12 +1,11 @@
-import { cookies, headers } from "next/headers";
+import { cookies, headers as nextHeaders } from "next/headers";
+import { getTranslations } from "next-intl/server";
 import { Header } from "@/components/header";
 import { BriefingPanel } from "@/components/briefing-panel";
 import { NewsFeed } from "@/components/news-feed";
 import { getBriefMeta, listArticles } from "@/lib/news";
 import { withFreshness } from "@/lib/article-utils";
 import type { FeedFilters } from "@/lib/types";
-
-export const runtime = "edge";
 
 interface HomeSearchParams {
   category?: string | string[];
@@ -36,9 +35,10 @@ async function readPrefCats(): Promise<string[]> {
   }
 }
 
-export default async function HomePage(props: PageProps<"/">) {
+export default async function HomePage(props: { searchParams: Promise<HomeSearchParams> }) {
+  const t = await getTranslations("home");
   const sp = (await props.searchParams) as HomeSearchParams;
-  const [prefCats] = await Promise.all([readPrefCats(), headers()]);
+  const [prefCats] = await Promise.all([readPrefCats(), nextHeaders()]);
 
   const urlCategory = pick(sp.category);
   const filters: FeedFilters = {
@@ -72,10 +72,7 @@ export default async function HomePage(props: PageProps<"/">) {
               </span>
             )}
             {filters.categories!.map((c) => (
-              <span
-                key={c}
-                className="px-2.5 py-0.5 rounded-md bg-neon-soft text-accent font-mono text-[11px]"
-              >
+              <span key={c} className="px-2.5 py-0.5 rounded-md bg-neon-soft text-accent font-mono text-[11px]">
                 CAT={c.toUpperCase()}
               </span>
             ))}
@@ -85,11 +82,11 @@ export default async function HomePage(props: PageProps<"/">) {
         <section className="animate-fade-up">
           <div className="flex items-center gap-3 pb-3">
             <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-fg-muted">
-              Timeline
+              {t("timeline")}
             </span>
             <span aria-hidden className="h-px flex-1 bg-line" />
             <span className="font-mono text-[11px] tabular-nums text-fg-muted">
-              {items.length} entries
+              {items.length} {t("entries")}
             </span>
           </div>
           <NewsFeed
@@ -102,12 +99,12 @@ export default async function HomePage(props: PageProps<"/">) {
       </main>
       <footer className="pb-12 pt-8 border-t border-line/60">
         <p className="text-center text-xs text-fg-muted">
-          <span className="brand-gradient-text font-semibold">AI 热点简报</span>
-          {" "}— part of{" "}
+          <span className="brand-gradient-text font-semibold">{t("footerBrand")}</span>
+          {t("footerNote")},{" "}
           <a href="https://cataito.com" className="hover:text-accent transition-colors">
             Cataito
           </a>
-          {" "}· 数据聚合自公开信源，点击信源可查证原文
+          {t("footerSource")}
         </p>
       </footer>
     </>

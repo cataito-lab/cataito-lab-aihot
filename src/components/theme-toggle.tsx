@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "@phosphor-icons/react";
 
@@ -21,6 +22,7 @@ function getServerThemeSnapshot(): boolean {
 }
 
 export function ThemeToggle() {
+  const t = useTranslations("header");
   const isDark = useSyncExternalStore(
     subscribeTheme,
     getThemeSnapshot,
@@ -39,7 +41,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      aria-label={isDark ? "切换到亮色模式" : "切换到暗色模式"}
+      aria-label={isDark ? t("light") : t("dark")}
       className="w-8 h-8 flex items-center justify-center rounded-full text-fg-secondary hover:text-fg hover:bg-line/50 transition-colors cursor-pointer"
     >
       {isDark ? <Sun size={17} /> : <Moon size={17} />}

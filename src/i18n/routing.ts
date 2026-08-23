@@ -1,0 +1,16 @@
+import { defineRouting } from "next-intl/routing";
+
+/**
+ * Locales — single source of truth.
+ * Default is English (international-first). To add a language:
+ *   1. append the code to `locales`
+ *   2. create messages/{locale}.json with all keys
+ *   everything else derives from routing.locales.
+ */
+export const locales = ["en", "zh", "ja", "es", "fr"] as const;
+export const defaultLocale = "en";
+
+export const routing = defineRouting({
+  locales,
+  defaultLocale,
+});

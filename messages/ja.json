@@ -1,0 +1,84 @@
+{
+  "site": {
+    "title": "AI 速報 - 世界の AI ニュースタイムライン",
+    "titleSuffix": "AI 速報",
+    "description": "公式サイト、英中メディア、コミュニティのグローバルな AI 情報のリアルタイム集約と要約。イベント順のタイムラインで、出典リンク付き。"
+  },
+  "brand": { "name": "AI 速報" },
+  "header": {
+    "all": "すべて",
+    "official": "公式",
+    "mediaCn": "中国メディア",
+    "mediaEn": "英語メディア",
+    "community": "コミュニティ",
+    "favorites": "保存",
+    "toggleTheme": "テーマ切替",
+    "light": "ライトモードにする",
+    "dark": "ダークモードにする",
+    "searchPlaceholder": "検索 ⌘K",
+    "searchAria": "見出しを検索"
+  },
+  "article": {
+    "justNow": "たった今",
+    "minutesAgo": "{n}分前",
+    "yesterday": "昨日",
+    "verify": "元の情報源を開く",
+    "event": "イベント",
+    "discussion": "議論",
+    "savedAt": "保存",
+    "aiSummary": "AI 要約",
+    "showSummary": "AI 要約",
+    "hideSummary": "要約を閉じる",
+    "star": "保存",
+    "unstar": "保存を解除"
+  },
+  "briefing": {
+    "signal": "SIGNAL // BRIEFING",
+    "title": "AI ホット",
+    "titleAccent": "速報",
+    "lead": "世界の AI 情報のリアルタイム集約と要約。イベント時間の逆順で並べ替え。各項目は出典リンク付きで検証可能。",
+    "updated": "更新時刻",
+    "last24h": "過去24時間",
+    "total": "累計件数",
+    "sources": "アクティブ情報源",
+    "covered": "カテゴリー",
+    "loadMore": "もっと見る",
+    "loading": "読み込み中…"
+  },
+  "feed": {
+    "today": "今日",
+    "yesterday": "昨日",
+    "emptyTitle": "現在のフィルターに該当する速報はありません",
+    "emptyHint": "カテゴリ設定を変更するか、検索語をクリアしてみてください。"
+  },
+  "filters": { "query": "Q", "source": "SRC", "category": "CAT" },
+  "prefs": {
+    "label": "設定",
+    "aria": "カテゴリ設定",
+    "header": "興味のあるカテゴリだけ表示",
+    "all": "すべてのカテゴリ",
+    "apply": "適用",
+    "applyAria": "設定を適用"
+  },
+  "home": {
+    "timeline": "タイムライン",
+    "entries": "件",
+    "footerBrand": "AI 速報",
+    "footerNote": "— が提供する",
+    "footerSource": " · 公開情報源を集約。出典リンクで原文を確認可能。"
+  },
+  "favorites": {
+    "heading": "マイfavorites",
+    "saved": "保存済み",
+    "refresh": "更新",
+    "refreshAria": "保存を更新",
+    "empty": "まだ保存していません",
+    "emptyHint": "タイムラインでスターを押すと、ここに一覧表示されます。",
+    "browse": "AI 速報を見る",
+    "loading": "読み込み中…",
+    "error": "読み込み失敗: {error}"
+  },
+  "footer": {
+    "copyright": "© 2026 AI 速報 — a Cataito project"
+  }
+}

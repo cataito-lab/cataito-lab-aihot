@@ -1,0 +1,84 @@
+{
+  "site": {
+    "title": "AI Actualités - Chronologie des actualités IA",
+    "titleSuffix": "AI Actualités",
+    "description": "Agrégation et résumés en temps réel de l'actualité mondiale de l'IA : blogs officiels, médias anglophones et sinophones, discussions communautaires, en chronologie avec sources vérifiables."
+  },
+  "brand": { "name": "AI Actualités" },
+  "header": {
+    "all": "Tous",
+    "official": "Officiel",
+    "mediaCn": "Médias CN",
+    "mediaEn": "Médias EN",
+    "community": "Communauté",
+    "favorites": "Sauvegardés",
+    "toggleTheme": "Changer de thème",
+    "light": "Passer en mode clair",
+    "dark": "Passer en mode sombre",
+    "searchPlaceholder": "Rechercher ⌘K",
+    "searchAria": "Rechercher des titres"
+  },
+  "article": {
+    "justNow": "à l'instant",
+    "minutesAgo": "il y a {n}m",
+    "yesterday": "Hier",
+    "verify": "Ouvrir la source originale",
+    "event": "Événement",
+    "discussion": "Discussion",
+    "savedAt": "Sauvegardé",
+    "aiSummary": "RÉSUMÉ IA",
+    "showSummary": "RÉSUME IA",
+    "hideSummary": "Masquer le résumé",
+    "star": "Sauvegarder",
+    "unstar": "Retirer des favoris"
+  },
+  "briefing": {
+    "signal": "SIGNAL // BRIEFING",
+    "title": "AI",
+    "titleAccent": "Actu",
+    "lead": "Agrégation et résumés en temps réel de l'actualité mondiale de l'IA, classés par heure de l'événement. Chaque entrée relie à sa source pour vérification.",
+    "updated": "Dernière MAJ",
+    "last24h": "24 dernières h",
+    "total": "Total d'entrées",
+    "sources": "Sources actives",
+    "covered": "Catégories couvertes",
+    "loadMore": "CHARGER PLUS",
+    "loading": "CHARGEMENT…"
+  },
+  "feed": {
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "emptyTitle": "Aucun briefing pour les filtres actuels",
+    "emptyHint": "Essayez d'ajuster vos catégories ou de vider la recherche."
+  },
+  "filters": { "query": "Q", "source": "SRC", "category": "CAT" },
+  "prefs": {
+    "label": "Prefs",
+    "aria": "Paramètres de catégories",
+    "header": "Afficher uniquement ce qui m'intéresse",
+    "all": "Toutes les catégories",
+    "apply": "Appliquer",
+    "applyAria": "Appliquer les préférences"
+  },
+  "home": {
+    "timeline": "Chronologie",
+    "entries": "entrées",
+    "footerBrand": "AI Actualités",
+    "footerNote": "— fait partie de",
+    "footerSource": " · Agrégé depuis des sources publiques ; cliquez sur une source pour vérifier l'original."
+  },
+  "favorites": {
+    "heading": "Mes favoris",
+    "saved": "sauvegardés",
+    "refresh": "Rafraîchir",
+    "refreshAria": "Rafraîchir les favoris",
+    "empty": "Pas encore de favoris",
+    "emptyHint": "Étoilez des éléments dans la chronologie pour les sauvegarder ici.",
+    "browse": "Voir AI Actualités",
+    "loading": "Chargement…",
+    "error": "Échec du chargement : {error}"
+  },
+  "footer": {
+    "copyright": "© 2026 AI Actualités — un projet Cataito"
+  }
+}

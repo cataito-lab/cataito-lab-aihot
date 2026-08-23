@@ -1,0 +1,84 @@
+{
+  "site": {
+    "title": "AI 热点简报 · 全球 AI 动态时间线",
+    "titleSuffix": "AI 热点简报",
+    "description": "全球 AI 动态实时聚合与摘要：官方博客、中英文媒体、社区讨论，按事件时间倒序的时间线简报，附信源可查证原文。"
+  },
+  "brand": { "name": "AI 热点简报" },
+  "header": {
+    "all": "全部",
+    "official": "官方",
+    "mediaCn": "中文媒体",
+    "mediaEn": "英文媒体",
+    "community": "社区",
+    "favorites": "收藏",
+    "toggleTheme": "切换主题",
+    "light": "切换到亮色模式",
+    "dark": "切换到暗色模式",
+    "searchPlaceholder": "搜索 ⌘K",
+    "searchAria": "搜索新闻标题"
+  },
+  "article": {
+    "justNow": "刚刚",
+    "minutesAgo": "{n}分钟前",
+    "yesterday": "昨天",
+    "verify": "查证原文",
+    "event": "事件",
+    "discussion": "讨论",
+    "savedAt": "收录",
+    "aiSummary": "AI_SUMMARY",
+    "showSummary": "AI_SUMMARY",
+    "hideSummary": "收起摘要",
+    "star": "收藏",
+    "unstar": "取消收藏"
+  },
+  "briefing": {
+    "signal": "SIGNAL // BRIEFING",
+    "title": "AI 热点",
+    "titleAccent": "简报",
+    "lead": "全球 AI 动态自动聚合与摘要，按事件时间倒序排列。每条附信源，点击即可查证原文。",
+    "updated": "简报更新",
+    "last24h": "近24h收录",
+    "total": "累计条目",
+    "sources": "在线信源",
+    "covered": "覆盖类别",
+    "loadMore": "加载更多",
+    "loading": "加载中…"
+  },
+  "feed": {
+    "today": "今天",
+    "yesterday": "昨天",
+    "emptyTitle": "当前筛选下暂无简报",
+    "emptyHint": "调整偏好类别或清除搜索关键词试试"
+  },
+  "filters": { "query": "Q", "source": "SRC", "category": "CAT" },
+  "prefs": {
+    "label": "偏好",
+    "aria": "类别偏好设置",
+    "header": "只看我感兴趣的类别",
+    "all": "全部类别",
+    "apply": "应用偏好",
+    "applyAria": "应用偏好"
+  },
+  "home": {
+    "timeline": "时间线",
+    "entries": "条",
+    "footerBrand": "AI 热点简报",
+    "footerNote": "— 属于",
+    "footerSource": " · 数据聚合自公开信源，点击信源可查证原文"
+  },
+  "favorites": {
+    "heading": "我的收藏",
+    "saved": "已收藏",
+    "refresh": "刷新",
+    "refreshAria": "刷新收藏",
+    "empty": "还没有收藏",
+    "emptyHint": "在时间线里点星标即可收藏，这里会自动汇总",
+    "browse": "去浏览 AI 热点",
+    "loading": "加载中…",
+    "error": "加载失败：{error}"
+  },
+  "footer": {
+    "copyright": "© 2026 AI 热点简报 — Cataito 项目"
+  }
+}
