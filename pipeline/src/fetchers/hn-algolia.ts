@@ -38,6 +38,7 @@ export async function fetchHnAlgolia(_source: { id: string }, windowHours: numbe
       title: hit.title,
       url: link,
       publishedAt: hit.created_at,
+      sourceTimezone: "UTC",
       author: hit.author,
     });
     if (items.length >= MAX_PER_RUN) break;

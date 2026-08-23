@@ -4,7 +4,9 @@
     "titleSuffix": "AI Hot Takes",
     "description": "Real-time aggregation and summaries of global AI news from official blogs, English and Chinese media, and community discussions, ordered as a chronological timeline with verifiable sources."
   },
-  "brand": { "name": "AI Hot Takes" },
+  "brand": {
+    "name": "AI Hot Takes"
+  },
   "header": {
     "all": "All",
     "official": "Official",
@@ -30,7 +32,10 @@
     "showSummary": "AI_SUMMARY",
     "hideSummary": "Hide summary",
     "star": "Save",
-    "unstar": "Remove save"
+    "unstar": "Remove save",
+    "hoursAgo": "{n}h ago",
+    "daysAgo": "{n}d ago",
+    "estimated": "est."
   },
   "briefing": {
     "signal": "SIGNAL // BRIEFING",
@@ -51,7 +56,11 @@
     "emptyTitle": "No briefing for the current filters",
     "emptyHint": "Try adjusting your category preferences or clearing the search."
   },
-  "filters": { "query": "Q", "source": "SRC", "category": "CAT" },
+  "filters": {
+    "query": "Q",
+    "source": "SRC",
+    "category": "CAT"
+  },
   "prefs": {
     "label": "Prefs",
     "aria": "Category preference settings",

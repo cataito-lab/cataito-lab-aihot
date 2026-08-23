@@ -58,6 +58,7 @@ export async function fetchRss(source: SourceDef, windowHours: number): Promise<
       title: cleanTitle(entry.title),
       url: entry.link,
       publishedAt,
+      sourceTimezone: source.publishedAtTz ?? "UTC",
       author: entry.creator,
     });
     if (items.length >= MAX_PER_SOURCE) break;

@@ -4,7 +4,9 @@
     "titleSuffix": "AI 热点简报",
     "description": "全球 AI 动态实时聚合与摘要：官方博客、中英文媒体、社区讨论，按事件时间倒序的时间线简报，附信源可查证原文。"
   },
-  "brand": { "name": "AI 热点简报" },
+  "brand": {
+    "name": "AI 热点简报"
+  },
   "header": {
     "all": "全部",
     "official": "官方",
@@ -30,7 +32,10 @@
     "showSummary": "AI_SUMMARY",
     "hideSummary": "收起摘要",
     "star": "收藏",
-    "unstar": "取消收藏"
+    "unstar": "取消收藏",
+    "hoursAgo": "{n}小时前",
+    "daysAgo": "{n}天前",
+    "estimated": "约"
   },
   "briefing": {
     "signal": "SIGNAL // BRIEFING",
@@ -51,7 +56,11 @@
     "emptyTitle": "当前筛选下暂无简报",
     "emptyHint": "调整偏好类别或清除搜索关键词试试"
   },
-  "filters": { "query": "Q", "source": "SRC", "category": "CAT" },
+  "filters": {
+    "query": "Q",
+    "source": "SRC",
+    "category": "CAT"
+  },
   "prefs": {
     "label": "偏好",
     "aria": "类别偏好设置",

@@ -4,7 +4,9 @@
     "titleSuffix": "AI 速報",
     "description": "公式サイト、英中メディア、コミュニティのグローバルな AI 情報のリアルタイム集約と要約。イベント順のタイムラインで、出典リンク付き。"
   },
-  "brand": { "name": "AI 速報" },
+  "brand": {
+    "name": "AI 速報"
+  },
   "header": {
     "all": "すべて",
     "official": "公式",
@@ -30,7 +32,10 @@
     "showSummary": "AI 要約",
     "hideSummary": "要約を閉じる",
     "star": "保存",
-    "unstar": "保存を解除"
+    "unstar": "保存を解除",
+    "hoursAgo": "{n}時間前",
+    "daysAgo": "{n}日前",
+    "estimated": "約"
   },
   "briefing": {
     "signal": "SIGNAL // BRIEFING",
@@ -51,7 +56,11 @@
     "emptyTitle": "現在のフィルターに該当する速報はありません",
     "emptyHint": "カテゴリ設定を変更するか、検索語をクリアしてみてください。"
   },
-  "filters": { "query": "Q", "source": "SRC", "category": "CAT" },
+  "filters": {
+    "query": "Q",
+    "source": "SRC",
+    "category": "CAT"
+  },
   "prefs": {
     "label": "設定",
     "aria": "カテゴリ設定",

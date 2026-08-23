@@ -4,7 +4,9 @@
     "titleSuffix": "AI Noticias",
     "description": "Agregación y resúmenes en tiempo real de las noticias globales de IA: blogs oficiales, medios en inglés y chino y discusiones comunitarias, en formato cronológico con fuentes verificables."
   },
-  "brand": { "name": "AI Noticias" },
+  "brand": {
+    "name": "AI Noticias"
+  },
   "header": {
     "all": "Todo",
     "official": "Oficial",
@@ -30,7 +32,10 @@
     "showSummary": "RESUMEN IA",
     "hideSummary": "Ocultar resumen",
     "star": "Guardar",
-    "unstar": "Quitar guardado"
+    "unstar": "Quitar guardado",
+    "hoursAgo": "hace {n}h",
+    "daysAgo": "hace {n}d",
+    "estimated": "aprox."
   },
   "briefing": {
     "signal": "SIGNAL // BRIEFING",
@@ -51,7 +56,11 @@
     "emptyTitle": "No hay noticias con los filtros actuales",
     "emptyHint": "Prueba a ajustar tus categorías o borrar la búsqueda."
   },
-  "filters": { "query": "Q", "source": "SRC", "category": "CAT" },
+  "filters": {
+    "query": "Q",
+    "source": "SRC",
+    "category": "CAT"
+  },
   "prefs": {
     "label": "Prefs",
     "aria": "Configuración de categorías",

@@ -103,6 +103,8 @@ async function main(): Promise<void> {
       url: item.url,
       author: item.author,
       publishedAt: item.publishedAt,
+      sourceTimezone: item.sourceTimezone,
+      estimated: item.estimated,
     })),
   );
 

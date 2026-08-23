@@ -51,6 +51,7 @@ export async function fetchReddit(source: SourceDef, windowHours: number): Promi
       title: d.title.replace(/\s+/g, " ").trim(),
       url: link,
       publishedAt: dt.toISOString(),
+      sourceTimezone: "UTC",
       author: d.author,
     });
   }

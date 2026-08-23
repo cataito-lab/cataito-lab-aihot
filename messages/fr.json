@@ -4,7 +4,9 @@
     "titleSuffix": "AI Actualités",
     "description": "Agrégation et résumés en temps réel de l'actualité mondiale de l'IA : blogs officiels, médias anglophones et sinophones, discussions communautaires, en chronologie avec sources vérifiables."
   },
-  "brand": { "name": "AI Actualités" },
+  "brand": {
+    "name": "AI Actualités"
+  },
   "header": {
     "all": "Tous",
     "official": "Officiel",
@@ -30,7 +32,10 @@
     "showSummary": "RÉSUME IA",
     "hideSummary": "Masquer le résumé",
     "star": "Sauvegarder",
-    "unstar": "Retirer des favoris"
+    "unstar": "Retirer des favoris",
+    "hoursAgo": "il y a {n}h",
+    "daysAgo": "il y a {n}j",
+    "estimated": "env."
   },
   "briefing": {
     "signal": "SIGNAL // BRIEFING",
@@ -51,7 +56,11 @@
     "emptyTitle": "Aucun briefing pour les filtres actuels",
     "emptyHint": "Essayez d'ajuster vos catégories ou de vider la recherche."
   },
-  "filters": { "query": "Q", "source": "SRC", "category": "CAT" },
+  "filters": {
+    "query": "Q",
+    "source": "SRC",
+    "category": "CAT"
+  },
   "prefs": {
     "label": "Prefs",
     "aria": "Paramètres de catégories",

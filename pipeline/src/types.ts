@@ -25,6 +25,10 @@ export interface RawItem {
   title: string;
   url: string;
   publishedAt: string;
+  /** 原文发布时间标注的实际时区（如 "Asia/Shanghai"）。无此字段时前端视为 UTC 显示。 */
+  sourceTimezone?: string;
+  /** 是否为估算/反推时间（原文无明确时间时） */
+  estimated?: boolean;
   author?: string;
 }
 

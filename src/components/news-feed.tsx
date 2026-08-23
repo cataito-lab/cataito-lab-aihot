@@ -103,19 +103,14 @@ export function NewsFeed({
   }, [groups]);
 
   return (
-    <div className="relative">
-      <span aria-hidden className="absolute left-[8px] top-2 bottom-2 w-px bg-gradient-to-b from-neon/40 via-line to-transparent" />
+    <div className="relative pl-8">
+      <span aria-hidden className="absolute left-[7px] top-0 bottom-0 w-[1px] border-l border-dashed border-line" />
       {indexedGroups.map((group) => (
-        <section key={group.key} className="pt-6">
-          <div className="flex items-center gap-3 pb-1">
-            <span className="font-mono text-[11px] font-medium uppercase tracking-[0.1em] text-fg-secondary bg-bg pr-2 py-0.5">
-              <span aria-hidden className="text-neon mr-1.5">{"//"}</span>
-              {group.label}
-            </span>
-            <span aria-hidden className="h-px flex-1 bg-line/60" />
-            <span className="font-mono text-[10px] text-fg-muted tabular-nums">×{group.items.length}</span>
-          </div>
-          <ol>
+        <section key={group.key} className="relative pt-6 pb-8 last:pb-0">
+          <span className="absolute left-[-8px] top-[22px] bg-bg pl-2 font-mono text-[11px] font-medium tabular-nums text-neon tracking-[0.02em]">
+            <span className="text-neon/50 mr-1">//</span>{group.label}
+          </span>
+          <ol className="flex flex-col gap-2">
             {group.items.map(({ item, index }) => <ArticleItem key={item.id} article={item} index={index} />)}
           </ol>
         </section>
@@ -134,7 +129,7 @@ export function NewsFeed({
       <div ref={sentinelRef} className="h-px" />
 
       {cursor && (
-        <div className="pt-6 pb-2 pl-6 flex justify-center">
+        <div className="pt-6 pb-2 flex justify-center">
           <button type="button" onClick={() => void loadMore()} disabled={loading} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-accent/30 text-accent hover:bg-neon-soft font-mono text-xs tracking-wider transition-all active:scale-95 disabled:opacity-50 cursor-pointer">
             <ArrowDown size={13} className={loading ? "animate-bounce" : ""} />
             {loading ? tBrief("loading") : tBrief("loadMore")}

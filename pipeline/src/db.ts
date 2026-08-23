@@ -118,6 +118,8 @@ export async function ensureSchema(): Promise<void> {
     "write",
   );
   await ensureColumn("articles", "summarized_at", "summarized_at TEXT");
+  await ensureColumn("articles", "source_timezone", "source_timezone TEXT DEFAULT 'UTC'");
+  await ensureColumn("articles", "estimated", "estimated INTEGER NOT NULL DEFAULT 0");
   await migrateFts();
   for (const ddl of TRIGGER_DDLS) {
     await getDb().execute({ sql: ddl, args: [] });
@@ -177,15 +179,27 @@ export interface NewArticleRow {
   url: string;
   author?: string;
   publishedAt: string;
+  sourceTimezone?: string;
+  estimated?: boolean;
 }
 
 export async function insertArticles(rows: NewArticleRow[]): Promise<number> {
   if (rows.length === 0) return 0;
   const now = new Date().toISOString();
   const statements: InStatement[] = rows.map((r) => ({
-    sql: `INSERT INTO articles (id, source_id, title, url, author, published_at, fetched_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    args: [r.id, r.sourceId, r.title, r.url, r.author ?? null, r.publishedAt, now],
+    sql: `INSERT INTO articles (id, source_id, title, url, author, published_at, fetched_at, source_timezone, estimated)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    args: [
+      r.id,
+      r.sourceId,
+      r.title,
+      r.url,
+      r.author ?? null,
+      r.publishedAt,
+      now,
+      r.sourceTimezone ?? "UTC",
+      r.estimated ? 1 : 0,
+    ],
   }));
   let inserted = 0;
   for (let i = 0; i < statements.length; i += 50) {

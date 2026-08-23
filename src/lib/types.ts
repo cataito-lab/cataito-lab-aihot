@@ -11,6 +11,10 @@ export interface FeedArticle {
   author: string | null;
   publishedAt: string;
   fetchedAt?: string;
+  /** 原文发布时区（如 "Asia/Shanghai" / "UTC"），仅当非 UTC 时前端才展示 */
+  sourceTimezone?: string;
+  /** 是否为估算时间 */
+  estimated?: boolean;
   isNew?: boolean;
 }
 
