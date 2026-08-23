@@ -182,11 +182,21 @@ export interface NewArticleRow {
 export async function insertArticles(rows: NewArticleRow[]): Promise<number> {
   if (rows.length === 0) return 0;
   const now = new Date().toISOString();
-  const statements: InStatement[] = rows.map((r) => ({
-    sql: `INSERT INTO articles (id, source_id, title, url, author, published_at, fetched_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    args: [r.id, r.sourceId, r.title, r.url, r.author ?? null, r.publishedAt, now],
-  }));
+  // 部分源（如 InfoQ）把本地时间错标为 UTC，导致 published_at 跑到"未来"。
+  // 当 publishedAt 晚于抓取时间超过 5 分钟，回退用抓取时间。
+  const nowMs = Date.now();
+  const maxSkewMs = 5 * 60 * 1000;
+  const statements: InStatement[] = rows.map((r) => {
+    const p = new Date(r.publishedAt);
+    const pub = Number.isNaN(p.getTime()) || (p.getTime() - nowMs) > maxSkewMs
+      ? now
+      : r.publishedAt;
+    return {
+      sql: `INSERT INTO articles (id, source_id, title, url, author, published_at, fetched_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      args: [r.id, r.sourceId, r.title, r.url, r.author ?? null, pub, now],
+    };
+  });
   let inserted = 0;
   for (let i = 0; i < statements.length; i += 50) {
     const results = await getDb().batch(statements.slice(i, i + 50), "write");
