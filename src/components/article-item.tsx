@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { Star, CaretDown, CaretUp, Lightning, ArrowSquareOut } from "@phosphor-icons/react";
+import { Star } from "@phosphor-icons/react";
 import type { FeedArticle } from "@/lib/types";
 import { isFavorite, subscribeFavorites, toggleFavorite } from "@/lib/favorites";
 
@@ -65,21 +65,6 @@ function fmtTime(
   return tzLabel ? `${est}${abs} · ${tzLabel}` : `${est}${abs}`;
 }
 
-function fmtSaved(iso: string | undefined, locale: string, t: ReturnType<typeof useTranslations<"article">>, sourceTimezone?: string, estimated?: boolean): string {
-  if (!iso) return "";
-  return fmtTime(iso, locale, t, sourceTimezone, estimated);
-}
-
-function catLabel(locale: string, id: string): string {
-  const map: Record<string, string> = {
-    official: "official",
-    "media-cn": locale === "zh" ? "中文媒体" : "CN Media",
-    "media-en": locale === "zh" ? "英文媒体" : "EN Media",
-    community: locale === "zh" ? "社区" : "Community",
-  };
-  return map[id] ?? id;
-}
-
 export function ArticleItem({
   article,
   index,
@@ -90,7 +75,6 @@ export function ArticleItem({
   const t = useTranslations("article");
   const locale = useLocale();
   const starred = useFavorite(article.id);
-  const [summaryOpen, setSummaryOpen] = useState(false);
 
   let primary: string;
   let secondary: string | null;
@@ -108,95 +92,74 @@ export function ArticleItem({
 
   return (
     <li
-      className="animate-fade-up group relative rounded-xl border border-line bg-surface transition-all duration-250 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-accent/40 hover:bg-surface/95 hover:-translate-y-[1px] hover:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.4)]"
+      className="card animate-fade-up"
       style={{ animationDelay: `${Math.min(index * 28, 320)}ms` }}
     >
-      <div className="px-5 py-4 sm:px-6 sm:py-5">
-        <div className="flex items-center gap-2 text-[11px] font-mono text-fg-muted">
-          <a
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            title={`${t("verify")}: ${article.sourceName}`}
-            className="text-[12px] font-semibold text-fg uppercase tracking-[0.06em] hover:text-neon transition-colors"
-          >
-            [{article.sourceName}]
-          </a>
-          <span aria-hidden className="text-fg-muted/70">·</span>
-          <span>
-            {timeLabel}{" "}<time dateTime={article.publishedAt} className="font-mono text-fg-secondary" suppressHydrationWarning>{fmtTime(article.publishedAt, locale, t, article.sourceTimezone, article.estimated)}</time>
-          </span>
-          <span className="flex-1" />
-          {isNew && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-neon-soft text-neon font-mono text-[10px] font-semibold border border-neon/20">
-              <Lightning size={10} weight="fill" /> NEW
-            </span>
-          )}
-          <span className="ml-2">{catLabel(locale, article.category)}</span>
+      <div className="card-meta">
+        <a
+          href={article.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={`${t("verify")}: ${article.sourceName}`}
+          className="source-tag"
+        >
+          [{article.sourceName}]
+        </a>
+        <span className="dot-divider" aria-hidden>·</span>
+        <span className="event-time">
+          {timeLabel}{" "}
+          <time dateTime={article.publishedAt} suppressHydrationWarning>
+            {fmtTime(article.publishedAt, locale, t, article.sourceTimezone, article.estimated)}
+          </time>
+        </span>
+        {isNew && <span className="badge-new">NEW</span>}
+      </div>
+
+      <h3>
+        <a href={article.url} target="_blank" rel="noopener noreferrer">
+          {primary}
+        </a>
+      </h3>
+      {secondary && <p className="title-secondary">{secondary}</p>}
+
+      {hasSummary && (
+        <div className="ai-summary-box">
+          <div className="ai-summary-title">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+            {t("aiSummary")}
+          </div>
+          <div className="ai-summary-content">{article.summary}</div>
         </div>
+      )}
 
-        <h3 className="mt-2.5">
-          <a
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[17px] font-semibold leading-snug tracking-[-0.005em] text-fg hover:text-neon transition-colors"
-          >
-            {primary}
-          </a>
-        </h3>
-        {secondary && (
-          <p className="mt-0.5 text-[13px] leading-snug text-fg-muted truncate">{secondary}</p>
-        )}
-
-        {hasSummary && (
-          <>
-            <div
-              className={`overflow-hidden transition-all duration-300 ease-out ${summaryOpen ? "grid grid-rows-[1fr] opacity-100 mt-3" : "grid grid-rows-[0fr] opacity-0 mt-0"}`}
-            >
-              <div className="min-h-0">
-                <div className="relative rounded-lg border border-line/60 border-l-[2px] border-l-neon bg-surface/60 px-4 py-3">
-                  <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-neon mb-1 flex items-center gap-2">
-                    <Lightning size={12} weight="fill" />
-                    {t("aiSummary")}
-                  </div>
-                  <p className="text-[14px] leading-relaxed text-fg-secondary">{article.summary}</p>
-                </div>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setSummaryOpen((o) => !o)}
-              className="mt-2 inline-flex items-center gap-1 font-mono text-[11px] text-neon hover:text-accent-strong transition-colors cursor-pointer"
-            >
-              {summaryOpen ? <CaretUp size={11} weight="bold" /> : <CaretDown size={11} weight="bold" />}
-              {summaryOpen ? t("hideSummary") : t("showSummary")}
-            </button>
-          </>
-        )}
-
-        <div className="mt-3 flex items-center justify-between pt-3 border-t border-line/50">
-          <span suppressHydrationWarning className="font-mono text-[10px] text-fg-muted">
-            {t("savedAt")} {fmtSaved(article.fetchedAt ?? article.publishedAt, locale, t, article.sourceTimezone, article.estimated)}
-          </span>
-          <a
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 font-mono text-[11px] text-fg-secondary hover:text-neon transition-colors"
-          >
-            {t("verify")} <ArrowSquareOut size={12} />
-          </a>
+      <div className="card-footer">
+        <span suppressHydrationWarning>
+          {t("savedAt")}{" "}
+          {fmtTime(article.fetchedAt ?? article.publishedAt, locale, t, article.sourceTimezone, article.estimated)}
+        </span>
+        <span className="inline-flex items-center gap-3">
           <button
             type="button"
             onClick={() => toggleFavorite(article.id)}
             aria-label={starred ? t("unstar") : t("star")}
             aria-pressed={starred}
-            className={`ml-2 transition-all active:scale-75 cursor-pointer ${starred ? "text-star" : "text-fg-muted opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 hover:text-star"}`}
+            className={`transition-colors cursor-pointer ${
+              starred ? "text-[#10b981]" : "text-[#71717a] hover:text-[#f4f4f5]"
+            }`}
           >
-            <Star size={15} weight={starred ? "fill" : "regular"} />
+            <Star size={14} weight={starred ? "fill" : "regular"} />
           </button>
-        </div>
+          <a
+            href={article.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="original-link"
+          >
+            {t("verify")} ↗
+          </a>
+        </span>
       </div>
     </li>
   );

@@ -13,24 +13,20 @@
     "mediaCn": "Medios CN",
     "mediaEn": "Medios EN",
     "community": "Comunidad",
+    "categories": "Categorías",
     "favorites": "Guardados",
-    "toggleTheme": "Cambiar tema",
-    "light": "Cambiar a modo claro",
-    "dark": "Cambiar a modo oscuro",
-    "searchPlaceholder": "Buscar ⌘K",
+    "searchPlaceholder": "Buscar",
     "searchAria": "Buscar titulares"
   },
   "article": {
     "justNow": "ahora mismo",
     "minutesAgo": "hace {n}m",
     "yesterday": "Ayer",
-    "verify": "Abrir fuente original",
+    "verify": "Verificar fuente",
     "event": "Evento",
     "discussion": "Debate",
-    "savedAt": "Guardado",
-    "aiSummary": "RESUMEN IA",
-    "showSummary": "RESUMEN IA",
-    "hideSummary": "Ocultar resumen",
+    "savedAt": "Recopilado",
+    "aiSummary": "AI SUMMARY",
     "star": "Guardar",
     "unstar": "Quitar guardado",
     "hoursAgo": "hace {n}h",
@@ -38,15 +34,14 @@
     "estimated": "aprox."
   },
   "briefing": {
-    "signal": "SIGNAL // BRIEFING",
+    "signal": "// SIGNAL BRIEFING SYSTEM",
     "title": "AI Noticias",
-    "titleAccent": "Hot",
-    "lead": "Agregación y resúmenes en tiempo real de la actividad global de IA, ordenados por hora del evento. Cada entrada enlaza a su fuente para verificarla.",
+    "titleAccent": "Panorama global",
+    "lead": "Señales fronterizas de IA agregadas automáticamente con resúmenes inteligentes, en orden cronológico inverso por hora del evento. Cada entrada incluye una fuente verificable.",
     "updated": "Última actualización",
     "last24h": "Últimas 24h",
     "total": "Total de entradas",
     "sources": "Fuentes activas",
-    "covered": "Categorías cubiertas",
     "loadMore": "CARGAR MÁS",
     "loading": "CARGANDO…"
   },
@@ -60,14 +55,6 @@
     "query": "Q",
     "source": "SRC",
     "category": "CAT"
-  },
-  "prefs": {
-    "label": "Prefs",
-    "aria": "Configuración de categorías",
-    "header": "Mostrar solo lo que me interesa",
-    "all": "Todas las categorías",
-    "apply": "Aplicar",
-    "applyAria": "Aplicar preferencias"
   },
   "home": {
     "timeline": "Cronología",

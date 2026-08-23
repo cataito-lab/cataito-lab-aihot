@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { MagnifyingGlass, X } from "@phosphor-icons/react";
+import { X } from "@phosphor-icons/react";
 
 export function SearchBox({ initialQuery = "" }: { initialQuery?: string }) {
   const t = useTranslations("header");
@@ -41,8 +41,8 @@ export function SearchBox({ initialQuery = "" }: { initialQuery?: string }) {
   };
 
   return (
-    <div className="relative w-36 sm:w-52">
-      <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-fg-muted pointer-events-none" />
+    <div className="search-shortcut">
+      <span aria-hidden>⌘K</span>
       <input
         ref={inputRef}
         type="search"
@@ -56,7 +56,6 @@ export function SearchBox({ initialQuery = "" }: { initialQuery?: string }) {
         }}
         placeholder={t("searchPlaceholder")}
         aria-label={t("searchAria")}
-        className="w-full h-9 pl-8 pr-7 rounded-xl border border-line bg-surface/70 text-[13px] placeholder:text-fg-muted outline-none focus:border-accent/50 focus:ring-4 focus:ring-accent/10 focus:bg-surface transition-all"
       />
       {value && (
         <button
@@ -68,7 +67,7 @@ export function SearchBox({ initialQuery = "" }: { initialQuery?: string }) {
             inputRef.current?.focus();
           }}
           aria-label={t("searchAria")}
-          className="absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full text-fg-muted hover:text-fg cursor-pointer"
+          className="flex items-center justify-center text-[#71717a] hover:text-[#f4f4f5] cursor-pointer"
         >
           <X size={12} />
         </button>

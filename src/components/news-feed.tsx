@@ -2,30 +2,31 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { ArrowDown, Tray } from "@phosphor-icons/react";
+import { Tray } from "@phosphor-icons/react";
 import { isRecent } from "@/lib/article-utils";
 import type { FeedArticle, FeedFilters, FeedPage } from "@/lib/types";
 import { ArticleItem } from "./article-item";
 
-interface HourGroup {
+interface TimeGroup {
   key: string;
   label: string;
   items: FeedArticle[];
 }
 
-function groupByHour(items: FeedArticle[], locale: string, t: ReturnType<typeof useTranslations<"feed">>): HourGroup[] {
+function groupByTime(items: FeedArticle[], locale: string, t: ReturnType<typeof useTranslations<"feed">>): TimeGroup[] {
   const fmtHour = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", hour12: false });
-  const fmtDay = new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" });
+  const fmtDay = new Intl.DateTimeFormat(locale, { month: "2-digit", day: "2-digit" });
   const today = new Date().toDateString();
-  const yesterday = new Date(Date.now() - 86400000).toDateString();
-  const groups: HourGroup[] = [];
-  let current: HourGroup | null = null;
+  const groups: TimeGroup[] = [];
+  let current: TimeGroup | null = null;
   for (const item of items) {
     const d = new Date(item.publishedAt);
     const dayStr = d.toDateString();
-    const dayLabel = dayStr === today ? t("today") : dayStr === yesterday ? t("yesterday") : fmtDay.format(d);
+    // 时间轴标记保持设计稿的紧凑宽度：当天只显示 HH:MM，跨天用 MM-dd 换行 HH:MM
+    const dayLabel = dayStr === today ? "" : fmtDay.format(d);
+    const time = fmtHour.format(d);
+    const label = dayLabel ? `${dayLabel}\n${time}` : time;
     const key = `${dayStr}-${d.getHours()}`;
-    const label = `${dayLabel} ${fmtHour.format(d)}`;
     if (!current || current.key !== key) {
       current = { key: `${key}-${groups.length}`, label, items: [] };
       groups.push(current);
@@ -96,46 +97,53 @@ export function NewsFeed({
     return () => observer.disconnect();
   }, [loadMore, cursor]);
 
-  const groups = useMemo(() => groupByHour(items, locale, tFeed), [items, locale, tFeed]);
+  const groups = useMemo(() => groupByTime(items, locale, tFeed), [items, locale, tFeed]);
   const indexedGroups = useMemo(() => {
     let idx = -1;
     return groups.map((g) => ({ ...g, items: g.items.map((item) => ({ item, index: ++idx })) }));
   }, [groups]);
 
   return (
-    <div className="relative pl-8">
-      <span aria-hidden className="absolute left-[7px] top-0 bottom-0 w-[1px] border-l border-dashed border-line/50" />
-      {indexedGroups.map((group) => (
-        <section key={group.key} className="relative pt-6 pb-8 last:pb-0">
-          <span className="absolute left-[-8px] top-[8px] bg-bg pl-2 font-mono text-[11px] font-medium tabular-nums text-neon tracking-[0.02em]">
-            <span className="text-neon/50 mr-1">//</span>{group.label}
-          </span>
-          <ol className="flex flex-col gap-2">
-            {group.items.map(({ item, index }) => <ArticleItem key={item.id} article={item} index={index} />)}
-          </ol>
-        </section>
-      ))}
+    <>
+      <div className="timeline-container">
+        {indexedGroups.map((group) => (
+          <section key={group.key} className="timeline-group">
+            <div className="time-marker" suppressHydrationWarning>
+              {group.label}
+            </div>
+            <ol className="timeline-cards">
+              {group.items.map(({ item, index }) => (
+                <ArticleItem key={item.id} article={item} index={index} />
+              ))}
+            </ol>
+          </section>
+        ))}
 
-      {items.length === 0 && (
-        <div className="py-28 flex flex-col items-center gap-3 text-center animate-fade-up">
-          <span className="w-14 h-14 rounded-full border border-line flex items-center justify-center text-fg-muted">
-            <Tray size={24} />
-          </span>
-          <p className="text-[15px] text-fg-secondary">{tFeed("emptyTitle")}</p>
-          <p className="text-[13px] text-fg-muted">{tFeed("emptyHint")}</p>
-        </div>
-      )}
+        {items.length === 0 && (
+          <div className="py-28 flex flex-col items-center gap-3 text-center animate-fade-up">
+            <span className="w-14 h-14 rounded-full border border-[#222228] flex items-center justify-center text-[#71717a]">
+              <Tray size={24} />
+            </span>
+            <p className="text-[15px] text-[#a1a1aa]">{tFeed("emptyTitle")}</p>
+            <p className="text-[13px] text-[#71717a]">{tFeed("emptyHint")}</p>
+          </div>
+        )}
+      </div>
 
       <div ref={sentinelRef} className="h-px" />
 
       {cursor && (
         <div className="pt-6 pb-2 flex justify-center">
-          <button type="button" onClick={() => void loadMore()} disabled={loading} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-accent/30 text-accent hover:bg-neon-soft font-mono text-xs tracking-wider transition-all active:scale-95 disabled:opacity-50 cursor-pointer">
-            <ArrowDown size={13} className={loading ? "animate-bounce" : ""} />
+          <button
+            type="button"
+            onClick={() => void loadMore()}
+            disabled={loading}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-[#222228] bg-[#121216] text-[#a1a1aa] hover:text-[#f4f4f5] hover:border-[#3f3f46] font-mono text-xs tracking-wider transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+          >
             {loading ? tBrief("loading") : tBrief("loadMore")}
           </button>
         </div>
       )}
-    </div>
+    </>
   );
 }

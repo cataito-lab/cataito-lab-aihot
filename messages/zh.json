@@ -13,11 +13,9 @@
     "mediaCn": "中文媒体",
     "mediaEn": "英文媒体",
     "community": "社区",
+    "categories": "分类",
     "favorites": "收藏",
-    "toggleTheme": "切换主题",
-    "light": "切换到亮色模式",
-    "dark": "切换到暗色模式",
-    "searchPlaceholder": "搜索 ⌘K",
+    "searchPlaceholder": "搜索",
     "searchAria": "搜索新闻标题"
   },
   "article": {
@@ -27,10 +25,8 @@
     "verify": "查证原文",
     "event": "事件",
     "discussion": "讨论",
-    "savedAt": "收录",
-    "aiSummary": "AI_SUMMARY",
-    "showSummary": "AI_SUMMARY",
-    "hideSummary": "收起摘要",
+    "savedAt": "收录于",
+    "aiSummary": "AI SUMMARY",
     "star": "收藏",
     "unstar": "取消收藏",
     "hoursAgo": "{n}小时前",
@@ -38,15 +34,14 @@
     "estimated": "约"
   },
   "briefing": {
-    "signal": "SIGNAL // BRIEFING",
+    "signal": "// SIGNAL BRIEFING SYSTEM",
     "title": "AI 热点",
-    "titleAccent": "简报",
-    "lead": "全球 AI 动态自动聚合与摘要，按事件时间倒序排列。每条附信源，点击即可查证原文。",
+    "titleAccent": "实时全景观测",
+    "lead": "全球 AI 前沿动态自动聚合与智能摘要，按事件时间倒序排列。每条附可查证信源。",
     "updated": "简报更新",
-    "last24h": "近24h收录",
+    "last24h": "近 24h 收录",
     "total": "累计条目",
     "sources": "在线信源",
-    "covered": "覆盖类别",
     "loadMore": "加载更多",
     "loading": "加载中…"
   },
@@ -60,14 +55,6 @@
     "query": "Q",
     "source": "SRC",
     "category": "CAT"
-  },
-  "prefs": {
-    "label": "偏好",
-    "aria": "类别偏好设置",
-    "header": "只看我感兴趣的类别",
-    "all": "全部类别",
-    "apply": "应用偏好",
-    "applyAria": "应用偏好"
   },
   "home": {
     "timeline": "时间线",

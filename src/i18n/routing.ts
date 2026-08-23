@@ -13,4 +13,7 @@ export const defaultLocale = "en";
 export const routing = defineRouting({
   locales,
   defaultLocale,
+  // Never sniff the browser/geo language: everyone lands on the default
+  // (English) until they explicitly pick a locale via the switcher.
+  localeDetection: false,
 });

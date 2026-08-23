@@ -13,24 +13,20 @@
     "mediaCn": "CN Media",
     "mediaEn": "EN Media",
     "community": "Community",
+    "categories": "Categories",
     "favorites": "Saved",
-    "toggleTheme": "Switch theme",
-    "light": "Switch to light mode",
-    "dark": "Switch to dark mode",
-    "searchPlaceholder": "Search ⌘K",
+    "searchPlaceholder": "Search",
     "searchAria": "Search headlines"
   },
   "article": {
     "justNow": "just now",
     "minutesAgo": "{n}m ago",
     "yesterday": "Yesterday",
-    "verify": "Open original source",
+    "verify": "Verify source",
     "event": "Event",
     "discussion": "Discussion",
     "savedAt": "Saved",
-    "aiSummary": "AI_SUMMARY",
-    "showSummary": "AI_SUMMARY",
-    "hideSummary": "Hide summary",
+    "aiSummary": "AI SUMMARY",
     "star": "Save",
     "unstar": "Remove save",
     "hoursAgo": "{n}h ago",
@@ -38,16 +34,15 @@
     "estimated": "est."
   },
   "briefing": {
-    "signal": "SIGNAL // BRIEFING",
-    "title": "AI Hot",
-    "titleAccent": "Takes",
-    "lead": "Real-time aggregation and summaries of global AI activity, ordered by event time. Every entry links to its source for verification.",
+    "signal": "// SIGNAL BRIEFING SYSTEM",
+    "title": "AI Hot Takes",
+    "titleAccent": "Live Overview",
+    "lead": "Auto-aggregated frontier AI signals with smart summaries, reverse-chronological by event time. Every entry carries a verifiable source.",
     "updated": "Briefing updated",
     "last24h": "Last 24h",
     "total": "Total items",
     "sources": "Live sources",
-    "covered": "Categories covered",
-    "loadMore": "LOAD_MORE",
+    "loadMore": "LOAD MORE",
     "loading": "LOADING..."
   },
   "feed": {
@@ -60,14 +55,6 @@
     "query": "Q",
     "source": "SRC",
     "category": "CAT"
-  },
-  "prefs": {
-    "label": "Prefs",
-    "aria": "Category preference settings",
-    "header": "Show only what interests me",
-    "all": "All categories",
-    "apply": "Apply",
-    "applyAria": "Apply preferences"
   },
   "home": {
     "timeline": "Timeline",
