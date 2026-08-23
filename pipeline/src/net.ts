@@ -25,7 +25,8 @@ function setupDispatcher(direct: boolean): void {
 
 function initDispatcher(): void {
   if (dispatcher) return;
-  setupDispatcher(!!proxyUrl());
+  const p = proxyUrl();
+  setupDispatcher(!p); // no proxy string -> direct; proxy present -> proxy dispatcher
 }
 
 /**
@@ -41,6 +42,8 @@ export function recordFailure(msg: string): boolean {
     msg.includes("ENETUNREACH") ||
     msg.includes("ETIMEDOUT") ||
     msg.includes("Could not connect") ||
+    msg.includes("Proxy opts.uri") ||
+    msg.includes("proxy") ||
     msg === "fetch failed";
   if (!transportFail) return false;
 
