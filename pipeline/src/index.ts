@@ -2,6 +2,7 @@ import "./env";
 import pLimit from "p-limit";
 import { fetchRss } from "./fetchers/rss";
 import { fetchHnAlgolia } from "./fetchers/hn-algolia";
+import { fetchReddit } from "./fetchers/reddit";
 import { assignIds } from "./dedup";
 import { isAiRelated } from "./filter";
 import { loadSources } from "./config";
@@ -40,6 +41,8 @@ async function fetchSource(source: SourceDef, windowHours: number): Promise<Fetc
         return { sourceId: source.id, items: await fetchRss(source, windowHours) };
       case "hn-algolia":
         return { sourceId: source.id, items: await fetchHnAlgolia(source, windowHours) };
+      case "reddit":
+        return { sourceId: source.id, items: await fetchReddit(source, windowHours) };
       default:
         return { sourceId: source.id, items: [], error: `fetcher '${source.fetcher}' not implemented` };
     }
@@ -125,15 +128,23 @@ async function main(): Promise<void> {
   const summarizable = await getRecentWithoutSummary(windowHours, 40);
   await summarizePending(summarizable);
 
+  const hardFail = results.length > 0 && results.every((r) => r.error);
   await finishRun(runId, {
     inserted,
     totalSeen,
     failedFeeds,
-    ok: failedFeeds.length < results.length,
+    ok: !hardFail && failedFeeds.length < results.length,
   });
   console.log(
     `\n[pipeline] seen=${totalSeen} candidates=${withIds.length} inserted=${inserted} failedFeeds=${failedFeeds.length}`,
   );
+  if (hardFail) {
+    console.error(
+      "\n[pipeline] FATAL: every source failed to fetch -- this run inserted nothing. " +
+        "If you see this repeatedly, check network / proxy (HTTPS_PROXY) and source reachability.",
+    );
+    process.exitCode = 1;
+  }
 }
 
 main()

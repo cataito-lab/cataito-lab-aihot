@@ -210,7 +210,7 @@
     "lang": "en",
     "siteUrl": "https://www.reddit.com/r/LocalLLaMA/",
     "feedUrl": "https://www.reddit.com/r/LocalLLaMA/.rss",
-    "fetcher": "rss",
+    "fetcher": "reddit",
     "dedicated": true,
     "enabled": true
   },
@@ -221,7 +221,7 @@
     "lang": "en",
     "siteUrl": "https://www.reddit.com/r/MachineLearning/",
     "feedUrl": "https://www.reddit.com/r/MachineLearning/.rss",
-    "fetcher": "rss",
+    "fetcher": "reddit",
     "dedicated": true,
     "enabled": true
   }

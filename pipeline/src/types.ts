@@ -1,6 +1,6 @@
 export type SourceCategory = "official" | "media-cn" | "media-en" | "community";
 
-export type FetcherKind = "rss" | "hn-algolia" | "html" | "bridge";
+export type FetcherKind = "rss" | "hn-algolia" | "html" | "bridge" | "reddit";
 
 export interface SourceDef {
   id: string;
