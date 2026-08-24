@@ -45,3 +45,7 @@ next-env.d.ts
 /data/
 *.local.db*
 /scripts/backfill-*.ts
+
+# AI 工具包/技能包与个人备忘，禁止入库
+/skills/
+docs/QUOTA.md
