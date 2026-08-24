@@ -75,6 +75,7 @@
     "error": "読み込み失敗: {error}"
   },
   "footer": {
-    "copyright": "© 2026 AI 速報 — a Cataito project"
+    "copyright": "© 2026 AI 速報 — a Cataito project",
+    "tzNote": "時刻はあなたの現地時間で表示"
   }
 }

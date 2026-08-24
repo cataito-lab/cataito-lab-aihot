@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { Header } from "@/components/header";
 import { BriefingPanel } from "@/components/briefing-panel";
 import { NewsFeed } from "@/components/news-feed";
+import { TzNote } from "@/components/tz-note";
 import { getBriefMeta, listArticles } from "@/lib/news";
 import { withFreshness } from "@/lib/article-utils";
 import type { FeedFilters } from "@/lib/types";
@@ -80,6 +81,7 @@ export default async function HomePage(props: { searchParams: Promise<HomeSearch
           </a>
           {t("footerSource")}
         </p>
+        <TzNote />
       </footer>
     </>
   );

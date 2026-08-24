@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { Header } from "@/components/header";
+import { TzNote } from "@/components/tz-note";
 import FavoritesClient from "./client";
 
 export const runtime = "edge";
@@ -21,6 +22,7 @@ export default async function FavoritesPage() {
           </a>
           {t("footerSource")}
         </p>
+        <TzNote />
       </footer>
     </>
   );

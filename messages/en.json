@@ -75,6 +75,7 @@
     "error": "Failed to load: {error}"
   },
   "footer": {
-    "copyright": "© 2026 AI Hot Takes — a Cataito project"
+    "copyright": "© 2026 AI Hot Takes — a Cataito project",
+    "tzNote": "Times shown in your local timezone"
   }
 }

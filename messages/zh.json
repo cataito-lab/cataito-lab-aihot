@@ -75,6 +75,7 @@
     "error": "加载失败：{error}"
   },
   "footer": {
-    "copyright": "© 2026 AI 热点简报 — Cataito 项目"
+    "copyright": "© 2026 AI 热点简报 — Cataito 项目",
+    "tzNote": "时间按你的本地时区显示"
   }
 }

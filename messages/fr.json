@@ -75,6 +75,7 @@
     "error": "Échec du chargement : {error}"
   },
   "footer": {
-    "copyright": "© 2026 AI Actualités — un projet Cataito"
+    "copyright": "© 2026 AI Actualités — un projet Cataito",
+    "tzNote": "Heures affichées dans votre fuseau horaire local"
   }
 }

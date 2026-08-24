@@ -75,6 +75,7 @@
     "error": "Error al cargar: {error}"
   },
   "footer": {
-    "copyright": "© 2026 AI Noticias — un proyecto de Cataito"
+    "copyright": "© 2026 AI Noticias — un proyecto de Cataito",
+    "tzNote": "Horas mostradas en tu zona horaria local"
   }
 }
