@@ -42,8 +42,19 @@
     "last24h": "過去24時間",
     "total": "累計件数",
     "sources": "アクティブ情報源",
+    "dailyLink": "デイリー速報を見る",
     "loadMore": "もっと見る",
     "loading": "読み込み中…"
+  },
+  "daily": {
+    "tag": "// DAILY BRIEFING",
+    "title": "デイリー速報",
+    "description": "集約した AI ニュースの日次アーカイブ：バイリンガル見出し、AI 要約、出典付き。",
+    "archive": "速報アーカイブ",
+    "itemsCount": "{n} 件",
+    "prevDay": "← 前日",
+    "nextDay": "翌日 →",
+    "noData": "この日の速報はありません。"
   },
   "feed": {
     "today": "今日",

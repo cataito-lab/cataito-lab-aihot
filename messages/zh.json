@@ -42,8 +42,19 @@
     "last24h": "近 24h 收录",
     "total": "累计条目",
     "sources": "在线信源",
+    "dailyLink": "查看每日简报",
     "loadMore": "加载更多",
     "loading": "加载中…"
+  },
+  "daily": {
+    "tag": "// DAILY BRIEFING",
+    "title": "每日简报",
+    "description": "按日归档的全球 AI 动态策展：双语标题、AI 摘要、可查证来源。",
+    "archive": "简报存档",
+    "itemsCount": "{n} 条",
+    "prevDay": "← 前一天",
+    "nextDay": "后一天 →",
+    "noData": "当天暂无简报。"
   },
   "feed": {
     "today": "今天",

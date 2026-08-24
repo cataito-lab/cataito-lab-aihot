@@ -51,6 +51,16 @@ export function BriefingPanel({ meta }: Props) {
           <div className="stat-value">{meta.sourcesEnabled}</div>
         </div>
       </div>
+
+      <div className="mt-4 font-mono text-[11px]">
+        <a
+          href={`/${locale}/daily${meta.updatedAt ? `/${meta.updatedAt.slice(0, 10)}` : ""}`}
+          className="text-accent hover:underline"
+        >
+          {"// "}
+          {t("dailyLink")}
+        </a>
+      </div>
     </section>
   );
 }

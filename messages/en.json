@@ -42,8 +42,19 @@
     "last24h": "Last 24h",
     "total": "Total items",
     "sources": "Live sources",
-    "loadMore": "LOAD MORE",
-    "loading": "LOADING..."
+    "dailyLink": "View daily briefing",
+    "loadMore": "Load more",
+    "loading": "Loading..."
+  },
+  "daily": {
+    "tag": "// DAILY BRIEFING",
+    "title": "Daily Briefing",
+    "description": "Curated daily archive of aggregated AI news: bilingual headlines, AI summaries, verifiable sources.",
+    "archive": "Briefing Archive",
+    "itemsCount": "{n} items",
+    "prevDay": "← Previous day",
+    "nextDay": "Next day →",
+    "noData": "No briefing for this date."
   },
   "feed": {
     "today": "Today",

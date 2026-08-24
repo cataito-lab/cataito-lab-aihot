@@ -42,8 +42,19 @@
     "last24h": "24 dernières h",
     "total": "Total d'entrées",
     "sources": "Sources actives",
+    "dailyLink": "Voir le briefing quotidien",
     "loadMore": "CHARGER PLUS",
     "loading": "CHARGEMENT…"
+  },
+  "daily": {
+    "tag": "// DAILY BRIEFING",
+    "title": "Briefing quotidien",
+    "description": "Archive quotidienne organisée de l'actualité IA : titres bilingues, résumés IA et sources vérifiables.",
+    "archive": "Archives des briefings",
+    "itemsCount": "{n} articles",
+    "prevDay": "← Jour précédent",
+    "nextDay": "Jour suivant →",
+    "noData": "Aucun briefing pour cette date."
   },
   "feed": {
     "today": "Aujourd'hui",

@@ -178,8 +178,47 @@ export async function listSources(): Promise<SourceInfo[]> {
   }));
 }
 
-export async function getBriefMeta(): Promise<BriefMeta> {
+export interface DailyDateRow {
+  date: string;
+  count: number;
+}
+
+/** 最近 N 天有内容的日期及条数（存档索引用） */
+export async function getDailyDates(limit = 30): Promise<DailyDateRow[]> {
   const db = await getDb();
+  const rs = await db.execute({
+    sql: `SELECT substr(published_at, 1, 10) AS d, COUNT(*) AS n
+          FROM articles GROUP BY d ORDER BY d DESC LIMIT ?`,
+    args: [limit],
+  });
+  return rs.rows.map((row) => ({
+    date: String(row.d),
+    count: Number(row.n),
+  }));
+}
+
+/** 某个 UTC 日期（YYYY-MM-DD）的全部条目 */
+export async function getDailyArticles(date: string): Promise<FeedArticle[]> {
+  const db = await getDb();
+  const start = `${date}T00:00:00.000Z`;
+  const endDate = new Date(`${date}T00:00:00.000Z`);
+  endDate.setUTCDate(endDate.getUTCDate() + 1);
+  const rs = await db.execute({
+    sql: `SELECT a.id, a.source_id, s.name AS source_name, s.category, s.lang,
+                 a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
+                 a.summary_es, a.summary_fr, a.url, a.author,
+                 a.published_at, a.fetched_at
+          FROM articles a
+          JOIN sources s ON s.id = a.source_id
+          WHERE a.published_at >= ? AND a.published_at < ?
+          ORDER BY a.published_at DESC
+          LIMIT 400`,
+    args: [start, endDate.toISOString()],
+  });
+  return rs.rows.map((row) => toFeedArticle(row as unknown as ArticleRow));
+}
+
+export async function getBriefMeta(): Promise<BriefMeta> {  const db = await getDb();
 
   const totalRs = await db.execute("SELECT COUNT(*) AS n FROM articles");
   const dayRs = await db.execute({

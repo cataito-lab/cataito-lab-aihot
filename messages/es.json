@@ -42,8 +42,19 @@
     "last24h": "Últimas 24h",
     "total": "Total de entradas",
     "sources": "Fuentes activas",
+    "dailyLink": "Ver resumen diario",
     "loadMore": "CARGAR MÁS",
     "loading": "CARGANDO…"
+  },
+  "daily": {
+    "tag": "// DAILY BRIEFING",
+    "title": "Resumen diario",
+    "description": "Archivo diario curado de noticias de IA: titulares bilingües, resúmenes IA y fuentes verificables.",
+    "archive": "Archivo de resúmenes",
+    "itemsCount": "{n} artículos",
+    "prevDay": "← Día anterior",
+    "nextDay": "Día siguiente →",
+    "noData": "No hay resumen para esta fecha."
   },
   "feed": {
     "today": "Hoy",
