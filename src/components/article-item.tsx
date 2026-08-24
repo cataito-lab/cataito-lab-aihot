@@ -66,13 +66,15 @@ function fmtTime(
   return tzLabel ? `${est}${abs} · ${tzLabel}` : `${est}${abs}`;
 }
 
-/** 按 locale 取摘要；缺失时回退 en → zh（zh 为主列，摘要行必有） */
+/** 按 locale 取摘要。非中文界面绝不回退中文摘要（避免语言混杂）：
+ * 目标语缺失先回退英文（通用语），仍无则返回 null 隐藏摘要框，
+ * 等管线补齐译文后下次渲染自然出现。 */
 function pickSummary(article: FeedArticle, locale: string): string | null {
   if (locale === "zh") return article.summary;
-  if (locale === "ja") return article.summaryJa ?? article.summaryEn ?? article.summary;
-  if (locale === "es") return article.summaryEs ?? article.summaryEn ?? article.summary;
-  if (locale === "fr") return article.summaryFr ?? article.summaryEn ?? article.summary;
-  return article.summaryEn ?? article.summary;
+  if (locale === "ja") return article.summaryJa ?? article.summaryEn;
+  if (locale === "es") return article.summaryEs ?? article.summaryEn;
+  if (locale === "fr") return article.summaryFr ?? article.summaryEn;
+  return article.summaryEn;
 }
 
 export function ArticleItem({
