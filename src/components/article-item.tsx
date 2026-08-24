@@ -131,11 +131,11 @@ export function ArticleItem({
         {isNew && <span className="badge-new">NEW</span>}
       </div>
 
-      <h3>
+      <h2>
         <a href={article.url} target="_blank" rel="noopener noreferrer">
           {primary}
         </a>
-      </h3>
+      </h2>
       {secondary && <p className="title-secondary">{secondary}</p>}
 
       {hasSummary && (

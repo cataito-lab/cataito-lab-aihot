@@ -19,13 +19,14 @@ const OG_LOCALES: Record<string, string> = {
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
-  display: "swap",
+  // optional：首访不等待字体、不发生延迟交换——避免字体换装把 LCP 顶高（实测 3.2s）
+  display: "optional",
 });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains",
-  display: "swap",
+  display: "optional",
 });
 
 export const viewport: Viewport = {

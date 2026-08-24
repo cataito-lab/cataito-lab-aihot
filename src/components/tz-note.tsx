@@ -18,7 +18,7 @@ export function TzNote() {
   const t = useTranslations("footer");
   const mounted = useMounted();
   return (
-    <p className="mt-2 text-center font-mono text-[11px] text-fg-muted/70">
+    <p className="mt-2 text-center font-mono text-[11px] text-fg-muted">
       {mounted ? `${t("tzNote")} · ${localOffsetLabel()}` : ""}
     </p>
   );
