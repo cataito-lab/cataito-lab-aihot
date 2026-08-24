@@ -120,6 +120,10 @@ export async function ensureSchema(): Promise<void> {
   await ensureColumn("articles", "summarized_at", "summarized_at TEXT");
   await ensureColumn("articles", "source_timezone", "source_timezone TEXT DEFAULT 'UTC'");
   await ensureColumn("articles", "estimated", "estimated INTEGER NOT NULL DEFAULT 0");
+  await ensureColumn("articles", "summary_en", "summary_en TEXT");
+  await ensureColumn("articles", "summary_ja", "summary_ja TEXT");
+  await ensureColumn("articles", "summary_es", "summary_es TEXT");
+  await ensureColumn("articles", "summary_fr", "summary_fr TEXT");
   await migrateFts();
   for (const ddl of TRIGGER_DDLS) {
     await getDb().execute({ sql: ddl, args: [] });
@@ -317,6 +321,72 @@ export async function markSummarized(
     sql: `UPDATE articles SET summary = ?, summarized_at = ? WHERE id = ?`,
     args: [hasSummary ? summary : null, new Date().toISOString(), id],
   });
+}
+
+/** 摘要目标语言 → 数据库列（zh 沿用 summary 主列，不在此列） */
+export const SUMMARY_LANG_COLUMNS = {
+  en: "summary_en",
+  ja: "summary_ja",
+  es: "summary_es",
+  fr: "summary_fr",
+} as const;
+
+export type SummaryLang = keyof typeof SUMMARY_LANG_COLUMNS;
+
+export interface SummaryTranslateRow {
+  id: string;
+  summary: string;
+  missing: SummaryLang[];
+}
+
+export async function getPendingSummaryTranslations(
+  limit: number,
+): Promise<SummaryTranslateRow[]> {
+  const rs = await getDb().execute({
+    sql: `SELECT id, summary,
+            summary_en IS NULL AS need_en,
+            summary_ja IS NULL AS need_ja,
+            summary_es IS NULL AS need_es,
+            summary_fr IS NULL AS need_fr
+          FROM articles
+          WHERE summary IS NOT NULL
+            AND (summary_en IS NULL OR summary_ja IS NULL OR summary_es IS NULL OR summary_fr IS NULL)
+          ORDER BY published_at DESC LIMIT ?`,
+    args: [limit],
+  });
+  const rows: SummaryTranslateRow[] = [];
+  for (const row of rs.rows) {
+    const missing: SummaryLang[] = [];
+    if (Number(row.need_en) === 1) missing.push("en");
+    if (Number(row.need_ja) === 1) missing.push("ja");
+    if (Number(row.need_es) === 1) missing.push("es");
+    if (Number(row.need_fr) === 1) missing.push("fr");
+    if (missing.length > 0) {
+      rows.push({ id: String(row.id), summary: String(row.summary), missing });
+    }
+  }
+  return rows;
+}
+
+export async function applySummaryTranslationUpdates(
+  updates: { id: string; lang: SummaryLang; text: string }[],
+): Promise<void> {
+  if (updates.length === 0) return;
+  const byLang: Record<SummaryLang, { sql: string; args: (string | number)[] }[]> = {
+    en: [], ja: [], es: [], fr: [],
+  };
+  for (const u of updates) {
+    byLang[u.lang].push({
+      sql: `UPDATE articles SET ${SUMMARY_LANG_COLUMNS[u.lang]} = ? WHERE id = ?`,
+      args: [u.text, u.id],
+    });
+  }
+  for (const lang of Object.keys(byLang) as SummaryLang[]) {
+    const stmts = byLang[lang];
+    for (let i = 0; i < stmts.length; i += 50) {
+      await getDb().batch(stmts.slice(i, i + 50), "write");
+    }
+  }
 }
 
 export async function finishRun(

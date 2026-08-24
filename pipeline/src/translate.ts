@@ -19,9 +19,9 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function translateOnce(text: string): Promise<string> {
+async function translateOnce(text: string, target = "zh-CN"): Promise<string> {
   const url =
-    `${ENDPOINT}?client=gtx&sl=auto&tl=zh-CN&dt=t&q=${encodeURIComponent(text)}`;
+    `${ENDPOINT}?client=gtx&sl=auto&tl=${encodeURIComponent(target)}&dt=t&q=${encodeURIComponent(text)}`;
   let delayMs = 1000;
   for (let attempt = 0; attempt < 3; attempt++) {
     const res = await httpFetch(url, {
@@ -42,6 +42,10 @@ async function translateOnce(text: string): Promise<string> {
     return segments.trim();
   }
   throw new Error("translate rate-limited after retries");
+}
+
+export async function translateText(text: string, target: string): Promise<string> {
+  return translateOnce(text, target);
 }
 
 export async function translatePending(

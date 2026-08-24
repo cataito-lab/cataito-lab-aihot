@@ -21,6 +21,7 @@ import {
 } from "./db";
 import { translatePending } from "./translate";
 import { summarizePending } from "./summarize";
+import { translateSummariesPending } from "./summary-translate";
 import type { FetchResult, RawItem, SourceDef } from "./types";
 
 function parseArgs(): { windowHours: number; dryRun: boolean } {
@@ -129,6 +130,7 @@ async function main(): Promise<void> {
 
   const summarizable = await getRecentWithoutSummary(windowHours, 40);
   await summarizePending(summarizable);
+  await translateSummariesPending();
 
   const hardFail = results.length > 0 && results.every((r) => r.error);
   await finishRun(runId, {

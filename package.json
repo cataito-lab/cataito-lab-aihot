@@ -1,39 +1,41 @@
 {
-  "name": "news",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "pages:build": "npx @cloudflare/next-on-pages@1.13.16",
-    "pipeline": "tsx pipeline/src/index.ts",
-    "pipeline:dry": "tsx pipeline/src/index.ts --dry-run",
-    "db:init": "tsx pipeline/scripts/init-db.ts"
-  },
-  "dependencies": {
-    "@libsql/client": "^0.17.4",
-    "@phosphor-icons/react": "^2.0.3",
-    "geist": "^1.7.2",
-    "next": "15.5.2",
-    "next-intl": "^4.13.2",
-    "p-limit": "^7.3.1",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "rss-parser": "^3.13.0",
-    "undici": "^5.28.4"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "dotenv": "^17.4.2",
-    "eslint": "^9",
-    "eslint-config-next": "15.5.2",
-    "tailwindcss": "^4",
-    "tsx": "^4.23.12",
-    "typescript": "^5"
-  }
+    "name": "news",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "eslint",
+        "pages:build": "npx @cloudflare/next-on-pages@1.13.16",
+        "pipeline": "tsx pipeline/src/index.ts",
+        "pipeline:dry": "tsx pipeline/src/index.ts --dry-run",
+        "db:init": "tsx pipeline/scripts/init-db.ts",
+        "summary:backfill": "tsx pipeline/scripts/backfill-summary-langs.ts"
+    },
+    "dependencies": {
+        "@libsql/client": "^0.17.4",
+        "@phosphor-icons/react": "^2.0.3",
+        "geist": "^1.7.2",
+        "next": "15.5.2",
+        "next-intl": "^4.13.2",
+        "p-limit": "^7.3.1",
+        "react": "19.2.8",
+        "react-dom": "19.2.8",
+        "rss-parser": "^3.13.0",
+        "undici": "^5.28.4"
+    },
+    "devDependencies": {
+        "@tailwindcss/postcss": "^4",
+        "@types/node": "^20",
+        "@types/react": "^18",
+        "@types/react-dom": "^18",
+        "dotenv": "^17.4.2",
+        "eslint": "^9",
+        "eslint-config-next": "15.5.2",
+        "puppeteer-core": "^25.8.0",
+        "tailwindcss": "^4",
+        "tsx": "^4.23.12",
+        "typescript": "^5"
+    }
 }

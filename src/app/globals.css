@@ -439,6 +439,12 @@ body {
     .logo-text span {
       display: none;
     }
+    .search-shortcut input {
+      width: 56px;
+    }
+    .header-actions {
+      gap: 8px;
+    }
   }
 }
 

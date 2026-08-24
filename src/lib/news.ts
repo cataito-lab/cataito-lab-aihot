@@ -4,7 +4,7 @@ import type { BriefMeta, CategoryCount, FeedArticle, FeedFilters, FeedPage } fro
 
 const PAGE_SIZE = 50;
 
-interface Row {
+export interface ArticleRow {
   id: unknown;
   source_id: unknown;
   source_name: unknown;
@@ -13,13 +13,20 @@ interface Row {
   title: unknown;
   title_zh: unknown;
   summary: unknown;
+  summary_en: unknown;
+  summary_ja: unknown;
+  summary_es: unknown;
+  summary_fr: unknown;
   url: unknown;
   author: unknown;
   published_at: unknown;
   fetched_at: unknown;
 }
+function str(v: unknown): string | null {
+  return v == null ? null : String(v);
+}
 
-function toArticle(row: Row): FeedArticle {
+export function toFeedArticle(row: ArticleRow): FeedArticle {
   return {
     id: String(row.id),
     sourceId: String(row.source_id),
@@ -27,10 +34,14 @@ function toArticle(row: Row): FeedArticle {
     category: String(row.category),
     lang: String(row.lang),
     title: String(row.title),
-    titleZh: row.title_zh == null ? null : String(row.title_zh),
-    summary: row.summary == null ? null : String(row.summary),
+    titleZh: str(row.title_zh),
+    summary: str(row.summary),
+    summaryEn: str(row.summary_en),
+    summaryJa: str(row.summary_ja),
+    summaryEs: str(row.summary_es),
+    summaryFr: str(row.summary_fr),
     url: String(row.url),
-    author: row.author == null ? null : String(row.author),
+    author: str(row.author),
     publishedAt: String(row.published_at),
     fetchedAt: row.fetched_at == null ? undefined : String(row.fetched_at),
   };
@@ -115,7 +126,8 @@ export async function listArticles(
 
   const sql = `
     SELECT a.id, a.source_id, s.name AS source_name, s.category, s.lang,
-           a.title, a.title_zh, a.summary, a.url, a.author,
+           a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
+           a.summary_es, a.summary_fr, a.url, a.author,
            a.published_at, a.fetched_at
     FROM articles a
     JOIN sources s ON s.id = a.source_id
@@ -126,7 +138,7 @@ export async function listArticles(
 
   args.push(limit + 1);
   const rs = await (await getDb()).execute({ sql, args });
-  const rows = rs.rows.map((row) => toArticle(row as unknown as Row));
+  const rows = rs.rows.map((row) => toFeedArticle(row as unknown as ArticleRow));
   const hasMore = rows.length > limit;
   const items = hasMore ? rows.slice(0, limit) : rows;
   const last = items[items.length - 1];

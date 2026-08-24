@@ -7,6 +7,10 @@ export interface FeedArticle {
   title: string;
   titleZh: string | null;
   summary: string | null;
+  summaryEn: string | null;
+  summaryJa: string | null;
+  summaryEs: string | null;
+  summaryFr: string | null;
   url: string;
   author: string | null;
   publishedAt: string;

@@ -65,6 +65,15 @@ function fmtTime(
   return tzLabel ? `${est}${abs} · ${tzLabel}` : `${est}${abs}`;
 }
 
+/** 按 locale 取摘要；缺失时回退 en → zh（zh 为主列，摘要行必有） */
+function pickSummary(article: FeedArticle, locale: string): string | null {
+  if (locale === "zh") return article.summary;
+  if (locale === "ja") return article.summaryJa ?? article.summaryEn ?? article.summary;
+  if (locale === "es") return article.summaryEs ?? article.summaryEn ?? article.summary;
+  if (locale === "fr") return article.summaryFr ?? article.summaryEn ?? article.summary;
+  return article.summaryEn ?? article.summary;
+}
+
 export function ArticleItem({
   article,
   index,
@@ -87,7 +96,8 @@ export function ArticleItem({
   }
 
   const isNew = article.isNew === true;
-  const hasSummary = Boolean(article.summary);
+  const summary = pickSummary(article, locale);
+  const hasSummary = Boolean(summary);
   const timeLabel = article.category === "community" ? t("discussion") : t("event");
 
   return (
@@ -130,7 +140,7 @@ export function ArticleItem({
             </svg>
             {t("aiSummary")}
           </div>
-          <div className="ai-summary-content">{article.summary}</div>
+          <div className="ai-summary-content">{summary}</div>
         </div>
       )}
 
