@@ -1,10 +1,20 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages, setRequestLocale } from "next-intl/server";
+import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import "../globals.css";
+
+const SITE_URL = "https://aihot.cataito.com";
+
+const OG_LOCALES: Record<string, string> = {
+  en: "en_US",
+  zh: "zh_CN",
+  ja: "ja_JP",
+  es: "es_ES",
+  fr: "fr_FR",
+};
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,14 +34,43 @@ export const viewport: Viewport = {
   themeColor: "#09090b",
 };
 
-export const metadata: Metadata = {
-  title: {
-    default: "AI Hot Takes · Global AI News Timeline",
-    template: "%s · AI Hot Takes",
-  },
-  description:
-    "Real-time aggregation and summaries of global AI news from official blogs, English and Chinese media, and community discussions.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "site" });
+  const languages = Object.fromEntries(
+    routing.locales.map((l) => [l, `${SITE_URL}/${l}`]),
+  );
+
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: {
+      default: t("title"),
+      template: `%s · ${t("titleSuffix")}`,
+    },
+    description: t("description"),
+    alternates: {
+      canonical: `/${locale}`,
+      languages: { ...languages, "x-default": `${SITE_URL}/en` },
+    },
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+      url: `${SITE_URL}/${locale}`,
+      siteName: t("titleSuffix"),
+      locale: OG_LOCALES[locale] ?? locale,
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title: t("title"),
+      description: t("description"),
+    },
+  };
+}
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));

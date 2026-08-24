@@ -1,9 +1,23 @@
+import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Header } from "@/components/header";
 import { TzNote } from "@/components/tz-note";
 import FavoritesClient from "./client";
 
 export const runtime = "edge";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  return {
+    title: "Favorites",
+    alternates: { canonical: `/${locale}/favorites` },
+    robots: { index: false, follow: true },
+  };
+}
 
 export default async function FavoritesPage() {
   const t = await getTranslations("home");

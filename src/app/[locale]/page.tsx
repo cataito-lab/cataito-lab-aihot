@@ -21,8 +21,14 @@ function pick(value: string | string[] | undefined): string | undefined {
   return undefined;
 }
 
-export default async function HomePage(props: { searchParams: Promise<HomeSearchParams> }) {
+export default async function HomePage(
+  props: {
+    params: Promise<{ locale: string }>;
+    searchParams: Promise<HomeSearchParams>;
+  },
+) {
   const t = await getTranslations("home");
+  const { locale } = await props.params;
   const sp = (await props.searchParams) as HomeSearchParams;
 
   const urlCategory = pick(sp.category);
@@ -37,8 +43,30 @@ export default async function HomePage(props: { searchParams: Promise<HomeSearch
   const items = withFreshness(page.items);
   const feedKey = `${urlCategory ?? ""}|${filters.sourceId ?? ""}|${filters.q ?? ""}|${filters.hours ?? ""}`;
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: t("timeline"),
+    description: t("lead"),
+    url: `https://aihot.cataito.com/${locale}`,
+    inLanguage: locale,
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: items.slice(0, 30).map((a, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: locale === "zh" ? (a.titleZh ?? a.title) : a.title,
+        url: a.url,
+      })),
+    },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Header activeCategory={urlCategory} q={filters.q} />
       <main className="site-main">
         <BriefingPanel meta={meta} />
