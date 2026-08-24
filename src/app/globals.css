@@ -268,7 +268,7 @@ body {
 
   .time-marker {
     position: absolute;
-    left: 0;
+    left: -48px; /* 抵消容器 padding-left：使标记中心恰好落在轴线上 */
     top: 0;
     transform: translateX(-50%); /* 以轴线为中心骑跨 */
     z-index: 1;
@@ -450,6 +450,9 @@ body {
     .timeline-container {
       margin-left: 36px;
       padding-left: 44px;
+    }
+    .time-marker {
+      left: -44px;
     }
   }
 }
