@@ -2,8 +2,8 @@ name: update-news
 
 on:
   schedule:
-    # 8:00-22:00 每小时一次，节省 GitHub Actions 配额（免费层 2000 分钟/月）
-    - cron: "0 8-22 * * *"
+    # 全天候每小时一次；公开仓库 Actions 分钟数免费，不占配额
+    - cron: "0 * * * *"
   workflow_dispatch:
 
 concurrency:

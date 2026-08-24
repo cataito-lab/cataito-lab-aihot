@@ -43,4 +43,4 @@ npm run build               # 生产构建
 
 - 前端：Cloudflare Pages（`@cloudflare/next-on-pages` 适配），绑定域名 `aihot.cataito.com`
 - 数据：Turso（libSQL）；凭据配在 GH Actions secrets 与 CF Pages 环境变量
-- 抓取：`.github/workflows/update-news.yml`，每小时整点（8–22 点 UTC）运行
+- 抓取：`.github/workflows/update-news.yml`，全天候每小时整点运行
