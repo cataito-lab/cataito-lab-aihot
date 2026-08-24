@@ -91,18 +91,6 @@
     "enabled": true
   },
   {
-    "id": "jiqizhixin",
-    "name": "机器之心",
-    "category": "media-cn",
-    "lang": "zh",
-    "siteUrl": "https://www.jiqizhixin.com/",
-    "feedUrl": null,
-    "fetcher": "html",
-    "dedicated": true,
-    "enabled": false,
-    "note": "官方/rss已下线(返回HTML)，待html fetcher（M2）"
-  },
-  {
     "id": "qbitai",
     "name": "量子位",
     "category": "media-cn",
@@ -125,6 +113,98 @@
     "dedicated": false,
     "enabled": true,
     "publishedAtTz": "Asia/Shanghai"
+  },
+  {
+    "id": "the-decoder",
+    "name": "The Decoder",
+    "category": "media-en",
+    "lang": "en",
+    "siteUrl": "https://the-decoder.com/",
+    "feedUrl": "https://the-decoder.com/feed/",
+    "fetcher": "rss",
+    "dedicated": true,
+    "enabled": true
+  },
+  {
+    "id": "arstechnica-ai",
+    "name": "Ars Technica AI",
+    "category": "media-en",
+    "lang": "en",
+    "siteUrl": "https://arstechnica.com/ai/",
+    "feedUrl": "https://arstechnica.com/ai/feed/",
+    "fetcher": "rss",
+    "dedicated": true,
+    "enabled": true
+  },
+  {
+    "id": "mittr-ai",
+    "name": "MIT Technology Review AI",
+    "category": "media-en",
+    "lang": "en",
+    "siteUrl": "https://www.technologyreview.com/topic/artificial-intelligence/",
+    "feedUrl": "https://www.technologyreview.com/topic/artificial-intelligence/feed",
+    "fetcher": "rss",
+    "dedicated": true,
+    "enabled": true
+  },
+  {
+    "id": "wired-ai",
+    "name": "Wired AI",
+    "category": "media-en",
+    "lang": "en",
+    "siteUrl": "https://www.wired.com/tag/ai/",
+    "feedUrl": "https://www.wired.com/feed/tag/ai/latest/rss",
+    "fetcher": "rss",
+    "dedicated": true,
+    "enabled": true
+  },
+  {
+    "id": "interconnects",
+    "name": "Interconnects (Nathan Lambert)",
+    "category": "media-en",
+    "lang": "en",
+    "siteUrl": "https://www.interconnects.ai/",
+    "feedUrl": "https://www.interconnects.ai/feed",
+    "fetcher": "rss",
+    "dedicated": true,
+    "enabled": true,
+    "note": "Substack 托管：本地 200，Actions 环境 403 风险（失败自动跳过，观察 fetch_logs）"
+  },
+  {
+    "id": "latent-space",
+    "name": "Latent Space",
+    "category": "media-en",
+    "lang": "en",
+    "siteUrl": "https://www.latent.space/",
+    "feedUrl": "https://www.latent.space/feed",
+    "fetcher": "rss",
+    "dedicated": true,
+    "enabled": true,
+    "note": "Substack 托管：本地 200，Actions 环境 403 风险（失败自动跳过，观察 fetch_logs）"
+  },
+  {
+    "id": "ifanr",
+    "name": "爱范儿",
+    "category": "media-cn",
+    "lang": "zh",
+    "siteUrl": "https://www.ifanr.com/",
+    "feedUrl": "https://www.ifanr.com/feed",
+    "fetcher": "rss",
+    "dedicated": false,
+    "enabled": true,
+    "note": "通用科技源，靠 AI 关键词过滤"
+  },
+  {
+    "id": "sspai",
+    "name": "少数派",
+    "category": "media-cn",
+    "lang": "zh",
+    "siteUrl": "https://sspai.com/",
+    "feedUrl": "https://sspai.com/feed",
+    "fetcher": "rss",
+    "dedicated": false,
+    "enabled": true,
+    "note": "通用科技源，靠 AI 关键词过滤"
   },
   {
     "id": "xinzhiyuan",
