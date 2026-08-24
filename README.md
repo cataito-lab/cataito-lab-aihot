@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Hot Takes（AI 热点简报）
 
-## Getting Started
+公开的 AI 行业新闻聚合站：**https://aihot.cataito.com**
 
-First, run the development server:
+GitHub Actions 定时抓取约 20 个中英文 AI 信源 → 标题自动翻译、重点新闻 AI 摘要（Cloudflare Workers AI）→ 写入 Turso 云数据库 → Next.js 按事件时间倒序展示。
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 功能
+
+- Techmeme 式紧凑时间流，小时分组 + 「今日/昨日」标记，按访客本地时区渲染
+- 英文标题自动译中，双语对照；重点新闻多语言 AI 摘要
+- FTS 搜索（中英文子串）、分类/信源筛选、收藏（localStorage）
+- 对外输出 RSS：`/rss.xml`；5 语言界面（en / zh / ja / es / fr）
+- 数据永久保存，支持回溯
+
+## 架构
+
+```
+GitHub Actions (cron 0 8-22 * * *)
+  └─ pipeline/src：fetch → dedup(sha1) → filter → translate → summarize
+       └─ Turso (libSQL)：articles / sources / fetch_logs / FTS
+             └─ Next.js App Router @ Cloudflare Pages（edge runtime）
+                  / · /api/news · /api/sources · /rss.xml · /sitemap.xml
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+技术细节见 [docs/TECH_SPEC.md](docs/TECH_SPEC.md)，执行与交接见 [docs/HANDOFF.md](docs/HANDOFF.md)。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 本地开发
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
 
-## Learn More
+cp .env.example .env.local   # 填入 Turso 凭据（可选，缺省落本地 sqlite data/local.db）
 
-To learn more about Next.js, take a look at the following resources:
+npx tsx pipeline/src/index.ts --window-hours 24 --dry-run  # 抓取管线 dry-run
+npm run dev                 # http://localhost:3000
+npm run build               # 生产构建
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- 环境：Node 20+；抓取管线走 `pipeline/src/net.ts` 的 httpFetch（支持代理环境变量）
+- 数据库初始化：`npm run db:init`；查看数据：`npx tsx pipeline/scripts/inspect-db.ts`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 部署
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- 前端：Cloudflare Pages（`@cloudflare/next-on-pages` 适配），绑定域名 `aihot.cataito.com`
+- 数据：Turso（libSQL）；凭据配在 GH Actions secrets 与 CF Pages 环境变量
+- 抓取：`.github/workflows/update-news.yml`，每小时整点（8–22 点 UTC）运行
