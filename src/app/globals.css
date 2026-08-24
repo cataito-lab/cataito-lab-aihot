@@ -253,9 +253,9 @@ body {
   /* ===== Timeline ===== */
   .timeline-container {
     position: relative;
-    padding-left: 24px;
+    padding-left: 48px; /* ≥ 标记右半宽（"Yesterday"≈33px）+ 间隙，保证不压卡片 */
     border-left: 1px dashed var(--border-color);
-    margin-left: 8px;
+    margin-left: 44px;  /* 轴左侧容纳标记左半 */
   }
 
   .timeline-group {
@@ -268,9 +268,9 @@ body {
 
   .time-marker {
     position: absolute;
-    left: -24px;
+    left: 0;
     top: 0;
-    transform: translateX(-50%);
+    transform: translateX(-50%); /* 以轴线为中心骑跨 */
     z-index: 1;
     font-family: var(--font-code);
     font-size: 12px;
@@ -445,6 +445,11 @@ body {
     }
     .header-actions {
       gap: 8px;
+    }
+    /* 移动端：同样采用「标记骑轴居中」，但收窄左右留白防溢出屏幕 */
+    .timeline-container {
+      margin-left: 36px;
+      padding-left: 44px;
     }
   }
 }
