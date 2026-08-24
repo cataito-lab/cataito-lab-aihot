@@ -188,7 +188,7 @@ export function Header({
       <Link href="/" className="logo-area" onClick={() => setMenuOpen(false)}>
         <span className="logo-pulse" aria-hidden />
         <span className="logo-text">
-          {brand("name")} <span>// v2.6 Neo</span>
+          {brand("name")} <span>{"// v2.6 Neo"}</span>
         </span>
       </Link>
 

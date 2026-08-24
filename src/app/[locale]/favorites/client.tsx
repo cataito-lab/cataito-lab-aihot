@@ -4,7 +4,6 @@ import { useTranslations } from "next-intl";
 import { useState, useEffect, useSyncExternalStore } from "react";
 import {
   subscribeFavorites,
-  toggleFavorite,
   readFavorites,
 } from "@/lib/favorites";
 import { Star } from "@phosphor-icons/react";
@@ -52,7 +51,7 @@ export default function FavoritesClient() {
       }
     })();
     return () => { cancelled = true; };
-  }, [favIds.join(",")]);
+  }, [favIds]);
 
   const loaded = withFreshness(Object.values(map));
 

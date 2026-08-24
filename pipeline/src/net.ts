@@ -88,14 +88,14 @@ export async function httpFetch(
   }) as unknown as HttpResponse;
 
   const wrap = (res: unknown): HttpResponse => {
-    const r = res as HttpResponse;
+    const r = res as Partial<HttpResponse>;
     if (typeof r.text !== "function") {
-      (r as any).text = () => Promise.resolve(typeof res === "string" ? res : "");
+      r.text = () => Promise.resolve(typeof res === "string" ? res : "");
     }
     if (typeof r.json !== "function") {
-      (r as any).json = async () => JSON.parse(await (r as HttpResponse).text());
+      r.json = async () => JSON.parse(await r.text!());
     }
-    return r;
+    return r as HttpResponse;
   };
 
   try {
