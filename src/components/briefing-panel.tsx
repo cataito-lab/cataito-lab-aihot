@@ -2,6 +2,7 @@
 
 import { useTranslations, useLocale } from "next-intl";
 import type { BriefMeta } from "@/lib/types";
+import { useMounted } from "@/lib/use-mounted";
 
 interface Props {
   meta: BriefMeta;
@@ -20,6 +21,7 @@ function fmtClock(iso: string | null, locale: string): string {
 export function BriefingPanel({ meta }: Props) {
   const t = useTranslations("briefing");
   const locale = useLocale();
+  const mounted = useMounted();
 
   return (
     <section className="hero-section animate-fade-up">
@@ -32,8 +34,8 @@ export function BriefingPanel({ meta }: Props) {
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-label">{t("updated")}</div>
-          <div className="stat-value" suppressHydrationWarning>
-            {fmtClock(meta.updatedAt, locale)}
+          <div className="stat-value">
+            {mounted ? fmtClock(meta.updatedAt, locale) : "—"}
           </div>
         </div>
         <div className="stat-card">

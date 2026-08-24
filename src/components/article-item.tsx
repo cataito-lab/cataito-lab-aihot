@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { Star } from "@phosphor-icons/react";
 import type { FeedArticle } from "@/lib/types";
 import { isFavorite, subscribeFavorites, toggleFavorite } from "@/lib/favorites";
+import { useMounted } from "@/lib/use-mounted";
 
 function useFavorite(id: string): boolean {
   return useSyncExternalStore(
@@ -84,6 +85,7 @@ export function ArticleItem({
   const t = useTranslations("article");
   const locale = useLocale();
   const starred = useFavorite(article.id);
+  const mounted = useMounted();
 
   let primary: string;
   let secondary: string | null;
@@ -118,8 +120,10 @@ export function ArticleItem({
         <span className="dot-divider" aria-hidden>·</span>
         <span className="event-time">
           {timeLabel}{" "}
-          <time dateTime={article.publishedAt} suppressHydrationWarning>
-            {fmtTime(article.publishedAt, locale, t, article.sourceTimezone, article.estimated)}
+          <time dateTime={article.publishedAt}>
+            {mounted
+              ? fmtTime(article.publishedAt, locale, t, article.sourceTimezone, article.estimated)
+              : ""}
           </time>
         </span>
         {isNew && <span className="badge-new">NEW</span>}
@@ -145,9 +149,11 @@ export function ArticleItem({
       )}
 
       <div className="card-footer">
-        <span suppressHydrationWarning>
+        <span>
           {t("savedAt")}{" "}
-          {fmtTime(article.fetchedAt ?? article.publishedAt, locale, t, article.sourceTimezone, article.estimated)}
+          {mounted
+            ? fmtTime(article.fetchedAt ?? article.publishedAt, locale, t, article.sourceTimezone, article.estimated)
+            : ""}
         </span>
         <span className="inline-flex items-center gap-3">
           <button
