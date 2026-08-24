@@ -118,6 +118,7 @@ async function main(): Promise<void> {
   const toTranslate = [...newEnRows, ...backfill].filter((r) =>
     seenIds.has(r.id) ? false : (seenIds.add(r.id), true),
   );
+  let translateStats: { ok: number; failed: number } | undefined;
   if (toTranslate.length > 0) {
     const t = await translatePending(
       toTranslate,
@@ -125,7 +126,10 @@ async function main(): Promise<void> {
       saveTitleTranslations,
       applyTranslationUpdates,
     );
-    console.log(`  [translate] updated=${t.updates.length} failed=${t.failed}`);
+    console.log(
+      `  [translate] updated=${t.updates.length} failed=${t.failed} fallback=${t.viaFallback}`,
+    );
+    translateStats = { ok: t.updates.length, failed: t.failed };
   }
 
   const summarizable = await getRecentWithoutSummary(windowHours, 40);
@@ -138,6 +142,8 @@ async function main(): Promise<void> {
     totalSeen,
     failedFeeds,
     ok: !hardFail && failedFeeds.length < results.length,
+    translateOk: translateStats?.ok,
+    translateFailed: translateStats?.failed,
   });
   console.log(
     `\n[pipeline] seen=${totalSeen} candidates=${withIds.length} inserted=${inserted} failedFeeds=${failedFeeds.length}`,

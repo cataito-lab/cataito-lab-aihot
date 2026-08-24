@@ -65,7 +65,8 @@
     "feedUrl": "https://blogs.microsoft.com/ai/feed/",
     "fetcher": "rss",
     "dedicated": true,
-    "enabled": true
+    "enabled": false,
+    "note": "2026-08-24 禁用：WAF 对数据中心 IP 持续 403（本地与 GH Actions 均被拒，14/14 次失败）。待换抓取路径后再启用"
   },
   {
     "id": "nvidia-genai",

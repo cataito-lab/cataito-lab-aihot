@@ -124,6 +124,8 @@ export async function ensureSchema(): Promise<void> {
   await ensureColumn("articles", "summary_ja", "summary_ja TEXT");
   await ensureColumn("articles", "summary_es", "summary_es TEXT");
   await ensureColumn("articles", "summary_fr", "summary_fr TEXT");
+  await ensureColumn("fetch_logs", "translate_ok", "translate_ok INTEGER NOT NULL DEFAULT 0");
+  await ensureColumn("fetch_logs", "translate_failed", "translate_failed INTEGER NOT NULL DEFAULT 0");
   await migrateFts();
   for (const ddl of TRIGGER_DDLS) {
     await getDb().execute({ sql: ddl, args: [] });
@@ -391,11 +393,19 @@ export async function applySummaryTranslationUpdates(
 
 export async function finishRun(
   runId: string,
-  stats: { inserted: number; totalSeen: number; failedFeeds: string[]; ok: boolean },
+  stats: {
+    inserted: number;
+    totalSeen: number;
+    failedFeeds: string[];
+    ok: boolean;
+    translateOk?: number;
+    translateFailed?: number;
+  },
 ): Promise<void> {
   await getDb().execute({
     sql: `UPDATE fetch_logs
-          SET finished_at = ?, inserted = ?, total_seen = ?, failed_feeds = ?, ok = ?
+          SET finished_at = ?, inserted = ?, total_seen = ?, failed_feeds = ?, ok = ?,
+              translate_ok = COALESCE(?, translate_ok), translate_failed = COALESCE(?, translate_failed)
           WHERE run_id = ?`,
     args: [
       new Date().toISOString(),
@@ -403,6 +413,8 @@ export async function finishRun(
       stats.totalSeen,
       JSON.stringify(stats.failedFeeds),
       stats.ok ? 1 : 0,
+      stats.translateOk ?? null,
+      stats.translateFailed ?? null,
       runId,
     ],
   });

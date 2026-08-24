@@ -3,7 +3,7 @@ import {
   applySummaryTranslationUpdates,
   type SummaryLang,
 } from "./db";
-import { translateText } from "./translate";
+import { translateTextSmart } from "./translate";
 
 const MAX_ROWS_PER_RUN = 25;
 const REQUEST_GAP_MS = 150;
@@ -28,7 +28,7 @@ export async function translateSummariesPending(limit = MAX_ROWS_PER_RUN): Promi
   for (const row of rows) {
     for (const lang of row.missing) {
       try {
-        const text = await translateText(row.summary, TARGETS[lang]);
+        const text = await translateTextSmart(row.summary, TARGETS[lang]);
         if (text) updates.push({ id: row.id, lang, text });
       } catch (err) {
         failures++;
