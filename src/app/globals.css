@@ -234,6 +234,7 @@ body {
     border: 1px solid var(--border-color);
     border-radius: 10px;
     padding: 16px;
+    text-align: center;
   }
 
   .stat-label {
