@@ -46,6 +46,9 @@ next-env.d.ts
 *.local.db*
 /scripts/backfill-*.ts
 
-# AI ���߰�/���ܰ�����˱�������ֹ���
+# AI 工具包/技能包，禁止入库
 /skills/
+
+# 内部讨论产物/个人备忘，永不入库不推送
 docs/QUOTA.md
+docs/SCORING-ROADMAP.md
