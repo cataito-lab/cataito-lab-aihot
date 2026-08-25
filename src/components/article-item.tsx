@@ -77,6 +77,15 @@ function pickSummary(article: FeedArticle, locale: string): string | null {
   return article.summaryEn;
 }
 
+/** 按 locale 取 WHY 行。规则同摘要：zh 用原文，其他语言回退英文，无则隐藏。 */
+function pickWhy(article: FeedArticle, locale: string): string | null {
+  if (locale === "zh") return article.whyItMatters;
+  if (locale === "ja") return article.whyJa ?? article.whyEn;
+  if (locale === "es") return article.whyEs ?? article.whyEn;
+  if (locale === "fr") return article.whyFr ?? article.whyEn;
+  return article.whyEn;
+}
+
 export function ArticleItem({
   article,
   index,
@@ -101,6 +110,7 @@ export function ArticleItem({
 
   const isNew = article.isNew === true;
   const summary = pickSummary(article, locale);
+  const why = pickWhy(article, locale);
   const hasSummary = Boolean(summary);
   const timeLabel = article.category === "community" ? t("discussion") : t("event");
 
@@ -147,6 +157,12 @@ export function ArticleItem({
             {t("aiSummary")}
           </div>
           <div className="ai-summary-content">{summary}</div>
+          {why && (
+            <div className="ai-why-line">
+              <span className="ai-why-label">{t("whyItMatters")}</span>
+              <span className="ai-why-text">{why}</span>
+            </div>
+          )}
         </div>
       )}
 

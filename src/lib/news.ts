@@ -4,6 +4,9 @@ import type { BriefMeta, CategoryCount, FeedArticle, FeedFilters, FeedPage } fro
 
 const PAGE_SIZE = 50;
 
+/** AIHOT 评分准入线：低于此分不进 Feed；未评分（NULL）保底展示。可用环境变量调整。 */
+const SCORE_THRESHOLD = Number(process.env.SCORE_THRESHOLD ?? 60);
+
 export interface ArticleRow {
   id: unknown;
   source_id: unknown;
@@ -17,6 +20,12 @@ export interface ArticleRow {
   summary_ja: unknown;
   summary_es: unknown;
   summary_fr: unknown;
+  why_it_matters: unknown;
+  why_en: unknown;
+  why_ja: unknown;
+  why_es: unknown;
+  why_fr: unknown;
+  score_final: unknown;
   url: unknown;
   author: unknown;
   published_at: unknown;
@@ -40,6 +49,12 @@ export function toFeedArticle(row: ArticleRow): FeedArticle {
     summaryJa: str(row.summary_ja),
     summaryEs: str(row.summary_es),
     summaryFr: str(row.summary_fr),
+    whyItMatters: str(row.why_it_matters),
+    whyEn: str(row.why_en),
+    whyJa: str(row.why_ja),
+    whyEs: str(row.why_es),
+    whyFr: str(row.why_fr),
+    scoreFinal: row.score_final == null ? null : Number(row.score_final),
     url: String(row.url),
     author: str(row.author),
     publishedAt: String(row.published_at),
@@ -117,6 +132,8 @@ export async function listArticles(
     where.push("a.published_at >= ?");
     args.push(new Date(Date.now() - filters.hours * 3_600_000).toISOString());
   }
+  where.push(`(a.score_final IS NULL OR a.score_final >= ?)`);
+  args.push(SCORE_THRESHOLD);
 
   const decoded = decodeCursor(cursor);
   if (decoded) {
@@ -128,7 +145,8 @@ export async function listArticles(
     SELECT a.id, a.source_id, s.name AS source_name, s.category, s.lang,
            a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
            a.summary_es, a.summary_fr, a.url, a.author,
-           a.published_at, a.fetched_at
+           a.published_at, a.fetched_at,
+           a.why_it_matters, a.why_en, a.why_ja, a.why_es, a.why_fr, a.score_final
     FROM articles a
     JOIN sources s ON s.id = a.source_id
     ${useFts ? "JOIN articles_fts ON articles_fts.article_id = a.id" : ""}
@@ -207,13 +225,15 @@ export async function getDailyArticles(date: string): Promise<FeedArticle[]> {
     sql: `SELECT a.id, a.source_id, s.name AS source_name, s.category, s.lang,
                  a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
                  a.summary_es, a.summary_fr, a.url, a.author,
-                 a.published_at, a.fetched_at
+                 a.published_at, a.fetched_at,
+                 a.why_it_matters, a.why_en, a.why_ja, a.why_es, a.why_fr, a.score_final
           FROM articles a
           JOIN sources s ON s.id = a.source_id
           WHERE a.published_at >= ? AND a.published_at < ?
+            AND (a.score_final IS NULL OR a.score_final >= ?)
           ORDER BY a.published_at DESC
           LIMIT 400`,
-    args: [start, endDate.toISOString()],
+    args: [start, endDate.toISOString(), SCORE_THRESHOLD],
   });
   return rs.rows.map((row) => toFeedArticle(row as unknown as ArticleRow));
 }

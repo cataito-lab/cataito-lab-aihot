@@ -11,6 +11,14 @@ export interface FeedArticle {
   summaryJa: string | null;
   summaryEs: string | null;
   summaryFr: string | null;
+  /** 为什么重要（中文原文） */
+  whyItMatters: string | null;
+  whyEn: string | null;
+  whyJa: string | null;
+  whyEs: string | null;
+  whyFr: string | null;
+  /** AIHOT 综合评分 0-100（未评分为 null，前端保底展示） */
+  scoreFinal: number | null;
   url: string;
   author: string | null;
   publishedAt: string;
