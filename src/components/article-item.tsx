@@ -173,6 +173,15 @@ export function ArticleItem({
           </time>
         </span>
         {isNew && <span className="badge-new">NEW</span>}
+        <button
+          type="button"
+          onClick={() => toggleFavorite(article.id)}
+          aria-label={starred ? t("unstar") : t("star")}
+          aria-pressed={starred}
+          className={`star-btn ${starred ? "starred" : ""}`}
+        >
+          <Star size={20} weight={starred ? "fill" : "regular"} />
+        </button>
       </div>
 
       <h2>
@@ -200,30 +209,6 @@ export function ArticleItem({
           )}
         </div>
       )}
-
-      <div className="card-footer">
-        <span className="inline-flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => toggleFavorite(article.id)}
-            aria-label={starred ? t("unstar") : t("star")}
-            aria-pressed={starred}
-            className={`transition-colors cursor-pointer ${
-              starred ? "text-[#10b981]" : "text-[#71717a] hover:text-[#f4f4f5]"
-            }`}
-          >
-            <Star size={14} weight={starred ? "fill" : "regular"} />
-          </button>
-          <a
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="original-link"
-          >
-            {t("verify")}
-          </a>
-        </span>
-      </div>
     </li>
   );
 }

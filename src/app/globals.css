@@ -454,28 +454,27 @@ body {
     color: var(--accent);
   }
 
-  .card-footer {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    font-size: 12px;
-    color: var(--text-muted);
-    padding-top: 12px;
-    border-top: 1px solid rgba(255, 255, 255, 0.04);
-  }
-
-  .original-link {
-    color: var(--text-secondary);
-    text-decoration: none;
+  /* 收藏按钮：meta 行右侧 ghost 图标，默认低对比，悬停/已藏显主题色 */
+  .star-btn {
+    margin-left: auto;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    font-weight: 500;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
     transition: color 0.2s;
   }
 
-  .original-link:hover {
-    color: var(--text-primary);
+  .star-btn:hover {
+    color: var(--accent);
+  }
+
+  .star-btn.starred {
+    color: var(--accent);
   }
 
   @media (max-width: 768px) {
