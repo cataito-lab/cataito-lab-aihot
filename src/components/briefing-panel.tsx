@@ -32,7 +32,7 @@ export function BriefingPanel({ meta }: Props) {
       <p className="hero-desc">{t("lead")}</p>
 
       <div className="stats-grid">
-        <div className="stat-card">
+        <div className="stat-card" title={mounted ? t("updatedTip") : undefined}>
           <div className="stat-label">{t("updated")}</div>
           <div className="stat-value">
             {mounted ? fmtClock(meta.updatedAt, locale) : "—"}

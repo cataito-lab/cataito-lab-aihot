@@ -33,6 +33,18 @@ function diffMinutes(iso: string): number {
   return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
 }
 
+/** 悬停提示用：带年份的完整本地时间 */
+function absFull(iso: string, locale: string): string {
+  return new Date(iso).toLocaleString(locale, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
 /** 分类 → 色点样式 + 本地化短标签（A+C 方案） */
 const CAT_META: Record<string, { dot: string; labelKey: "catOfficial" | "catMedia" | "catCommunity" }> = {
   official: { dot: "cat-dot-official", labelKey: "catOfficial" },
@@ -145,7 +157,16 @@ export function ArticleItem({
         <span className="meta-type">{t(cat.labelKey)}</span>
         <span className="meta-sep" aria-hidden>|</span>
         <span className="meta-time">
-          <time dateTime={article.publishedAt}>
+          <time
+            dateTime={article.publishedAt}
+            title={
+              mounted
+                ? `${t("publishedAt")} ${absFull(article.publishedAt, locale)}${
+                    article.fetchedAt ? `\n${t("savedAt")} ${absFull(article.fetchedAt, locale)}` : ""
+                  }`
+                : undefined
+            }
+          >
             {mounted
               ? fmtTime(article.publishedAt, locale, t, article.sourceTimezone, article.estimated)
               : ""}
@@ -181,12 +202,6 @@ export function ArticleItem({
       )}
 
       <div className="card-footer">
-        <span>
-          {t("savedAt")}{" "}
-          {mounted
-            ? fmtTime(article.fetchedAt ?? article.publishedAt, locale, t, article.sourceTimezone, article.estimated)
-            : ""}
-        </span>
         <span className="inline-flex items-center gap-3">
           <button
             type="button"
