@@ -33,6 +33,14 @@ function diffMinutes(iso: string): number {
   return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
 }
 
+/** 分类 → 色点样式 + 本地化短标签（A+C 方案） */
+const CAT_META: Record<string, { dot: string; labelKey: "catOfficial" | "catMedia" | "catCommunity" }> = {
+  official: { dot: "cat-dot-official", labelKey: "catOfficial" },
+  "media-cn": { dot: "cat-dot-media", labelKey: "catMedia" },
+  "media-en": { dot: "cat-dot-media", labelKey: "catMedia" },
+  community: { dot: "cat-dot-community", labelKey: "catCommunity" },
+};
+
 /** 主时间：智能双态 —— <24h 显示相对时间，≥24h 显示绝对时间（用户本地时区）
  * 并可选附加源时区标签（如 "· CST"）与估算标记（"约 3h ago"）。 */
 function fmtTime(
@@ -116,7 +124,7 @@ export function ArticleItem({
   const summary = pickSummary(article, locale);
   const keyPoints = pickKeyPoints(article, locale);
   const hasSummary = Boolean(summary);
-  const timeLabel = article.category === "community" ? t("discussion") : t("event");
+  const cat = CAT_META[article.category] ?? CAT_META.community;
 
   return (
     <li
@@ -129,13 +137,14 @@ export function ArticleItem({
           target="_blank"
           rel="noopener noreferrer"
           title={`${t("verify")}: ${article.sourceName}`}
-          className="source-tag"
+          className="src-chip"
         >
-          [{article.sourceName}]
+          <span className={`cat-dot ${cat.dot}`} aria-hidden />
+          {article.sourceName}
         </a>
-        <span className="dot-divider" aria-hidden>·</span>
-        <span className="event-time">
-          {timeLabel}{" "}
+        <span className="meta-type">{t(cat.labelKey)}</span>
+        <span className="meta-sep" aria-hidden>|</span>
+        <span className="meta-time">
           <time dateTime={article.publishedAt}>
             {mounted
               ? fmtTime(article.publishedAt, locale, t, article.sourceTimezone, article.estimated)
@@ -196,7 +205,7 @@ export function ArticleItem({
             rel="noopener noreferrer"
             className="original-link"
           >
-            {t("verify")} ↗
+            {t("verify")}
           </a>
         </span>
       </div>
