@@ -11,12 +11,10 @@ export interface FeedArticle {
   summaryJa: string | null;
   summaryEs: string | null;
   summaryFr: string | null;
-  /** 为什么重要（中文原文） */
-  whyItMatters: string | null;
-  whyEn: string | null;
-  whyJa: string | null;
-  whyEs: string | null;
-  whyFr: string | null;
+  /** 核心要点（中文，JSON 数组字符串），仅中文界面展示 */
+  keyPoints: string | null;
+  /** 一句话行业影响（中文） */
+  industryImpact: string | null;
   /** AIHOT 综合评分 0-100（未评分为 null，前端保底展示） */
   scoreFinal: number | null;
   url: string;

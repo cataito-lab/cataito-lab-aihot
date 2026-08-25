@@ -29,15 +29,7 @@ export async function translateSummariesPending(limit = MAX_ROWS_PER_RUN): Promi
     for (const lang of row.missing) {
       try {
         const text = await translateTextSmart(row.summary, TARGETS[lang]);
-        let why: string | null = null;
-        if (row.why) {
-          try {
-            why = await translateTextSmart(row.why, TARGETS[lang]);
-          } catch {
-            why = null; // why 翻译失败不阻塞摘要译文
-          }
-        }
-        if (text) updates.push({ id: row.id, lang, text, why });
+        if (text) updates.push({ id: row.id, lang, text });
       } catch (err) {
         failures++;
         if (failures <= 2) {

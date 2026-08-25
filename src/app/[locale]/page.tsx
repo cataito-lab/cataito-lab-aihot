@@ -28,6 +28,7 @@ export default async function HomePage(
   },
 ) {
   const t = await getTranslations("home");
+  const ts = await getTranslations("site");
   const { locale } = await props.params;
   const sp = (await props.searchParams) as HomeSearchParams;
 
@@ -47,7 +48,7 @@ export default async function HomePage(
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     name: t("timeline"),
-    description: t("lead"),
+    description: ts("description"),
     url: `https://aihot.cataito.com/${locale}`,
     inLanguage: locale,
     mainEntity: {

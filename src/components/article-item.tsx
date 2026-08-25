@@ -77,13 +77,17 @@ function pickSummary(article: FeedArticle, locale: string): string | null {
   return article.summaryEn;
 }
 
-/** 按 locale 取 WHY 行。规则同摘要：zh 用原文，其他语言回退英文，无则隐藏。 */
-function pickWhy(article: FeedArticle, locale: string): string | null {
-  if (locale === "zh") return article.whyItMatters;
-  if (locale === "ja") return article.whyJa ?? article.whyEn;
-  if (locale === "es") return article.whyEs ?? article.whyEn;
-  if (locale === "fr") return article.whyFr ?? article.whyEn;
-  return article.whyEn;
+/** 核心要点：仅中文界面展示（要点暂不翻译，避免语言混杂） */
+function pickKeyPoints(article: FeedArticle, locale: string): string[] | null {
+  if (locale !== "zh" || !article.keyPoints) return null;
+  try {
+    const arr = JSON.parse(article.keyPoints) as unknown;
+    if (!Array.isArray(arr)) return null;
+    const points = arr.filter((p): p is string => typeof p === "string" && p.trim().length > 0);
+    return points.length > 0 ? points : null;
+  } catch {
+    return null;
+  }
 }
 
 export function ArticleItem({
@@ -110,7 +114,7 @@ export function ArticleItem({
 
   const isNew = article.isNew === true;
   const summary = pickSummary(article, locale);
-  const why = pickWhy(article, locale);
+  const keyPoints = pickKeyPoints(article, locale);
   const hasSummary = Boolean(summary);
   const timeLabel = article.category === "community" ? t("discussion") : t("event");
 
@@ -157,11 +161,12 @@ export function ArticleItem({
             {t("aiSummary")}
           </div>
           <div className="ai-summary-content">{summary}</div>
-          {why && (
-            <div className="ai-why-line">
-              <span className="ai-why-label">{t("whyItMatters")}</span>
-              <span className="ai-why-text">{why}</span>
-            </div>
+          {keyPoints && (
+            <ul className="ai-key-points">
+              {keyPoints.map((p, i) => (
+                <li key={i}>{p}</li>
+              ))}
+            </ul>
           )}
         </div>
       )}

@@ -20,11 +20,8 @@ export interface ArticleRow {
   summary_ja: unknown;
   summary_es: unknown;
   summary_fr: unknown;
-  why_it_matters: unknown;
-  why_en: unknown;
-  why_ja: unknown;
-  why_es: unknown;
-  why_fr: unknown;
+  key_points: unknown;
+  industry_impact: unknown;
   score_final: unknown;
   url: unknown;
   author: unknown;
@@ -49,11 +46,8 @@ export function toFeedArticle(row: ArticleRow): FeedArticle {
     summaryJa: str(row.summary_ja),
     summaryEs: str(row.summary_es),
     summaryFr: str(row.summary_fr),
-    whyItMatters: str(row.why_it_matters),
-    whyEn: str(row.why_en),
-    whyJa: str(row.why_ja),
-    whyEs: str(row.why_es),
-    whyFr: str(row.why_fr),
+    keyPoints: str(row.key_points),
+    industryImpact: str(row.industry_impact),
     scoreFinal: row.score_final == null ? null : Number(row.score_final),
     url: String(row.url),
     author: str(row.author),
@@ -146,7 +140,7 @@ export async function listArticles(
            a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
            a.summary_es, a.summary_fr, a.url, a.author,
            a.published_at, a.fetched_at,
-           a.why_it_matters, a.why_en, a.why_ja, a.why_es, a.why_fr, a.score_final
+           a.key_points, a.industry_impact, a.score_final
     FROM articles a
     JOIN sources s ON s.id = a.source_id
     ${useFts ? "JOIN articles_fts ON articles_fts.article_id = a.id" : ""}
@@ -226,7 +220,7 @@ export async function getDailyArticles(date: string): Promise<FeedArticle[]> {
                  a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
                  a.summary_es, a.summary_fr, a.url, a.author,
                  a.published_at, a.fetched_at,
-                 a.why_it_matters, a.why_en, a.why_ja, a.why_es, a.why_fr, a.score_final
+                 a.key_points, a.industry_impact, a.score_final
           FROM articles a
           JOIN sources s ON s.id = a.source_id
           WHERE a.published_at >= ? AND a.published_at < ?

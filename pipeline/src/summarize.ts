@@ -1,32 +1,33 @@
 import { countSummariesToday, markSummarized } from "./db";
-import type { SummarizeResultV2 } from "./db";
+import type { SummarizeResultV3 } from "./db";
 import { httpFetch } from "./net";
 
 const API_BASE = "https://api.cloudflare.com/client/v4/accounts";
 
 const MODEL = process.env.CF_AI_MODEL ?? "@cf/meta/llama-3.1-70b-instruct";
-const DAILY_QUOTA = 500;
+const DAILY_QUOTA = 200;
 const MAX_PER_RUN = 30;
 
-// Summarize v2：一次调用产出 摘要 + WHY + 三维评分（0-100）。
-// 硬规则：禁止复述标题；原文没有的信息不得编造；营销/预告类内容 impact 封顶。
+// Summarize v3：一段式摘要（事实→核心变化→行业意义）+ 要点 + 行业影响 + 三维评分。
+// 硬规则：禁止复述标题；只依据正文事实；原文没有的信息不得编造；营销/预告类 impact 封顶。
 const SYSTEM_PROMPT = `你是 AI 行业新闻编辑，处理一条新闻并输出 JSON（不要输出其他内容）。
 JSON 格式：
-{"summary":"不超过60字的中文摘要","why":"不超过40字的中文：这件事为什么值得关注","relevance":0-100,"quality":0-100,"impact":0-100}
+{"summary":"80-100字的中文一段式摘要","key_points":["要点1","要点2","要点3"],"industry_impact":"一句话：对行业/企业/用户的影响","relevance":0-100,"quality":0-100,"impact":0-100}
 
 各字段要求：
-- summary：只能依据正文摘录中的事实撰写，标题仅用于理解主题、不得作为事实来源。必须包含正文中有而标题没有的信息（具体变化/关键数据/影响对象）。只是把标题换成另一种说法 = 失败。正文没有的信息（数据、日期、性能数字、背景）一律不得出现在摘要里。
-- why：基于正文事实说明这条新闻为什么值得关注（行业格局/竞争/对谁有影响）。正文不足以支撑判断则写"行业影响有限"。
-- relevance：与 AI 主题的核心程度。100=核心 AI 内容（模型/Agent/研究/政策），30=只顺带提到 AI。
-- quality：正文的信息质量。100=有具体事实、数据、日期；20=营销稿/标题党/空话。
+- summary：一段流畅的中文，三句话结构：第一句陈述核心事实，第二句点出与以往不同的关键变化，第三句说明行业意义。禁止复述标题——只把标题换一种说法 = 失败。只能依据正文摘录中的事实，正文没有的数据、日期、性能数字一律不得出现；信息不足时如实说明。
+- key_points：恰好 3 条，每条 ≤20 字，提取正文中的具体事实（数据/日期/功能/价格/涉及方）。
+- industry_impact：一句话说明对行业、企业或用户的影响。
+- relevance：与 AI 主题的核心程度。100=核心 AI 内容，30=只顺带提到 AI。
+- quality：正文信息质量。100=有具体事实、数据、日期；20=营销稿/标题党/空话。
 - impact：对 AI 行业的影响面。100=影响全行业的里程碑；60=重要产品或研究；30=常规更新；10=营销活动。
 
 标题含"直播/预告/优惠/报名/招聘/抽奖"等营销词时，impact 不得超过 30。`;
 
+const PROMO_TITLE_RE = /(直播|预告|优惠|报名|招聘|抽奖|优惠券|免费领)/;
+
 /** 正文低于此长度视为"无有效正文"——没有事实依据就不生成摘要（一切以事实为依据） */
 const MIN_CONTENT_CHARS = 80;
-
-const PROMO_TITLE_RE = /(直播|预告|优惠|报名|招聘|抽奖|优惠券|免费领)/;
 
 export interface SummarizableRow {
   id: string;
@@ -96,12 +97,13 @@ function computeResult(
   row: SummarizableRow,
   parsed: Record<string, unknown> | null,
   fallbackSummary: string | null,
-): SummarizeResultV2 {
+): SummarizeResultV3 {
   if (!parsed) {
     // 兼容降级：模型未返回结构化 JSON 时，只保留纯摘要文本，不打分
     return {
       summary: fallbackSummary,
-      why: null,
+      keyPoints: null,
+      industryImpact: null,
       relevance: null,
       quality: null,
       impact: null,
@@ -109,7 +111,13 @@ function computeResult(
     };
   }
   const summary = typeof parsed.summary === "string" ? parsed.summary.trim() || null : null;
-  const why = typeof parsed.why === "string" ? parsed.why.trim() || null : null;
+  const rawPoints = Array.isArray(parsed.key_points) ? parsed.key_points : [];
+  const keyPoints = rawPoints
+    .map((p) => (typeof p === "string" ? p.trim() : ""))
+    .filter((p) => p.length > 0)
+    .slice(0, 3);
+  const industryImpact =
+    typeof parsed.industry_impact === "string" ? parsed.industry_impact.trim() || null : null;
   const relevance = clampScore(parsed.relevance);
   const quality = clampScore(parsed.quality);
   let impact = clampScore(parsed.impact);
@@ -120,7 +128,15 @@ function computeResult(
     const authority = Math.max(0, Math.min(100, row.authority || 60));
     final = Math.round(0.2 * relevance + 0.2 * authority + 0.25 * quality + 0.35 * impact);
   }
-  return { summary: summary ?? fallbackSummary, why, relevance, quality, impact, final };
+  return {
+    summary: summary ?? fallbackSummary,
+    keyPoints: keyPoints.length > 0 ? keyPoints : null,
+    industryImpact,
+    relevance,
+    quality,
+    impact,
+    final,
+  };
 }
 
 export async function summarizePending(rows: SummarizableRow[]): Promise<number> {
@@ -144,7 +160,8 @@ export async function summarizePending(rows: SummarizableRow[]): Promise<number>
     if (!row.content || row.content.length < MIN_CONTENT_CHARS) {
       await markSummarized(row.id, {
         summary: null,
-        why: null,
+        keyPoints: null,
+        industryImpact: null,
         relevance: null,
         quality: null,
         impact: null,

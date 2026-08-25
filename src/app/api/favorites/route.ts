@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
              a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
              a.summary_es, a.summary_fr, a.url, a.author,
              a.published_at, a.fetched_at,
-             a.why_it_matters, a.why_en, a.why_ja, a.why_es, a.why_fr, a.score_final
+             a.key_points, a.industry_impact, a.score_final
       FROM articles a
       JOIN sources s ON s.id = a.source_id
       WHERE a.id IN (${placeholders})

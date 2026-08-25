@@ -403,25 +403,29 @@ body {
     line-height: 1.5;
   }
 
-  .ai-why-line {
+  .ai-key-points {
     margin-top: 10px;
     padding-top: 8px;
     border-top: 1px dashed var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     font-size: 12.5px;
-    line-height: 1.6;
-  }
-
-  .ai-why-label {
-    display: block;
-    font-family: var(--font-code);
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    color: var(--accent);
-    margin-bottom: 2px;
-  }
-
-  .ai-why-text {
+    line-height: 1.5;
     color: var(--text-muted);
+  }
+
+  .ai-key-points li {
+    list-style: none;
+    padding-left: 14px;
+    position: relative;
+  }
+
+  .ai-key-points li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
   }
 
   .card-footer {
