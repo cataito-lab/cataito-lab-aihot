@@ -212,7 +212,8 @@ export async function insertArticles(rows: NewArticleRow[]): Promise<number> {
       r.sourceId,
       r.title,
       r.url,
-      r.author ?? null,
+      // 防御：author 若被上游解析成对象/数组等非字符串类型，一律置 null（SQLite 拒绝绑定其他类型）
+      typeof r.author === "string" ? r.author : null,
       r.publishedAt,
       now,
       r.sourceTimezone ?? "UTC",

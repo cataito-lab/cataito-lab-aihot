@@ -55,6 +55,17 @@ function extractText(raw: unknown, maxChars: number): string {
     .slice(0, maxChars);
 }
 
+/** RSS 的 creator 可能是字符串/对象{name}/数组（不同源结构不一），统一归一化为 string | undefined */
+function asText(v: unknown): string | undefined {
+  if (typeof v === "string") return v;
+  if (Array.isArray(v)) return asText(v[0]);
+  if (v && typeof v === "object") {
+    const n = (v as { name?: unknown }).name;
+    if (typeof n === "string") return n;
+  }
+  return undefined;
+}
+
 export async function fetchRss(source: SourceDef, windowHours: number): Promise<RawItem[]> {
   if (!source.feedUrl) return [];
   const xml = await fetchFeedText(source.feedUrl);
@@ -75,7 +86,7 @@ export async function fetchRss(source: SourceDef, windowHours: number): Promise<
       url: entry.link,
       publishedAt,
       sourceTimezone: source.publishedAtTz ?? "UTC",
-      author: entry.creator,
+      author: asText(entry.creator),
       articleContent:
         extractText((entry as Record<string, unknown>).content, 800) ||
         extractText(entry.description, 800) ||
