@@ -126,6 +126,18 @@ export async function ensureSchema(): Promise<void> {
   await ensureColumn("articles", "summary_fr", "summary_fr TEXT");
   await ensureColumn("fetch_logs", "translate_ok", "translate_ok INTEGER NOT NULL DEFAULT 0");
   await ensureColumn("fetch_logs", "translate_failed", "translate_failed INTEGER NOT NULL DEFAULT 0");
+  // Summarize v2：正文摘录 + WHY + 三维评分（见 docs/SCORING-ROADMAP.md / INSIGHT-PLAN.md）
+  await ensureColumn("articles", "article_content", "article_content TEXT");
+  await ensureColumn("articles", "why_it_matters", "why_it_matters TEXT");
+  await ensureColumn("articles", "why_en", "why_en TEXT");
+  await ensureColumn("articles", "why_ja", "why_ja TEXT");
+  await ensureColumn("articles", "why_es", "why_es TEXT");
+  await ensureColumn("articles", "why_fr", "why_fr TEXT");
+  await ensureColumn("articles", "score_relevance", "score_relevance INTEGER");
+  await ensureColumn("articles", "score_quality", "score_quality INTEGER");
+  await ensureColumn("articles", "score_impact", "score_impact INTEGER");
+  await ensureColumn("articles", "score_final", "score_final INTEGER");
+  await ensureColumn("sources", "authority", "authority INTEGER");
   await migrateFts();
   for (const ddl of TRIGGER_DDLS) {
     await getDb().execute({ sql: ddl, args: [] });
@@ -135,8 +147,8 @@ export async function ensureSchema(): Promise<void> {
 export async function seedSources(sources: SourceDef[]): Promise<void> {
   const now = new Date().toISOString();
   const statements: InStatement[] = sources.map((s) => ({
-    sql: `INSERT INTO sources (id, name, category, lang, site_url, feed_url, fetcher, dedicated, enabled, note, created_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    sql: `INSERT INTO sources (id, name, category, lang, site_url, feed_url, fetcher, dedicated, enabled, note, authority, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
             name = excluded.name,
             category = excluded.category,
@@ -146,7 +158,8 @@ export async function seedSources(sources: SourceDef[]): Promise<void> {
             fetcher = excluded.fetcher,
             dedicated = excluded.dedicated,
             enabled = excluded.enabled,
-            note = excluded.note`,
+            note = excluded.note,
+            authority = excluded.authority`,
     args: [
       s.id,
       s.name,
@@ -158,6 +171,7 @@ export async function seedSources(sources: SourceDef[]): Promise<void> {
       s.dedicated ? 1 : 0,
       s.enabled ? 1 : 0,
       s.note ?? null,
+      s.authority ?? 60,
       now,
     ],
   }));
@@ -187,14 +201,15 @@ export interface NewArticleRow {
   publishedAt: string;
   sourceTimezone?: string;
   estimated?: boolean;
+  articleContent?: string;
 }
 
 export async function insertArticles(rows: NewArticleRow[]): Promise<number> {
   if (rows.length === 0) return 0;
   const now = new Date().toISOString();
   const statements: InStatement[] = rows.map((r) => ({
-    sql: `INSERT INTO articles (id, source_id, title, url, author, published_at, fetched_at, source_timezone, estimated)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    sql: `INSERT INTO articles (id, source_id, title, url, author, published_at, fetched_at, source_timezone, estimated, article_content)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [
       r.id,
       r.sourceId,
@@ -205,6 +220,7 @@ export async function insertArticles(rows: NewArticleRow[]): Promise<number> {
       now,
       r.sourceTimezone ?? "UTC",
       r.estimated ? 1 : 0,
+      r.articleContent ?? null,
     ],
   }));
   let inserted = 0;
@@ -281,6 +297,12 @@ export interface SummarizableArticleRow {
   title: string;
   titleZh: string | null;
   sourceName: string;
+  content: string | null;
+  authority: number;
+}
+
+function textOrNull(v: unknown): string | null {
+  return v == null ? null : String(v);
 }
 
 export async function getRecentWithoutSummary(
@@ -289,7 +311,8 @@ export async function getRecentWithoutSummary(
 ): Promise<SummarizableArticleRow[]> {
   const cutoff = new Date(Date.now() - windowHours * 3_600_000).toISOString();
   const rs = await getDb().execute({
-    sql: `SELECT a.id, a.title, a.title_zh, s.name AS source_name
+    sql: `SELECT a.id, a.title, a.title_zh, s.name AS source_name,
+                 a.article_content, COALESCE(s.authority, 60) AS authority
           FROM articles a JOIN sources s ON s.id = a.source_id
           WHERE a.summary IS NULL AND a.summarized_at IS NULL AND a.published_at >= ?
           ORDER BY a.published_at DESC LIMIT ?`,
@@ -300,6 +323,8 @@ export async function getRecentWithoutSummary(
     title: String(row.title),
     titleZh: row.title_zh == null ? null : String(row.title_zh),
     sourceName: String(row.source_name),
+    content: textOrNull(row.article_content),
+    authority: Number(row.authority ?? 60),
   }));
 }
 
@@ -314,14 +339,35 @@ export async function countSummariesToday(): Promise<number> {
   return Number(rs.rows[0]?.n ?? 0);
 }
 
+export interface SummarizeResultV2 {
+  summary: string | null;
+  why: string | null;
+  relevance: number | null;
+  quality: number | null;
+  impact: number | null;
+  final: number | null;
+}
+
 export async function markSummarized(
   id: string,
-  summary: string | null,
-  hasSummary: boolean,
+  result: SummarizeResultV2,
 ): Promise<void> {
   await getDb().execute({
-    sql: `UPDATE articles SET summary = ?, summarized_at = ? WHERE id = ?`,
-    args: [hasSummary ? summary : null, new Date().toISOString(), id],
+    sql: `UPDATE articles SET
+            summary = ?, why_it_matters = ?,
+            score_relevance = ?, score_quality = ?, score_impact = ?, score_final = ?,
+            summarized_at = ?
+          WHERE id = ?`,
+    args: [
+      result.summary,
+      result.why,
+      result.relevance,
+      result.quality,
+      result.impact,
+      result.final,
+      new Date().toISOString(),
+      id,
+    ],
   });
 }
 
@@ -335,9 +381,17 @@ export const SUMMARY_LANG_COLUMNS = {
 
 export type SummaryLang = keyof typeof SUMMARY_LANG_COLUMNS;
 
+const WHY_LANG_COLUMNS = {
+  en: "why_en",
+  ja: "why_ja",
+  es: "why_es",
+  fr: "why_fr",
+} as const;
+
 export interface SummaryTranslateRow {
   id: string;
   summary: string;
+  why: string | null;
   missing: SummaryLang[];
 }
 
@@ -345,14 +399,15 @@ export async function getPendingSummaryTranslations(
   limit: number,
 ): Promise<SummaryTranslateRow[]> {
   const rs = await getDb().execute({
-    sql: `SELECT id, summary,
-            summary_en IS NULL AS need_en,
-            summary_ja IS NULL AS need_ja,
-            summary_es IS NULL AS need_es,
-            summary_fr IS NULL AS need_fr
+    sql: `SELECT id, summary, why_it_matters,
+            (summary_en IS NULL OR (why_it_matters IS NOT NULL AND why_en IS NULL)) AS need_en,
+            (summary_ja IS NULL OR (why_it_matters IS NOT NULL AND why_ja IS NULL)) AS need_ja,
+            (summary_es IS NULL OR (why_it_matters IS NOT NULL AND why_es IS NULL)) AS need_es,
+            (summary_fr IS NULL OR (why_it_matters IS NOT NULL AND why_fr IS NULL)) AS need_fr
           FROM articles
           WHERE summary IS NOT NULL
-            AND (summary_en IS NULL OR summary_ja IS NULL OR summary_es IS NULL OR summary_fr IS NULL)
+            AND (summary_en IS NULL OR summary_ja IS NULL OR summary_es IS NULL OR summary_fr IS NULL
+                 OR (why_it_matters IS NOT NULL AND (why_en IS NULL OR why_ja IS NULL OR why_es IS NULL OR why_fr IS NULL)))
           ORDER BY published_at DESC LIMIT ?`,
     args: [limit],
   });
@@ -364,23 +419,28 @@ export async function getPendingSummaryTranslations(
     if (Number(row.need_es) === 1) missing.push("es");
     if (Number(row.need_fr) === 1) missing.push("fr");
     if (missing.length > 0) {
-      rows.push({ id: String(row.id), summary: String(row.summary), missing });
+      rows.push({
+        id: String(row.id),
+        summary: String(row.summary),
+        why: row.why_it_matters == null ? null : String(row.why_it_matters),
+        missing,
+      });
     }
   }
   return rows;
 }
 
 export async function applySummaryTranslationUpdates(
-  updates: { id: string; lang: SummaryLang; text: string }[],
+  updates: { id: string; lang: SummaryLang; text: string; why?: string | null }[],
 ): Promise<void> {
   if (updates.length === 0) return;
-  const byLang: Record<SummaryLang, { sql: string; args: (string | number)[] }[]> = {
+  const byLang: Record<SummaryLang, { sql: string; args: (string | number | null)[] }[]> = {
     en: [], ja: [], es: [], fr: [],
   };
   for (const u of updates) {
     byLang[u.lang].push({
-      sql: `UPDATE articles SET ${SUMMARY_LANG_COLUMNS[u.lang]} = ? WHERE id = ?`,
-      args: [u.text, u.id],
+      sql: `UPDATE articles SET ${SUMMARY_LANG_COLUMNS[u.lang]} = ?, ${WHY_LANG_COLUMNS[u.lang]} = COALESCE(?, ${WHY_LANG_COLUMNS[u.lang]}) WHERE id = ?`,
+      args: [u.text, u.why ?? null, u.id],
     });
   }
   for (const lang of Object.keys(byLang) as SummaryLang[]) {

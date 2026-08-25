@@ -106,6 +106,7 @@ async function main(): Promise<void> {
       publishedAt: item.publishedAt,
       sourceTimezone: item.sourceTimezone,
       estimated: item.estimated,
+      articleContent: item.articleContent,
     })),
   );
 

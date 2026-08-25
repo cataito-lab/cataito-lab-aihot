@@ -8,7 +8,8 @@
     "feedUrl": "https://openai.com/news/rss.xml",
     "fetcher": "rss",
     "dedicated": true,
-    "enabled": true
+    "enabled": true,
+    "authority": 95
   },
   {
     "id": "anthropic",
@@ -20,6 +21,7 @@
     "fetcher": "html",
     "dedicated": true,
     "enabled": false,
+    "authority": 95,
     "note": "无官方RSS，需html fetcher（M2实现）"
   },
   {
@@ -32,6 +34,7 @@
     "fetcher": "rss",
     "dedicated": true,
     "enabled": true,
+    "authority": 95,
     "note": "本机网络403，需在GH Actions环境验证"
   },
   {
@@ -43,7 +46,8 @@
     "feedUrl": "https://blog.google/technology/ai/rss/",
     "fetcher": "rss",
     "dedicated": true,
-    "enabled": true
+    "enabled": true,
+    "authority": 95
   },
   {
     "id": "huggingface",
@@ -54,7 +58,8 @@
     "feedUrl": "https://huggingface.co/blog/feed.xml",
     "fetcher": "rss",
     "dedicated": true,
-    "enabled": true
+    "enabled": true,
+    "authority": 85
   },
   {
     "id": "microsoft-ai",
@@ -66,6 +71,7 @@
     "fetcher": "rss",
     "dedicated": true,
     "enabled": false,
+    "authority": 90,
     "note": "2026-08-24 禁用：WAF 对数据中心 IP 持续 403（本地与 GH Actions 均被拒，14/14 次失败）。待换抓取路径后再启用"
   },
   {
@@ -77,7 +83,8 @@
     "feedUrl": "https://developer.nvidia.com/blog/category/generative-ai/feed/",
     "fetcher": "rss",
     "dedicated": true,
-    "enabled": true
+    "enabled": true,
+    "authority": 90
   },
   {
     "id": "github-changelog",
@@ -88,7 +95,8 @@
     "feedUrl": "https://github.blog/changelog/feed/",
     "fetcher": "rss",
     "dedicated": false,
-    "enabled": true
+    "enabled": true,
+    "authority": 85
   },
   {
     "id": "qbitai",
@@ -100,6 +108,7 @@
     "fetcher": "rss",
     "dedicated": true,
     "enabled": true,
+    "authority": 85,
     "publishedAtTz": "Asia/Shanghai"
   },
   {
@@ -112,6 +121,7 @@
     "fetcher": "rss",
     "dedicated": false,
     "enabled": true,
+    "authority": 85,
     "publishedAtTz": "Asia/Shanghai"
   },
   {
@@ -123,7 +133,8 @@
     "feedUrl": "https://the-decoder.com/feed/",
     "fetcher": "rss",
     "dedicated": true,
-    "enabled": true
+    "enabled": true,
+    "authority": 75
   },
   {
     "id": "arstechnica-ai",
@@ -134,7 +145,8 @@
     "feedUrl": "https://arstechnica.com/ai/feed/",
     "fetcher": "rss",
     "dedicated": true,
-    "enabled": true
+    "enabled": true,
+    "authority": 80
   },
   {
     "id": "mittr-ai",
@@ -145,7 +157,8 @@
     "feedUrl": "https://www.technologyreview.com/topic/artificial-intelligence/feed",
     "fetcher": "rss",
     "dedicated": true,
-    "enabled": true
+    "enabled": true,
+    "authority": 85
   },
   {
     "id": "wired-ai",
@@ -156,7 +169,8 @@
     "feedUrl": "https://www.wired.com/feed/tag/ai/latest/rss",
     "fetcher": "rss",
     "dedicated": true,
-    "enabled": true
+    "enabled": true,
+    "authority": 60
   },
   {
     "id": "interconnects",
@@ -168,6 +182,7 @@
     "fetcher": "rss",
     "dedicated": true,
     "enabled": true,
+    "authority": 80,
     "note": "Substack 托管：本地 200，Actions 环境 403 风险（失败自动跳过，观察 fetch_logs）"
   },
   {
@@ -180,6 +195,7 @@
     "fetcher": "rss",
     "dedicated": true,
     "enabled": true,
+    "authority": 80,
     "note": "Substack 托管：本地 200，Actions 环境 403 风险（失败自动跳过，观察 fetch_logs）"
   },
   {
@@ -192,6 +208,7 @@
     "fetcher": "rss",
     "dedicated": false,
     "enabled": true,
+    "authority": 60,
     "note": "通用科技源，靠 AI 关键词过滤"
   },
   {
@@ -204,6 +221,7 @@
     "fetcher": "rss",
     "dedicated": false,
     "enabled": true,
+    "authority": 60,
     "note": "通用科技源，靠 AI 关键词过滤"
   },
   {
@@ -216,6 +234,7 @@
     "fetcher": "bridge",
     "dedicated": true,
     "enabled": false,
+    "authority": 70,
     "note": "无稳定RSS，待接入公众号桥/RSSHub后启用"
   },
   {
@@ -227,7 +246,8 @@
     "feedUrl": "https://techcrunch.com/category/artificial-intelligence/feed/",
     "fetcher": "rss",
     "dedicated": true,
-    "enabled": true
+    "enabled": true,
+    "authority": 85
   },
   {
     "id": "venturebeat-ai",
@@ -238,7 +258,8 @@
     "feedUrl": "https://venturebeat.com/category/ai/feed/",
     "fetcher": "rss",
     "dedicated": true,
-    "enabled": true
+    "enabled": true,
+    "authority": 80
   },
   {
     "id": "theverge",
@@ -250,6 +271,7 @@
     "fetcher": "rss",
     "dedicated": false,
     "enabled": true,
+    "authority": 60,
     "note": "综合科技源，走AI关键词过滤"
   },
   {
@@ -261,7 +283,8 @@
     "feedUrl": "https://www.marktechpost.com/feed/",
     "fetcher": "rss",
     "dedicated": true,
-    "enabled": true
+    "enabled": true,
+    "authority": 75
   },
   {
     "id": "simonwillison",
@@ -272,7 +295,8 @@
     "feedUrl": "https://simonwillison.net/atom/everything/",
     "fetcher": "rss",
     "dedicated": true,
-    "enabled": true
+    "enabled": true,
+    "authority": 80
   },
   {
     "id": "hackernews",
@@ -284,6 +308,7 @@
     "fetcher": "hn-algolia",
     "dedicated": false,
     "enabled": true,
+    "authority": 65,
     "note": "Algolia API + 关键词过滤 + 热度门槛"
   },
   {
@@ -295,7 +320,8 @@
     "feedUrl": "https://www.reddit.com/r/LocalLLaMA/.rss",
     "fetcher": "reddit",
     "dedicated": true,
-    "enabled": true
+    "enabled": true,
+    "authority": 65
   },
   {
     "id": "reddit-ml",
@@ -306,6 +332,7 @@
     "feedUrl": "https://www.reddit.com/r/MachineLearning/.rss",
     "fetcher": "reddit",
     "dedicated": true,
-    "enabled": true
+    "enabled": true,
+    "authority": 65
   }
 ]

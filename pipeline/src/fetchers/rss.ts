@@ -39,6 +39,22 @@ function cleanTitle(raw: string): string {
   return raw.replace(/\s+/g, " ").trim();
 }
 
+/** 提取正文文本：去 HTML 标签、压缩空白、截断到 maxChars */
+function extractText(raw: unknown, maxChars: number): string {
+  if (typeof raw !== "string") return "";
+  return raw
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, maxChars);
+}
+
 export async function fetchRss(source: SourceDef, windowHours: number): Promise<RawItem[]> {
   if (!source.feedUrl) return [];
   const xml = await fetchFeedText(source.feedUrl);
@@ -60,6 +76,10 @@ export async function fetchRss(source: SourceDef, windowHours: number): Promise<
       publishedAt,
       sourceTimezone: source.publishedAtTz ?? "UTC",
       author: entry.creator,
+      articleContent:
+        extractText((entry as Record<string, unknown>).content, 800) ||
+        extractText(entry.description, 800) ||
+        undefined,
     });
     if (items.length >= MAX_PER_SOURCE) break;
   }

@@ -18,6 +18,8 @@ export interface SourceDef {
    * 前端 +8 换算后正好显示源站原始时间。 */
   publishedAtTz?: string;
   note?: string;
+  /** 信源权威度 0-100（评分系统独立维度，见 docs/SCORING-ROADMAP.md） */
+  authority?: number;
 }
 
 export interface RawItem {
@@ -30,6 +32,8 @@ export interface RawItem {
   /** 是否为估算/反推时间（原文无明确时间时） */
   estimated?: boolean;
   author?: string;
+  /** RSS 自带正文/摘要（去 HTML 后截断），供摘要生成参考；无则为空 */
+  articleContent?: string;
 }
 
 export interface FetchResult {

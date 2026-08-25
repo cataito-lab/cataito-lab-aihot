@@ -22,14 +22,22 @@ export async function translateSummariesPending(limit = MAX_ROWS_PER_RUN): Promi
   const rows = await getPendingSummaryTranslations(limit);
   if (rows.length === 0) return 0;
 
-  const updates: { id: string; lang: SummaryLang; text: string }[] = [];
+  const updates: { id: string; lang: SummaryLang; text: string; why?: string | null }[] = [];
   let failures = 0;
 
   for (const row of rows) {
     for (const lang of row.missing) {
       try {
         const text = await translateTextSmart(row.summary, TARGETS[lang]);
-        if (text) updates.push({ id: row.id, lang, text });
+        let why: string | null = null;
+        if (row.why) {
+          try {
+            why = await translateTextSmart(row.why, TARGETS[lang]);
+          } catch {
+            why = null; // why 翻译失败不阻塞摘要译文
+          }
+        }
+        if (text) updates.push({ id: row.id, lang, text, why });
       } catch (err) {
         failures++;
         if (failures <= 2) {
