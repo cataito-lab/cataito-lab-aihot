@@ -187,8 +187,10 @@ export async function summarizePending(rows: SummarizableRow[]): Promise<number>
         continue;
       }
 
-      // 兼容降级：非 JSON 输出按纯文本摘要处理（旧版行为）
-      const fallback = parsed ? null : raw!;
+      // 兼容降级：非 JSON 输出按纯文本摘要处理（旧版行为）；
+      // 但形似 JSON 的残缺输出（截断/格式损坏）不许当摘要——整串 JSON 显示给用户就是事故，留待下轮重试
+      const looksLikeJson = raw!.trimStart().startsWith("{");
+      const fallback = !parsed && !looksLikeJson ? raw! : null;
       const result = computeResult(row, parsed, fallback);
       const valid = result.summary != null;
       if (!valid) {
