@@ -29,7 +29,7 @@ export async function GET() {
     <title>${esc(a.titleZh || a.title)}</title>
     <link>${esc(link)}</link>
     <guid isPermaLink="false">${esc(a.id)}</guid>
-    <pubDate>${a.publishedAt}</pubDate>
+    <pubDate>${new Date(a.publishedAt).toUTCString()}</pubDate>
     <source url="${esc(link)}">${esc(a.sourceName)}</source>
     <description>${esc(a.summary || a.titleZh || a.title)}</description>
     <category>${esc(a.category)}</category>
@@ -47,8 +47,8 @@ export async function GET() {
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <docs>http://www.rssboard.org/rss-specification</docs>
     <ttl>30</ttl>
-    <item>${itemsXml}
-  </channel>
+    ${itemsXml}
+   </channel>
 </rss>`;
 
     return new Response(xml, {

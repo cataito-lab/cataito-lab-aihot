@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { X } from "@phosphor-icons/react";
 
 export function SearchBox({ initialQuery = "" }: { initialQuery?: string }) {

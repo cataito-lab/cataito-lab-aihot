@@ -27,9 +27,19 @@ import type { FetchResult, RawItem, SourceDef } from "./types";
 function parseArgs(): { windowHours: number; dryRun: boolean } {
   let windowHours = 24;
   let dryRun = false;
-  for (const arg of process.argv.slice(2)) {
-    const m = arg.match(/^--window-hours=(\d+(?:\.\d+)?)$/);
-    if (m) windowHours = Number(m[1]);
+  const argv = process.argv.slice(2);
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    const eq = arg.match(/^--window-hours=(\d+(?:\.\d+)?)$/);
+    if (eq) {
+      windowHours = Number(eq[1]);
+      continue;
+    }
+    if (arg === "--window-hours" && argv[i + 1] && /^\d+(?:\.\d+)?$/.test(argv[i + 1])) {
+      windowHours = Number(argv[i + 1]);
+      i++;
+      continue;
+    }
     if (arg === "--dry-run") dryRun = true;
   }
   return { windowHours, dryRun };
