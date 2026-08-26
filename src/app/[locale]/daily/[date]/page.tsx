@@ -51,7 +51,15 @@ export default async function DailyPage({ params }: Props) {
   if (!DATE_RE.test(date)) notFound();
 
   const t = await getTranslations("daily");
+  const ta = await getTranslations("article");
   const items: FeedArticle[] = await getDailyArticles(date);
+
+  const catLabel = (cat: string): string =>
+    cat === "official"
+      ? ta("catOfficial")
+      : cat === "community"
+        ? ta("catCommunity")
+        : ta("catMedia");
 
   const byCategory = new Map<string, number>();
   for (const a of items) {
@@ -95,7 +103,7 @@ export default async function DailyPage({ params }: Props) {
             </span>
             {[...byCategory.entries()].map(([cat, n]) => (
               <span key={cat} className="px-2.5 py-0.5 rounded-md bg-neon-soft text-fg-muted">
-                {cat.toUpperCase()} {n}
+                {catLabel(cat)} {n}
               </span>
             ))}
           </div>
@@ -116,7 +124,7 @@ export default async function DailyPage({ params }: Props) {
           {items.length === 0 ? (
             <p className="py-24 text-center text-fg-muted">{t("noData")}</p>
           ) : (
-            <ol className="relative ml-0">
+            <ol className="relative ml-0 flex flex-col gap-5">
               {items.map((a, i) => (
                 <ArticleItem key={a.id} article={a} index={i} />
               ))}

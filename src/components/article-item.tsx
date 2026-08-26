@@ -132,11 +132,10 @@ export function ArticleItem({
     secondary = null;
   }
 
-  const isNew = article.isNew === true;
+  const cat = CAT_META[article.category] ?? CAT_META.community;
   const summary = pickSummary(article, locale);
   const keyPoints = pickKeyPoints(article, locale);
   const hasSummary = Boolean(summary);
-  const cat = CAT_META[article.category] ?? CAT_META.community;
 
   return (
     <li
@@ -172,7 +171,6 @@ export function ArticleItem({
               : ""}
           </time>
         </span>
-        {isNew && <span className="badge-new">NEW</span>}
         <button
           type="button"
           onClick={() => toggleFavorite(article.id)}
@@ -180,7 +178,7 @@ export function ArticleItem({
           aria-pressed={starred}
           className={`star-btn ${starred ? "starred" : ""}`}
         >
-          <Star size={20} weight={starred ? "fill" : "regular"} />
+          <Star size={16} weight={starred ? "fill" : "regular"} />
         </button>
       </div>
 
