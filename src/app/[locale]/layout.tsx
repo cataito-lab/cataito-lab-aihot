@@ -97,6 +97,12 @@ export default async function LocaleLayout({
       className={`${inter.variable} ${jetbrainsMono.variable}`}
     >
       <body className="min-h-screen flex flex-col antialiased">
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'&&t!=='system'){t=null;}if(!t||t==='system'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();",
+          }}
+        />
         <NextIntlClientProvider messages={messages}>
           {children}
         </NextIntlClientProvider>

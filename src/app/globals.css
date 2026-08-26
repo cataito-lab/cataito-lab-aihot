@@ -20,10 +20,41 @@
   --accent-glow: rgba(16, 185, 129, 0.15);
   --badge-bg: rgba(16, 185, 129, 0.1);
 
+  /* 半透明叠层 / 容器背景（随主题切换为暗色或亮色 alpha） */
+  --overlay-hover: rgba(255, 255, 255, 0.05);
+  --overlay-active: rgba(255, 255, 255, 0.08);
+  --overlay-subtle: rgba(255, 255, 255, 0.02);
+  --header-bg: rgba(9, 9, 11, 0.8);
+  --scrim: rgba(0, 0, 0, 0.5);
+
   /* next/font variables resolved at runtime (see [locale]/layout.tsx) */
   --font-app: var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, sans-serif;
   --font-code: var(--font-jetbrains), "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* ===== 浅色主题：仅覆盖设计令牌，组件层全部走 var() 自动跟随 ===== */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg-base: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f4f4f5;
+  --border-color: #e4e4e7;
+  --border-hover: #a1a1aa;
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --text-muted: #71717a;
+  --accent: #059669;
+  --accent-bright: #047857;
+  --accent-glow: rgba(5, 150, 105, 0.12);
+  --badge-bg: rgba(5, 150, 105, 0.1);
+
+  --overlay-hover: rgba(0, 0, 0, 0.04);
+  --overlay-active: rgba(0, 0, 0, 0.06);
+  --overlay-subtle: rgba(0, 0, 0, 0.02);
+  --header-bg: rgba(255, 255, 255, 0.8);
+  --scrim: rgba(0, 0, 0, 0.4);
 }
 
 /* Slim legacy utility mapping so existing class names resolve to the new palette */
@@ -67,7 +98,7 @@ body {
     left: 0;
     right: 0;
     height: 64px;
-    background: rgba(9, 9, 11, 0.8);
+    background: var(--header-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-color);
@@ -114,7 +145,7 @@ body {
   nav.nav-tabs {
     display: flex;
     gap: 6px;
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--overlay-hover);
     padding: 4px;
     border-radius: 8px;
     border: 1px solid var(--border-color);
@@ -134,7 +165,7 @@ body {
   nav.nav-tabs a.active,
   nav.nav-tabs a:hover {
     color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--overlay-active);
   }
 
   .header-actions {
@@ -147,7 +178,7 @@ body {
     font-family: var(--font-code);
     font-size: 12px;
     color: var(--text-muted);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--overlay-hover);
     padding: 6px 10px;
     border-radius: 6px;
     border: 1px solid var(--border-color);
@@ -325,7 +356,7 @@ body {
     align-items: center;
     gap: 6px;
     border: 1px solid var(--border-color);
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--overlay-hover);
     border-radius: 5px;
     padding: 2px 8px;
     font-size: 11.5px;
@@ -405,7 +436,7 @@ body {
 
   /* ===== AI summary box ===== */
   .ai-summary-box {
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--overlay-subtle);
     border-left: 2px solid var(--accent);
     padding: 12px 16px;
     border-radius: 0 8px 8px 0;

@@ -67,7 +67,7 @@ export function SearchBox({ initialQuery = "" }: { initialQuery?: string }) {
             inputRef.current?.focus();
           }}
           aria-label={t("searchAria")}
-          className="flex items-center justify-center text-[#71717a] hover:text-[#f4f4f5] cursor-pointer"
+          className="flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
         >
           <X size={12} />
         </button>

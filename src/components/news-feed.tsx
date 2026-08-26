@@ -163,11 +163,11 @@ export function NewsFeed({
 
         {items.length === 0 && (
           <div className="py-28 flex flex-col items-center gap-3 text-center animate-fade-up">
-            <span className="w-14 h-14 rounded-full border border-[#222228] flex items-center justify-center text-[#71717a]">
+            <span className="w-14 h-14 rounded-full border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)]">
               <Tray size={24} />
             </span>
-            <p className="text-[15px] text-[#a1a1aa]">{tFeed("emptyTitle")}</p>
-            <p className="text-[13px] text-[#71717a]">{tFeed("emptyHint")}</p>
+            <p className="text-[15px] text-[var(--text-secondary)]">{tFeed("emptyTitle")}</p>
+            <p className="text-[13px] text-[var(--text-muted)]">{tFeed("emptyHint")}</p>
           </div>
         )}
       </div>
@@ -180,7 +180,7 @@ export function NewsFeed({
             type="button"
             onClick={() => void loadMore()}
             disabled={loading}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-[#222228] bg-[#121216] text-[#a1a1aa] hover:text-[#f4f4f5] hover:border-[#3f3f46] font-mono text-xs tracking-wider transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-hover)] font-mono text-xs tracking-wider transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
           >
             {loading ? tBrief("loading") : tBrief("loadMore")}
           </button>
