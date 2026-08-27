@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: update-news
-  cancel-in-progress: false
+  group: news-pipeline
+  cancel-in-progress: true
 
 jobs:
   fetch:
