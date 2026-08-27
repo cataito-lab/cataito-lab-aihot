@@ -35,8 +35,12 @@ async function fetchFeedText(feedUrl: string): Promise<string> {
   throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
 }
 
+// 剥掉标题开头的栏目标签，如 Latent Space 下发的 "[AINews] "、"[Machine Learning] "。
+// 只去最前面的 [..] 前缀，标题其它位置的括号保持不变。
+const LEADING_TAG_RE = /^\[[^\]\n]{1,30}\]\s*/;
+
 function cleanTitle(raw: string): string {
-  return raw.replace(/\s+/g, " ").trim();
+  return raw.replace(LEADING_TAG_RE, "").replace(/\s+/g, " ").trim();
 }
 
 /** 提取正文文本：去 HTML 标签、压缩空白、截断到 maxChars */
