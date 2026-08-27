@@ -70,26 +70,27 @@ export async function generateMetadata({
   };
 }
 
-function TierBadge({ score }: { score: number | null }) {
-  const tier = tierOf(score);
-  if (!tier) return null;
-  return (
-    <span className={`tier-badge tier-${tier}`} title={`AIHOT ${score}`}>
-      {tier === "major" ? (
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-          <path d="M13 2c1.5 3.5-1.5 5-1.5 7.5 0 1.2 1 2.2 2.2 2.2 2.4 0 3.6-2.4 3.6-4.8 2.4 2.4 3.7 5.6 3.7 7.9a6.5 6.5 0 1 1-13 0C8.5 12 10.5 9.8 12 7c0-2 1-3.2 1-5z" />
-        </svg>
-      ) : tier === "important" ? (
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-          <path d="M13 2c1.5 3.5-1.5 5-1.5 7.5 0 1.2 1 2.2 2.2 2.2 2.4 0 3.6-2.4 3.6-4.8 2.4 2.4 3.7 5.6 3.7 7.9a6.5 6.5 0 1 1-13 0C8.5 12 10.5 9.8 12 7c0-2 1-3.2 1-5z" />
-        </svg>
-      ) : (
-        <span className="tier-dot" aria-hidden />
-      )}
-      <span className="tier-num">{score}</span>
-    </span>
-  );
-}
+  function TierBadge({ score }: { score: number | null }) {
+    const tier = tierOf(score);
+    if (!tier) return null;
+    return (
+      <span className={`tier-badge tier-${tier}`} title={`AIHOT ${score}`}>
+        {tier === "major" ? (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+            <path d="M13 2c1.5 3.5-1.5 5-1.5 7.5 0 1.2 1 2.2 2.2 2.2 2.4 0 3.6-2.4 3.6-4.8 2.4 2.4 3.7 5.6 3.7 7.9a6.5 6.5 0 1 1-13 0C8.5 12 10.5 9.8 12 7c0-2 1-3.2 1-5z" />
+          </svg>
+        ) : tier === "important" ? (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+            <path d="M13 2c1.5 3.5-1.5 5-1.5 7.5 0 1.2 1 2.2 2.2 2.2 2.4 0 3.6-2.4 3.6-4.8 2.4 2.4 3.7 5.6 3.7 7.9a6.5 6.5 0 1 1-13 0C8.5 12 10.5 9.8 12 7c0-2 1-3.2 1-5z" />
+          </svg>
+        ) : (
+          <span className="tier-dot" aria-hidden />
+        )}
+        <span className="tier-num">{score}</span>
+        <span className="tier-label">AIHOT</span>
+      </span>
+    );
+  }
 
 function MemberCard({ m, locale, verifyLabel }: {
   m: EventMember;

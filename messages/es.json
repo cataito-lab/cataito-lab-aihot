@@ -31,6 +31,8 @@
     "catMedia": "Medios",
     "catCommunity": "Comunidad",
     "aiSummary": "AI Insight",
+    "aihot": "AIHOT",
+    "importance": "Importancia",
     "star": "Guardar",
     "unstar": "Quitar guardado",
     "hoursAgo": "hace {n}h",

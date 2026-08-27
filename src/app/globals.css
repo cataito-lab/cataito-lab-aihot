@@ -421,6 +421,12 @@ body {
     border-radius: 50%;
     background: var(--text-muted);
   }
+  .tier-label {
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    opacity: 0.8;
+  }
 
   /* 事件卡（跨源同事件合并） */
   .event-chip {
@@ -735,6 +741,10 @@ body {
     content: "◎ ";
     color: var(--accent);
   }
+  .ai-mini-imp::before {
+    content: "★ ";
+    color: var(--accent);
+  }
 
   .ai-tags {
     margin-top: 10px;
@@ -751,6 +761,21 @@ body {
     background: color-mix(in srgb, var(--accent) 14%, transparent);
     color: var(--accent);
     border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  }
+
+  .ai-importance {
+    margin-top: 9px;
+    padding-top: 7px;
+    border-top: 1px dashed var(--border-color);
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+  }
+  .ai-importance b {
+    color: var(--accent);
+    font-family: var(--font-code);
+    font-size: 12px;
   }
 
   /* 收藏按钮：meta 行右侧 ghost 图标，默认低对比，悬停/已藏显主题色 */

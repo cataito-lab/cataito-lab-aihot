@@ -200,7 +200,7 @@ export function ArticleItem({
         </a>
         <span className="meta-type">{t(cat.labelKey)}</span>
         {tier && (
-          <span className={`tier-badge tier-${tier}`} title={`AIHOT ${article.scoreFinal}`}>
+          <span className={`tier-badge tier-${tier}`} title={`${t("aihot")} ${article.scoreFinal}`}>
             {tier === "major" ? (
               <Fire size={12} weight="fill" />
             ) : tier === "important" ? (
@@ -209,6 +209,7 @@ export function ArticleItem({
               <span className="tier-dot" aria-hidden />
             )}
             <span className="tier-num">{article.scoreFinal}</span>
+            <span className="tier-label">{t("aihot")}</span>
           </span>
         )}
         <span className="meta-sep" aria-hidden>|</span>
@@ -297,6 +298,11 @@ export function ArticleItem({
               {tags.map((tg, i) => (
                 <span key={i} className="ai-tag">{tg}</span>
               ))}
+            </div>
+          )}
+          {article.importanceScore != null && (
+            <div className="ai-importance">
+              {t("importance")} <b>{article.importanceScore}</b>/100
             </div>
           )}
         </div>

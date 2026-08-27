@@ -31,6 +31,8 @@
     "catMedia": "メディア",
     "catCommunity": "コミュニティ",
     "aiSummary": "AI インサイト",
+    "aihot": "AIHOT",
+    "importance": "重要度",
     "star": "保存",
     "unstar": "保存を解除",
     "hoursAgo": "{n}時間前",

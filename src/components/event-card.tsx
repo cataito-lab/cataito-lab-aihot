@@ -67,7 +67,7 @@ export function EventCard({
           {tFeed("eventSources", { n: items.length })}
         </span>
         {tier && (
-          <span className={`tier-badge tier-${tier}`} title={`AIHOT ${best.scoreFinal}`}>
+          <span className={`tier-badge tier-${tier}`} title={`${tArticle("aihot")} ${best.scoreFinal}`}>
             {tier === "major" ? (
               <Fire size={12} weight="fill" />
             ) : tier === "important" ? (
@@ -76,6 +76,7 @@ export function EventCard({
               <span className="tier-dot" aria-hidden />
             )}
             <span className="tier-num">{best.scoreFinal}</span>
+            <span className="tier-label">{tArticle("aihot")}</span>
           </span>
         )}
         <span className="meta-sep" aria-hidden>|</span>
@@ -119,10 +120,13 @@ export function EventCard({
               {tArticle("aiSummary")}
             </div>
             <div className="ai-summary-content">{canonicalSummary}</div>
-          {(kc || fs) && (
+          {(kc || fs || best.importanceScore != null) && (
             <div className="ai-insight-mini">
               {kc && <span className="ai-mini-change">{kc}</span>}
               {fs && <span className="ai-mini-fwd">{fs}</span>}
+              {best.importanceScore != null && (
+                <span className="ai-mini-imp">{tArticle("importance")} {best.importanceScore}</span>
+              )}
             </div>
           )}
           </div>
