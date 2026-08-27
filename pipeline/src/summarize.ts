@@ -96,6 +96,27 @@ export async function runModel(userContent: string): Promise<string | null> {
   return text || null;
 }
 
+/** 把模型输出规整成统一的 event_key / entities（跨源聚类唯一依据） */
+export function normalizeEventMeta(parsed: Record<string, unknown> | null): {
+  eventKey: string | null;
+  entities: string[] | null;
+} {
+  if (!parsed) return { eventKey: null, entities: null };
+  const rawKey = typeof parsed.event_key === "string" ? parsed.event_key : "";
+  const normKey = rawKey
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  const eventKey = normKey.length > 0 ? normKey : null;
+  const rawEnt = Array.isArray(parsed.entities) ? parsed.entities : [];
+  const entities = rawEnt
+    .map((e) => (typeof e === "string" ? e.trim() : ""))
+    .filter((e) => e.length > 0)
+    .slice(0, 5);
+  return { eventKey, entities: entities.length > 0 ? entities : null };
+}
+
 function computeResult(
   row: SummarizableRow,
   parsed: Record<string, unknown> | null,
@@ -128,15 +149,7 @@ function computeResult(
   let impact = clampScore(parsed.impact);
   if (impact != null && PROMO_TITLE_RE.test(row.title)) impact = Math.min(impact, 30);
 
-  const rawKey = typeof parsed.event_key === "string" ? parsed.event_key : "";
-  const normKey = rawKey.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-  const eventKey = normKey.length > 0 ? normKey : null;
-  const rawEnt = Array.isArray(parsed.entities) ? parsed.entities : [];
-  const entities = rawEnt
-    .map((e) => (typeof e === "string" ? e.trim() : ""))
-    .filter((e) => e.length > 0)
-    .slice(0, 5);
-  const cleanEntities = entities.length > 0 ? entities : null;
+  const { eventKey, entities: cleanEntities } = normalizeEventMeta(parsed);
 
   let final: number | null = null;
   if (relevance != null && quality != null && impact != null) {
@@ -154,6 +167,31 @@ function computeResult(
     eventKey,
     entities: cleanEntities,
   };
+}
+
+// 回填专用：只让模型判断 event_key + entities（复用同一段正文，但提示更轻，不重复生成摘要/评分）。
+// 返回 null 表示模型调用失败（调用方应按"无事件"处理并继续）。
+const EVENT_META_PROMPT = `你是 AI 新闻聚类助手。判断一条新闻是否对应一个具体、可独立描述的事件，仅输出 JSON（不要输出其他内容）：
+{"event_key":"规范化英文事件slug(小写、连字符、≤5词、只含a-z0-9-；若没有单一事件则留空字符串\"\")","entities":["实体1","实体2"]}
+同一事件的不同媒体、不同语言报道必须输出完全相同的 event_key（这是跨源聚类唯一依据）。只依据给定事实，不得编造。`;
+
+export async function extractEventMeta(
+  row: SummarizableRow,
+): Promise<{ eventKey: string | null; entities: string[] | null } | null> {
+  if (!row.content || row.content.length < MIN_CONTENT_CHARS) {
+    return { eventKey: null, entities: null };
+  }
+  const parts = [`标题：${row.titleZh ?? row.title}`];
+  if (row.titleZh && row.titleZh !== row.title) parts.push(`原标题：${row.title}`);
+  parts.push(`来源：${row.sourceName}`);
+  parts.push(`正文摘录：${row.content}`);
+  try {
+    const raw = await runModel(`${EVENT_META_PROMPT}\n\n${parts.join("\n")}`);
+    const parsed = raw ? parseModelJson(raw) : null;
+    return normalizeEventMeta(parsed);
+  } catch {
+    return null;
+  }
 }
 
 export async function summarizePending(rows: SummarizableRow[]): Promise<number> {
@@ -183,6 +221,8 @@ export async function summarizePending(rows: SummarizableRow[]): Promise<number>
         quality: null,
         impact: null,
         final: null,
+        eventKey: null,
+        entities: null,
       });
       noContent++;
       continue;

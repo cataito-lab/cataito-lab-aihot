@@ -325,6 +325,15 @@ function textOrNull(v: unknown): string | null {
   return v == null ? null : String(v);
 }
 
+// libSQL hrana 只接受 string | number | null；undefined / 非有限数字 / 对象都会抛
+// "Unsupported type of value"。这里统一兜底，避免单字段缺失导致整批写入失败。
+function dbVal(v: unknown): string | number | null {
+  if (v === undefined || v === null) return null;
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  if (typeof v === "string") return v;
+  return JSON.stringify(v);
+}
+
 export async function getRecentWithoutSummary(
   windowHours: number,
   limit: number,
@@ -383,18 +392,31 @@ export async function markSummarized(
             summarized_at = ?
           WHERE id = ?`,
     args: [
-      result.summary,
+      dbVal(result.summary),
       result.keyPoints ? JSON.stringify(result.keyPoints) : null,
-      result.industryImpact,
-      result.relevance,
-      result.quality,
-      result.impact,
-      result.final,
-      result.eventKey,
+      dbVal(result.industryImpact),
+      dbVal(result.relevance),
+      dbVal(result.quality),
+      dbVal(result.impact),
+      dbVal(result.final),
+      dbVal(result.eventKey),
       result.entities ? JSON.stringify(result.entities) : null,
       new Date().toISOString(),
       id,
     ],
+  });
+}
+
+// 回填用：只更新事件的 event_key/entities，并清空 event_id 以便 clusterEvents 重新聚类。
+// 不触碰 summary/评分，避免覆盖既有摘要。
+export async function setEventKey(
+  id: string,
+  eventKey: string | null,
+  entities: string[] | null,
+): Promise<void> {
+  await getDb().execute({
+    sql: `UPDATE articles SET event_key = ?, entities = ?, event_id = NULL WHERE id = ?`,
+    args: [dbVal(eventKey), entities ? JSON.stringify(entities) : null, id],
   });
 }
 
