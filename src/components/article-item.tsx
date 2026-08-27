@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { Star } from "@phosphor-icons/react";
+import { Fire, Star } from "@phosphor-icons/react";
 import type { FeedArticle } from "@/lib/types";
 import { isFavorite, subscribeFavorites, toggleFavorite } from "@/lib/favorites";
 import { useMounted } from "@/lib/use-mounted";
@@ -133,6 +133,12 @@ export function ArticleItem({
   }
 
   const cat = CAT_META[article.category] ?? CAT_META.community;
+  // AIHOT 重要性分级（数据已在管线计算并随 FeedArticle 下发，此处仅 surfacing）：
+  // ≥80 重磅 / 65–79 重要 / 60–64 或 null 常规
+  const tier = article.scoreFinal == null ? null
+    : article.scoreFinal >= 80 ? "major"
+    : article.scoreFinal >= 65 ? "important"
+    : "normal";
   const summary = pickSummary(article, locale);
   const keyPoints = pickKeyPoints(article, locale);
   const hasSummary = Boolean(summary);
@@ -154,6 +160,18 @@ export function ArticleItem({
           {article.sourceName}
         </a>
         <span className="meta-type">{t(cat.labelKey)}</span>
+        {tier && (
+          <span className={`tier-badge tier-${tier}`} title={`AIHOT ${article.scoreFinal}`}>
+            {tier === "major" ? (
+              <Fire size={12} weight="fill" />
+            ) : tier === "important" ? (
+              <Star size={12} weight="fill" />
+            ) : (
+              <span className="tier-dot" aria-hidden />
+            )}
+            <span className="tier-num">{article.scoreFinal}</span>
+          </span>
+        )}
         <span className="meta-sep" aria-hidden>|</span>
         <span className="meta-time">
           <time
