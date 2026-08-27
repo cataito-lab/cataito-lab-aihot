@@ -68,7 +68,10 @@
     "emptyHint": "调整偏好类别或清除搜索关键词试试",
     "sortLatest": "最新",
     "sortImportant": "重要",
-    "sortLabel": "排序"
+    "sortLabel": "排序",
+    "eventSources": "{n} 家媒体",
+    "eventSynthesis": "综合",
+    "sourcesLabel": "各源报道"
   },
   "filters": {
     "query": "Q",

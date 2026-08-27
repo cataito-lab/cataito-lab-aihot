@@ -68,7 +68,10 @@
     "emptyHint": "Try adjusting your category preferences or clearing the search.",
     "sortLatest": "Latest",
     "sortImportant": "Important",
-    "sortLabel": "Sort"
+    "sortLabel": "Sort",
+    "eventSources": "{n} sources",
+    "eventSynthesis": "Synthesis",
+    "sourcesLabel": "All sources"
   },
   "filters": {
     "query": "Q",

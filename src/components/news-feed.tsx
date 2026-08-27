@@ -7,6 +7,7 @@ import { isRecent } from "@/lib/article-utils";
 import { useMounted } from "@/lib/use-mounted";
 import type { FeedArticle, FeedFilters, FeedPage } from "@/lib/types";
 import { ArticleItem } from "./article-item";
+import { EventCard } from "./event-card";
 
 interface TimeGroup {
   key: string;
@@ -72,6 +73,28 @@ function groupByTime(
     current.items.push(item);
   }
   return groups;
+}
+
+type FeedCard =
+  | { kind: "single"; article: FeedArticle }
+  | { kind: "event"; items: FeedArticle[] };
+
+/** 把同 eventId 的文章在当前时间分组内合并为一张事件卡 */
+function mergeIntoCards(items: FeedArticle[]): FeedCard[] {
+  const byEvent = new Map<string, FeedArticle[]>();
+  const order: string[] = [];
+  for (const it of items) {
+    const key = it.eventId ? `e:${it.eventId}` : `s:${it.id}`;
+    if (!byEvent.has(key)) {
+      byEvent.set(key, []);
+      order.push(key);
+    }
+    byEvent.get(key)!.push(it);
+  }
+  return order.map((k) => {
+    const arr = byEvent.get(k)!;
+    return arr.length > 1 ? { kind: "event", items: arr } : { kind: "single", article: arr[0] };
+  });
 }
 
 function buildQuery(filters: FeedFilters, cursor?: string | null): string {
@@ -198,11 +221,15 @@ export function NewsFeed({
             <div className="time-marker" suppressHydrationWarning>
               {group.label}
             </div>
-            <ol className="timeline-cards">
-              {group.items.map(({ item, index }) => (
-                <ArticleItem key={item.id} article={item} index={index} />
-              ))}
-            </ol>
+              <ol className="timeline-cards">
+                {mergeIntoCards(group.items.map((x) => x.item)).map((card, i) =>
+                  card.kind === "event" ? (
+                    <EventCard key={`e-${card.items[0].eventId}`} items={card.items} index={i} />
+                  ) : (
+                    <ArticleItem key={card.article.id} article={card.article} index={i} />
+                  ),
+                )}
+              </ol>
           </section>
         ))}
 

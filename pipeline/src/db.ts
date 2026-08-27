@@ -48,6 +48,24 @@ const SCHEMA_STATEMENTS = [
   )`,
   `CREATE INDEX IF NOT EXISTS idx_articles_published ON articles (published_at DESC)`,
   `CREATE INDEX IF NOT EXISTS idx_articles_source ON articles (source_id, published_at DESC)`,
+  `CREATE TABLE IF NOT EXISTS events (
+    id TEXT PRIMARY KEY,
+    event_key TEXT,
+    title TEXT,
+    title_zh TEXT,
+    summary TEXT,
+    summary_en TEXT,
+    summary_ja TEXT,
+    summary_es TEXT,
+    summary_fr TEXT,
+    peak_score INTEGER,
+    source_count INTEGER NOT NULL DEFAULT 1,
+    first_seen TEXT,
+    last_seen TEXT,
+    updated_at TEXT,
+    synthesized INTEGER NOT NULL DEFAULT 0
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_events_key ON events (event_key)`,
   `CREATE TABLE IF NOT EXISTS fetch_logs (
     run_id TEXT PRIMARY KEY,
     started_at TEXT NOT NULL,
@@ -134,6 +152,10 @@ export async function ensureSchema(): Promise<void> {
   await ensureColumn("articles", "score_quality", "score_quality INTEGER");
   await ensureColumn("articles", "score_impact", "score_impact INTEGER");
   await ensureColumn("articles", "score_final", "score_final INTEGER");
+  await ensureColumn("articles", "event_key", "event_key TEXT");
+  await ensureColumn("articles", "entities", "entities TEXT");
+  await ensureColumn("articles", "event_id", "event_id TEXT");
+  await getDb().execute("CREATE INDEX IF NOT EXISTS idx_articles_event ON articles (event_id)");
   await ensureColumn("sources", "authority", "authority INTEGER");
   await migrateFts();
   for (const ddl of TRIGGER_DDLS) {
@@ -345,6 +367,8 @@ export interface SummarizeResultV3 {
   quality: number | null;
   impact: number | null;
   final: number | null;
+  eventKey: string | null;
+  entities: string[] | null;
 }
 
 export async function markSummarized(
@@ -355,6 +379,7 @@ export async function markSummarized(
     sql: `UPDATE articles SET
             summary = ?, key_points = ?, industry_impact = ?,
             score_relevance = ?, score_quality = ?, score_impact = ?, score_final = ?,
+            event_key = ?, entities = ?,
             summarized_at = ?
           WHERE id = ?`,
     args: [
@@ -365,10 +390,143 @@ export async function markSummarized(
       result.quality,
       result.impact,
       result.final,
+      result.eventKey,
+      result.entities ? JSON.stringify(result.entities) : null,
       new Date().toISOString(),
       id,
     ],
   });
+}
+
+// ---- 事件聚类 ----
+
+export interface EventRow {
+  id: string;
+  eventKey: string | null;
+  title: string | null;
+  titleZh: string | null;
+  summary: string | null;
+  summaryEn: string | null;
+  peakScore: number | null;
+  sourceCount: number;
+  firstSeen: string | null;
+  lastSeen: string | null;
+  updatedAt: string | null;
+  synthesized: number;
+}
+
+export async function findEventByKey(eventKey: string): Promise<EventRow | null> {
+  const rs = await getDb().execute({
+    sql: `SELECT id, event_key, title, title_zh, summary, summary_en, peak_score, source_count, first_seen, last_seen, updated_at, synthesized FROM events WHERE event_key = ? LIMIT 1`,
+    args: [eventKey],
+  });
+  const r = rs.rows[0];
+  if (!r) return null;
+  return {
+    id: String(r.id),
+    eventKey: r.event_key == null ? null : String(r.event_key),
+    title: r.title == null ? null : String(r.title),
+    titleZh: r.title_zh == null ? null : String(r.title_zh),
+    summary: r.summary == null ? null : String(r.summary),
+    summaryEn: r.summary_en == null ? null : String(r.summary_en),
+    peakScore: r.peak_score == null ? null : Number(r.peak_score),
+    sourceCount: Number(r.source_count ?? 1),
+    firstSeen: r.first_seen == null ? null : String(r.first_seen),
+    lastSeen: r.last_seen == null ? null : String(r.last_seen),
+    updatedAt: r.updated_at == null ? null : String(r.updated_at),
+    synthesized: Number(r.synthesized ?? 0),
+  };
+}
+
+export async function createEvent(params: {
+  id: string;
+  eventKey: string;
+  title: string;
+  titleZh: string | null;
+  peakScore: number | null;
+  firstSeen: string;
+}): Promise<void> {
+  const now = new Date().toISOString();
+  await getDb().execute({
+    sql: `INSERT INTO events (id, event_key, title, title_zh, peak_score, source_count, first_seen, last_seen, updated_at, synthesized)
+          VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, 0)`,
+    args: [params.id, params.eventKey, params.title, params.titleZh, params.peakScore, params.firstSeen, params.firstSeen, now],
+  });
+}
+
+export async function assignArticleEvent(articleId: string, eventId: string): Promise<void> {
+  await getDb().execute({
+    sql: `UPDATE articles SET event_id = ? WHERE id = ?`,
+    args: [eventId, articleId],
+  });
+}
+
+export async function updateEventStats(
+  eventId: string,
+  params: { peakScore: number | null; sourceCount: number; lastSeen: string; title: string; titleZh: string | null },
+): Promise<void> {
+  await getDb().execute({
+    sql: `UPDATE events SET peak_score = ?, source_count = ?, last_seen = ?, title = ?, title_zh = ?, updated_at = ? WHERE id = ?`,
+    args: [params.peakScore, params.sourceCount, params.lastSeen, params.title, params.titleZh, new Date().toISOString(), eventId],
+  });
+}
+
+export async function getEventMembers(
+  eventId: string,
+): Promise<Array<{ id: string; title: string; titleZh: string | null; summary: string | null; sourceId: string; scoreFinal: number | null; url: string; publishedAt: string }>> {
+  const rs = await getDb().execute({
+    sql: `SELECT id, title, title_zh, summary, source_id, score_final, url, published_at FROM articles WHERE event_id = ? ORDER BY COALESCE(score_final, -1) DESC, published_at DESC`,
+    args: [eventId],
+  });
+  return rs.rows.map((r) => ({
+    id: String(r.id),
+    title: String(r.title),
+    titleZh: r.title_zh == null ? null : String(r.title_zh),
+    summary: r.summary == null ? null : String(r.summary),
+    sourceId: String(r.source_id),
+    scoreFinal: r.score_final == null ? null : Number(r.score_final),
+    url: String(r.url),
+    publishedAt: String(r.published_at),
+  }));
+}
+
+export async function getUnsynthesizedEvents(limit: number): Promise<Array<{ id: string; eventKey: string | null; sourceCount: number }>> {
+  const rs = await getDb().execute({
+    sql: `SELECT id, event_key, source_count FROM events WHERE synthesized = 0 AND source_count >= 2 ORDER BY updated_at DESC LIMIT ?`,
+    args: [limit],
+  });
+  return rs.rows.map((r) => ({
+    id: String(r.id),
+    eventKey: r.event_key == null ? null : String(r.event_key),
+    sourceCount: Number(r.source_count ?? 1),
+  }));
+}
+
+export async function saveEventSynthesis(
+  eventId: string,
+  summaryZh: string | null,
+  summaryEn: string | null,
+): Promise<void> {
+  await getDb().execute({
+    sql: `UPDATE events SET summary = ?, summary_en = ?, synthesized = 1, updated_at = ? WHERE id = ?`,
+    args: [summaryZh, summaryEn, new Date().toISOString(), eventId],
+  });
+}
+
+/** 本运行窗口内已摘要、尚未分配 event_id 的文章（用于聚类）；非事件项也会被取出并以自身 id 成组 */
+export async function getUnclusteredArticles(windowHours: number): Promise<Array<{ id: string; eventKey: string | null; title: string; titleZh: string | null; scoreFinal: number | null; publishedAt: string }>> {
+  const rs = await getDb().execute({
+    sql: `SELECT id, event_key, title, title_zh, score_final, published_at FROM articles WHERE event_id IS NULL AND summary IS NOT NULL AND published_at >= ?`,
+    args: [new Date(Date.now() - windowHours * 3_600_000).toISOString()],
+  });
+  return rs.rows.map((r) => ({
+    id: String(r.id),
+    eventKey: r.event_key == null ? null : String(r.event_key),
+    title: String(r.title),
+    titleZh: r.title_zh == null ? null : String(r.title_zh),
+    scoreFinal: r.score_final == null ? null : Number(r.score_final),
+    publishedAt: String(r.published_at),
+  }));
 }
 
 /** 摘要目标语言 → 数据库列（zh 沿用 summary 主列，不在此列） */

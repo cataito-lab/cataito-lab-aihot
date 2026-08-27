@@ -68,7 +68,10 @@
     "emptyHint": "カテゴリ設定を変更するか、検索語をクリアしてみてください。",
     "sortLatest": "最新",
     "sortImportant": "重要",
-    "sortLabel": "並び順"
+    "sortLabel": "並び順",
+    "eventSources": "{n} メディア",
+    "eventSynthesis": "総合",
+    "sourcesLabel": "各メディア"
   },
   "filters": {
     "query": "Q",

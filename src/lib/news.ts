@@ -23,6 +23,8 @@ export interface ArticleRow {
   key_points: unknown;
   industry_impact: unknown;
   score_final: unknown;
+  event_id: unknown;
+  event_summary: unknown;
   url: unknown;
   author: unknown;
   published_at: unknown;
@@ -49,6 +51,8 @@ export function toFeedArticle(row: ArticleRow): FeedArticle {
     keyPoints: str(row.key_points),
     industryImpact: str(row.industry_impact),
     scoreFinal: row.score_final == null ? null : Number(row.score_final),
+    eventId: row.event_id == null ? null : String(row.event_id),
+    eventSummary: str(row.event_summary),
     url: String(row.url),
     author: str(row.author),
     publishedAt: String(row.published_at),
@@ -159,9 +163,11 @@ export async function listArticles(
            a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
            a.summary_es, a.summary_fr, a.url, a.author,
            a.published_at, a.fetched_at,
-           a.key_points, a.industry_impact, a.score_final
+           a.key_points, a.industry_impact, a.score_final,
+           a.event_id, e.summary AS event_summary
     FROM articles a
     JOIN sources s ON s.id = a.source_id
+    LEFT JOIN events e ON e.id = a.event_id
     ${useFts ? "JOIN articles_fts ON articles_fts.article_id = a.id" : ""}
     ${where.length > 0 ? `WHERE ${where.join(" AND ")}` : ""}
     ORDER BY ${sort === "importance" ? "COALESCE(a.score_final, -1) DESC, a.published_at DESC, a.id DESC" : "a.published_at DESC, a.id DESC"}
@@ -246,9 +252,11 @@ export async function getDailyArticles(date: string): Promise<FeedArticle[]> {
                  a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
                  a.summary_es, a.summary_fr, a.url, a.author,
                  a.published_at, a.fetched_at,
-                 a.key_points, a.industry_impact, a.score_final
+                 a.key_points, a.industry_impact, a.score_final,
+                 a.event_id, e.summary AS event_summary
           FROM articles a
           JOIN sources s ON s.id = a.source_id
+          LEFT JOIN events e ON e.id = a.event_id
           WHERE a.published_at >= ? AND a.published_at < ?
             AND (a.score_final IS NULL OR a.score_final >= ?)
           ORDER BY a.published_at DESC

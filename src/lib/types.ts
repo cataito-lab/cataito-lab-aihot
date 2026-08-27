@@ -26,6 +26,10 @@ export interface FeedArticle {
   /** 是否为估算时间 */
   estimated?: boolean;
   isNew?: boolean;
+  /** 所属事件 ID（跨源同事件合并用；单篇事件/非事件项为其自身 id） */
+  eventId: string | null;
+  /** 事件级综合摘要（来自 events 表；仅当该文章属于多源事件且有综合时非空） */
+  eventSummary: string | null;
 }
 
 export interface FeedPage {

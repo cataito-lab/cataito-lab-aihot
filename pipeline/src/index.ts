@@ -22,6 +22,7 @@ import {
 import { translatePending } from "./translate";
 import { summarizePending } from "./summarize";
 import { translateSummariesPending } from "./summary-translate";
+import { clusterEvents } from "./cluster";
 import type { FetchResult, RawItem, SourceDef } from "./types";
 
 function parseArgs(): { windowHours: number; dryRun: boolean } {
@@ -146,6 +147,7 @@ async function main(): Promise<void> {
   const summarizable = await getRecentWithoutSummary(windowHours, 40);
   await summarizePending(summarizable);
   await translateSummariesPending();
+  await clusterEvents(windowHours);
 
   const hardFail = results.length > 0 && results.every((r) => r.error);
   await finishRun(runId, {

@@ -422,6 +422,52 @@ body {
     background: var(--text-muted);
   }
 
+  /* 事件卡（跨源同事件合并） */
+  .event-chip {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .cat-dot-event {
+    background: var(--accent);
+  }
+  .event-sources {
+    margin-top: 10px;
+    border-top: 1px dashed var(--border-color);
+    padding-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .event-sources-head {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+  .src-line {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    padding: 2px 0;
+    transition: color 0.15s;
+  }
+  .src-line:hover {
+    color: var(--accent);
+  }
+  .src-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    flex-shrink: 0;
+  }
+  .src-title {
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .meta-sep {
     color: var(--border-color);
     font-size: 11px;

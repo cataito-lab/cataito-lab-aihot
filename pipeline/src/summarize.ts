@@ -12,7 +12,7 @@ const MAX_PER_RUN = 30;
 // 硬规则：禁止复述标题；只依据正文事实；原文没有的信息不得编造；营销/预告类 impact 封顶。
 const SYSTEM_PROMPT = `你是 AI 行业新闻编辑，处理一条新闻并输出 JSON（不要输出其他内容）。
 JSON 格式：
-{"summary":"80-100字的中文一段式摘要","key_points":["要点1","要点2","要点3"],"industry_impact":"一句话：对行业/企业/用户的影响","relevance":0-100,"quality":0-100,"impact":0-100}
+{"summary":"80-100字的中文一段式摘要","key_points":["要点1","要点2","要点3"],"industry_impact":"一句话：对行业/企业/用户的影响","relevance":0-100,"quality":0-100,"impact":0-100,"event_key":"规范化英文事件slug(小写连字符、≤5词、无单一事件则留空字符串)","entities":["实体1","实体2"]}
 
 各字段要求：
 - summary：一段流畅的中文，三句话结构：第一句陈述核心事实，第二句点出与以往不同的关键变化，第三句说明行业意义。禁止复述标题——只把标题换一种说法 = 失败。只能依据正文摘录中的事实，正文没有的数据、日期、性能数字一律不得出现；信息不足时如实说明。
@@ -20,7 +20,10 @@ JSON 格式：
 - industry_impact：一句话说明对行业、企业或用户的影响。
 - relevance：与 AI 主题的核心程度。100=核心 AI 内容，30=只顺带提到 AI。
 - quality：正文信息质量。100=有具体事实、数据、日期；20=营销稿/标题党/空话。
-- impact：对 AI 行业的影响面。100=影响全行业的里程碑；60=重要产品或研究；30=常规更新；10=营销活动。
+  - impact：对 AI 行业的影响面。100=影响全行业的里程碑；60=重要产品或研究；30=常规更新；10=营销活动。
+  - event_key：若该新闻指向一个具体、可独立描述的事件（发布/发布模型/收购/研究突破/融资/监管动作等），给出规范化英文 slug：小写、连字符分隔、≤5 个词、只含 a-z0-9-，例如 "openai-gpt5-release"、"anthropic-claude-4-launch"。同一事件的不同媒体、不同语言报道必须输出完全相同的 event_key（这是跨源聚类的唯一依据）。若是观点/评论/综述/教程、或没有单一事件，输出空字符串 ""。
+  - entities：提取 ≤5 个最关键实体（机构/产品/人物/技术），用于聚类兜底与展示，例如 ["OpenAI","GPT-5"]。
+
 
 标题含"直播/预告/优惠/报名/招聘/抽奖"等营销词时，impact 不得超过 30。`;
 
@@ -48,7 +51,7 @@ function clampScore(v: unknown): number | null {
   return Math.max(0, Math.min(100, Math.round(n)));
 }
 
-function parseModelJson(raw: string): Record<string, unknown> | null {
+export function parseModelJson(raw: string): Record<string, unknown> | null {
   const start = raw.indexOf("{");
   const end = raw.lastIndexOf("}");
   if (start < 0 || end <= start) return null;
@@ -59,7 +62,7 @@ function parseModelJson(raw: string): Record<string, unknown> | null {
   }
 }
 
-async function runModel(userContent: string): Promise<string | null> {
+export async function runModel(userContent: string): Promise<string | null> {
   const accountId = process.env.CF_ACCOUNT_ID;
   const token = process.env.CF_AI_API_TOKEN;
   if (!accountId || !token) return null;
@@ -108,6 +111,8 @@ function computeResult(
       quality: null,
       impact: null,
       final: null,
+      eventKey: null,
+      entities: null,
     };
   }
   const summary = typeof parsed.summary === "string" ? parsed.summary.trim() || null : null;
@@ -123,6 +128,16 @@ function computeResult(
   let impact = clampScore(parsed.impact);
   if (impact != null && PROMO_TITLE_RE.test(row.title)) impact = Math.min(impact, 30);
 
+  const rawKey = typeof parsed.event_key === "string" ? parsed.event_key : "";
+  const normKey = rawKey.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  const eventKey = normKey.length > 0 ? normKey : null;
+  const rawEnt = Array.isArray(parsed.entities) ? parsed.entities : [];
+  const entities = rawEnt
+    .map((e) => (typeof e === "string" ? e.trim() : ""))
+    .filter((e) => e.length > 0)
+    .slice(0, 5);
+  const cleanEntities = entities.length > 0 ? entities : null;
+
   let final: number | null = null;
   if (relevance != null && quality != null && impact != null) {
     const authority = Math.max(0, Math.min(100, row.authority || 60));
@@ -136,6 +151,8 @@ function computeResult(
     quality,
     impact,
     final,
+    eventKey,
+    entities: cleanEntities,
   };
 }
 
