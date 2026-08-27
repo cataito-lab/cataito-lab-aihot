@@ -6,7 +6,7 @@ import {
   subscribeFavorites,
   readFavorites,
 } from "@/lib/favorites";
-import { Star } from "@phosphor-icons/react";
+import { BookmarkSimple } from "@phosphor-icons/react";
 import type { FeedArticle } from "@/lib/types";
 import { ArticleItem } from "@/components/article-item";
 import { withFreshness } from "@/lib/article-utils";
@@ -70,7 +70,7 @@ export default function FavoritesClient() {
       {favIds.length === 0 ? (
         <div className="py-24 flex flex-col items-center gap-3 text-fg-muted">
           <div className="w-16 h-16 rounded-full bg-surface flex items-center justify-center">
-            <Star size={28} weight="regular" className="text-fg-muted" />
+            <BookmarkSimple size={28} weight="regular" className="text-fg-muted" />
           </div>
           <p className="text-[15px] text-fg">{t("empty")}</p>
           <p className="text-[13px] text-fg-muted">{t("emptyHint")}</p>

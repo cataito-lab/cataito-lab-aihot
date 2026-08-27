@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { Fire, Star } from "@phosphor-icons/react";
+import { Fire, BookmarkSimple } from "@phosphor-icons/react";
 import type { FeedArticle } from "@/lib/types";
 import { isFavorite, subscribeFavorites, toggleFavorite } from "@/lib/favorites";
 import { useMounted } from "@/lib/use-mounted";
@@ -165,7 +165,7 @@ export function ArticleItem({
             {tier === "major" ? (
               <Fire size={12} weight="fill" />
             ) : tier === "important" ? (
-              <Star size={12} weight="fill" />
+              <Fire size={12} weight="fill" />
             ) : (
               <span className="tier-dot" aria-hidden />
             )}
@@ -196,7 +196,7 @@ export function ArticleItem({
           aria-pressed={starred}
           className={`star-btn ${starred ? "starred" : ""}`}
         >
-          <Star size={16} weight={starred ? "fill" : "regular"} />
+          <BookmarkSimple size={16} weight={starred ? "fill" : "regular"} />
         </button>
       </div>
 
@@ -211,7 +211,7 @@ export function ArticleItem({
         <div className="ai-summary-box">
           <div className="ai-summary-title">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" />
             </svg>
             {t("aiSummary")}
           </div>

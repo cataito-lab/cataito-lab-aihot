@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { Globe, List, X, Star, Check } from "@phosphor-icons/react";
+import { Globe, List, X, BookmarkSimple, Check } from "@phosphor-icons/react";
 import { Link } from "@/i18n/navigation";
 import { SearchBox } from "./search-box";
 import { ThemeToggle } from "./theme-toggle";
@@ -166,7 +166,7 @@ function MobileMenu({
           onClick={onClose}
           className="mt-1 px-3 py-2.5 rounded-md text-[14px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--overlay-hover)] transition-colors flex items-center gap-2"
         >
-          <Star size={15} />
+          <BookmarkSimple size={15} />
           {t("favorites")}
         </Link>
       </nav>
@@ -206,7 +206,7 @@ export function Header({
           className="hidden sm:flex items-center justify-center h-8 w-8 rounded-md           text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
           aria-label="Favorites"
         >
-          <Star size={16} weight="regular" />
+          <BookmarkSimple size={16} weight="regular" />
         </Link>
         <ThemeToggle />
         <LocaleMenu />

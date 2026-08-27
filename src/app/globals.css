@@ -406,9 +406,9 @@ body {
     border-color: rgba(244, 63, 94, 0.30);
   }
   .tier-important {
-    color: #f59e0b;
-    background: rgba(245, 158, 11, 0.10);
-    border-color: rgba(245, 158, 11, 0.30);
+    color: #fb923c;
+    background: rgba(251, 146, 60, 0.10);
+    border-color: rgba(251, 146, 60, 0.30);
   }
   .tier-normal {
     color: var(--text-muted);
