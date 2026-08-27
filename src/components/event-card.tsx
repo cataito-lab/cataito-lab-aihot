@@ -27,6 +27,12 @@ function pickSummary(a: FeedArticle, locale: string): string | null {
   return a.summaryEn;
 }
 
+function pickField(zh: string | null, en: string | null, locale: string): string | null {
+  if (locale === "zh") return zh ?? en;
+  if (locale === "en") return en ?? zh;
+  return en ?? zh;
+}
+
 export function EventCard({
   items,
   index,
@@ -47,6 +53,8 @@ export function EventCard({
   const latest = items.reduce((m, i) => (i.publishedAt > m ? i.publishedAt : m), items[0].publishedAt);
   const eventSummary = items[0].eventSummary;
   const canonicalSummary = pickSummary(best, locale);
+  const kc = pickField(best.keyChange, best.keyChangeEn, locale);
+  const fs = pickField(best.forwardSignal, best.forwardSignalEn, locale);
 
   return (
     <li
@@ -111,6 +119,12 @@ export function EventCard({
               {tArticle("aiSummary")}
             </div>
             <div className="ai-summary-content">{canonicalSummary}</div>
+          {(kc || fs) && (
+            <div className="ai-insight-mini">
+              {kc && <span className="ai-mini-change">{kc}</span>}
+              {fs && <span className="ai-mini-fwd">{fs}</span>}
+            </div>
+          )}
           </div>
         )
       )}

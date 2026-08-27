@@ -10,22 +10,41 @@ const MAX_PER_RUN = 30;
 
 // Summarize v3：一段式摘要（事实→核心变化→行业意义）+ 要点 + 行业影响 + 三维评分。
 // 硬规则：禁止复述标题；只依据正文事实；原文没有的信息不得编造；营销/预告类 impact 封顶。
-const SYSTEM_PROMPT = `你是 AI 行业新闻编辑，处理一条新闻并输出 JSON（不要输出其他内容）。
-JSON 格式：
-{"summary":"80-100字的中文一段式摘要","key_points":["要点1","要点2","要点3"],"industry_impact":"一句话：对行业/企业/用户的影响","relevance":0-100,"quality":0-100,"impact":0-100,"event_key":"规范化英文事件slug(小写连字符、≤5词、无单一事件则留空字符串)","entities":["实体1","实体2"]}
+const SYSTEM_PROMPT = `你是专业的 AI 行业分析师。把一条 AI 新闻转化为有分析价值的 AI Insight（智能洞察），帮助用户理解：发生了什么、真正的变化、为什么值得关注、影响谁、接下来关注什么。
 
-各字段要求：
-- summary：一段流畅的中文，三句话结构：第一句陈述核心事实，第二句点出与以往不同的关键变化，第三句说明行业意义。禁止复述标题——只把标题换一种说法 = 失败。只能依据正文摘录中的事实，正文没有的数据、日期、性能数字一律不得出现；信息不足时如实说明。
-- key_points：恰好 3 条，每条 ≤20 字，提取正文中的具体事实（数据/日期/功能/价格/涉及方）。
-- industry_impact：一句话说明对行业、企业或用户的影响。
-- relevance：与 AI 主题的核心程度。100=核心 AI 内容，30=只顺带提到 AI。
-- quality：正文信息质量。100=有具体事实、数据、日期；20=营销稿/标题党/空话。
-  - impact：对 AI 行业的影响面。100=影响全行业的里程碑；60=重要产品或研究；30=常规更新；10=营销活动。
-  - event_key：若该新闻指向一个具体、可独立描述的事件（发布/发布模型/收购/研究突破/融资/监管动作等），给出规范化英文 slug：小写、连字符分隔、≤5 个词、只含 a-z0-9-，例如 "openai-gpt5-release"、"anthropic-claude-4-launch"。同一事件的不同媒体、不同语言报道必须输出完全相同的 event_key（这是跨源聚类的唯一依据）。若是观点/评论/综述/教程、或没有单一事件，输出空字符串 ""。
-  - entities：提取 ≤5 个最关键实体（机构/产品/人物/技术），用于聚类兜底与展示，例如 ["OpenAI","GPT-5"]。
+严禁只复述标题；若删去标题后洞察仍提供新信息才算合格。事实与推断分离：已确认事实来自原文，合理推断可用"这意味着/表明"，禁止无依据预测。
 
+分析方法（5 层）：
+1. 事实：仅陈述新闻明确确认的信息，不夸大、不臆测。
+2. 核心变化：相比过去什么不同（新模型/功能/价格/能力/合作/融资/政策…），解释"它改变了什么"。
+3. 重要性：对产业/竞争格局/用户/成本/技术方向意味着什么；禁止空话（"重大突破"等）除非有证据。
+4. 影响对象：开发者 / 企业用户 / 普通用户 / AI 创业者 / AI研究者，只列真正相关者，各写一句影响。
+5. 未来信号：基于事实判断接下来值得观察什么；无法判断填"暂无明确后续信号。"。
 
-标题含"直播/预告/优惠/报名/招聘/抽奖"等营销词时，impact 不得超过 30。`;
+按新闻类型（大模型/AI Agent/产品/API/开源模型/AI研究/芯片硬件/云计算/公司动态/融资/收购/合作/政策法规/AI安全/机器人/多模态/行业趋势）采用不同侧重。
+
+严格输出 JSON（不要输出其他内容），中英双语：
+{
+  "insight": "中文：2-4句(≤120字)，含事实+核心变化+意义",
+  "insight_en": "English equivalent",
+  "key_change": "中文一句话最大变化(≤30字)",
+  "key_change_en": "English",
+  "why_it_matters": "中文为什么值得关注(≤60字)",
+  "why_it_matters_en": "English",
+  "impact": [{"audience":"中文受众","description":"中文影响(≤40字)"}],
+  "impact_en": [{"audience":"English audience","description":"English"}],
+  "forward_signal": "中文接下来关注什么(≤60字)",
+  "forward_signal_en": "English",
+  "category": ["大模型","API"],
+  "category_en": ["LLM","API"],
+  "relevance": 0-100,
+  "quality": 0-100,
+  "impact_score": 0-100,
+  "importance_score": 0-100,
+  "event_key": "规范英文slug(小写连字符≤5词,仅a-z0-9-;无单一事件则空字符串\"\")",
+  "entities": ["实体1","实体2"]
+}
+必须输出 relevance/quality/impact_score/importance_score 四个 0-100 整数。impact_score 为对 AI 行业的影响面（营销/预告类≤30）；importance_score 为综合新闻价值（90-100改变行业方向,75-89重大,60-74明显价值,40-59普通,20-39小更新,0-19低价值）。event_key 同一事件不同媒体/语言必须完全相同（跨源聚类唯一依据）。`
 
 const PROMO_TITLE_RE = /(直播|预告|优惠|报名|招聘|抽奖|优惠券|免费领)/;
 
@@ -74,7 +93,7 @@ export async function runModel(userContent: string): Promise<string | null> {
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userContent },
       ],
-      max_tokens: 500,
+      max_tokens: 1100,
     }),
     signal: AbortSignal.timeout(45000),
   });
@@ -117,7 +136,34 @@ export function normalizeEventMeta(parsed: Record<string, unknown> | null): {
   return { eventKey, entities: entities.length > 0 ? entities : null };
 }
 
-function computeResult(
+function asStr(v: unknown): string | null {
+  return typeof v === "string" ? v.trim() || null : null;
+}
+function asStrArray(v: unknown): string[] | null {
+  if (!Array.isArray(v)) return null;
+  const arr = v
+    .map((x) => (typeof x === "string" ? x.trim() : ""))
+    .filter((s) => s.length > 0)
+    .slice(0, 5);
+  return arr.length ? arr : null;
+}
+function asImpactArray(v: unknown): { audience: string; description: string }[] | null {
+  if (!Array.isArray(v)) return null;
+  const arr = v
+    .map((x) => {
+      if (typeof x !== "object" || x == null) return null;
+      const o = x as Record<string, unknown>;
+      const audience = asStr(o.audience);
+      const description = asStr(o.description);
+      if (!audience || !description) return null;
+      return { audience, description };
+    })
+    .filter((x): x is { audience: string; description: string } => x !== null)
+    .slice(0, 4);
+  return arr.length ? arr : null;
+}
+
+export function computeResult(
   row: SummarizableRow,
   parsed: Record<string, unknown> | null,
   fallbackSummary: string | null,
@@ -126,43 +172,68 @@ function computeResult(
     // 兼容降级：模型未返回结构化 JSON 时，只保留纯摘要文本，不打分
     return {
       summary: fallbackSummary,
-      keyPoints: null,
-      industryImpact: null,
+      summaryEn: null,
+      keyChange: null,
+      keyChangeEn: null,
+      whyItMatters: null,
+      whyItMattersEn: null,
+      forwardSignal: null,
+      forwardSignalEn: null,
+      impact: null,
+      impactEn: null,
+      category: null,
+      categoryEn: null,
       relevance: null,
       quality: null,
-      impact: null,
+      impactScore: null,
+      importanceScore: null,
       final: null,
       eventKey: null,
       entities: null,
     };
   }
-  const summary = typeof parsed.summary === "string" ? parsed.summary.trim() || null : null;
-  const rawPoints = Array.isArray(parsed.key_points) ? parsed.key_points : [];
-  const keyPoints = rawPoints
-    .map((p) => (typeof p === "string" ? p.trim() : ""))
-    .filter((p) => p.length > 0)
-    .slice(0, 3);
-  const industryImpact =
-    typeof parsed.industry_impact === "string" ? parsed.industry_impact.trim() || null : null;
+  const summary = asStr(parsed.insight) ?? fallbackSummary;
+  const summaryEn = asStr(parsed.insight_en);
+  const keyChange = asStr(parsed.key_change);
+  const keyChangeEn = asStr(parsed.key_change_en);
+  const whyItMatters = asStr(parsed.why_it_matters);
+  const whyItMattersEn = asStr(parsed.why_it_matters_en);
+  const forwardSignal = asStr(parsed.forward_signal);
+  const forwardSignalEn = asStr(parsed.forward_signal_en);
+  const impact = asImpactArray(parsed.impact);
+  const impactEn = asImpactArray(parsed.impact_en);
+  const category = asStrArray(parsed.category);
+  const categoryEn = asStrArray(parsed.category_en);
   const relevance = clampScore(parsed.relevance);
   const quality = clampScore(parsed.quality);
-  let impact = clampScore(parsed.impact);
-  if (impact != null && PROMO_TITLE_RE.test(row.title)) impact = Math.min(impact, 30);
+  let impactScore = clampScore(parsed.impact_score);
+  if (impactScore != null && PROMO_TITLE_RE.test(row.title)) impactScore = Math.min(impactScore, 30);
+  const importanceScore = clampScore(parsed.importance_score);
 
   const { eventKey, entities: cleanEntities } = normalizeEventMeta(parsed);
 
   let final: number | null = null;
-  if (relevance != null && quality != null && impact != null) {
+  if (relevance != null && quality != null && impactScore != null) {
     const authority = Math.max(0, Math.min(100, row.authority || 60));
-    final = Math.round(0.2 * relevance + 0.2 * authority + 0.25 * quality + 0.35 * impact);
+    final = Math.round(0.2 * relevance + 0.2 * authority + 0.25 * quality + 0.35 * impactScore);
   }
   return {
     summary: summary ?? fallbackSummary,
-    keyPoints: keyPoints.length > 0 ? keyPoints : null,
-    industryImpact,
+    summaryEn,
+    keyChange,
+    keyChangeEn,
+    whyItMatters,
+    whyItMattersEn,
+    forwardSignal,
+    forwardSignalEn,
+    impact: impact ? JSON.stringify(impact) : null,
+    impactEn: impactEn ? JSON.stringify(impactEn) : null,
+    category: category ? JSON.stringify(category) : null,
+    categoryEn: categoryEn ? JSON.stringify(categoryEn) : null,
     relevance,
     quality,
-    impact,
+    impactScore,
+    importanceScore,
     final,
     eventKey,
     entities: cleanEntities,
@@ -215,11 +286,21 @@ export async function summarizePending(rows: SummarizableRow[]): Promise<number>
     if (!row.content || row.content.length < MIN_CONTENT_CHARS) {
       await markSummarized(row.id, {
         summary: null,
-        keyPoints: null,
-        industryImpact: null,
+        summaryEn: null,
+        keyChange: null,
+        keyChangeEn: null,
+        whyItMatters: null,
+        whyItMattersEn: null,
+        forwardSignal: null,
+        forwardSignalEn: null,
+        impact: null,
+        impactEn: null,
+        category: null,
+        categoryEn: null,
         relevance: null,
         quality: null,
-        impact: null,
+        impactScore: null,
+        importanceScore: null,
         final: null,
         eventKey: null,
         entities: null,

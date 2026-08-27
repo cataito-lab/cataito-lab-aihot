@@ -24,6 +24,12 @@ function pickSummary(m: EventMember, locale: string): string | null {
   return m.summaryEn;
 }
 
+function pickField(zh: string | null, en: string | null, locale: string): string | null {
+  if (locale === "zh") return zh ?? en;
+  if (locale === "en") return en ?? zh;
+  return en ?? zh;
+}
+
 function fmt(d: string, locale: string): string {
   return new Date(d).toLocaleString(locale, {
     year: "numeric",
@@ -110,6 +116,17 @@ function MemberCard({ m, locale, verifyLabel }: {
         </a>
       </h3>
       {summary && <p className="member-summary">{summary}</p>}
+      {(() => {
+        const kc = pickField(m.keyChange, m.keyChangeEn, locale);
+        const fs = pickField(m.forwardSignal, m.forwardSignalEn, locale);
+        if (!kc && !fs) return null;
+        return (
+          <div className="ai-insight-mini">
+            {kc && <span className="ai-mini-change">{kc}</span>}
+            {fs && <span className="ai-mini-fwd">{fs}</span>}
+          </div>
+        );
+      })()}
       <a className="verify-link" href={m.url} target="_blank" rel="noopener noreferrer">
         {verifyLabel} →
       </a>

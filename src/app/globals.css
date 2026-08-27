@@ -672,6 +672,87 @@ body {
     color: var(--accent);
   }
 
+  /* AI Insight 子结构（关键变化 / 为何重要 / 影响对象 / 后续信号） */
+  .ai-insight-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+
+  .ai-insight-row svg {
+    flex: 0 0 auto;
+    margin-top: 2px;
+    color: var(--accent);
+  }
+
+  .ai-impact {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    list-style: none;
+  }
+
+  .ai-impact li {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--text-muted);
+  }
+
+  .ai-impact-aud {
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 11.5px;
+    letter-spacing: 0.02em;
+  }
+
+  /* 事件卡 / 成员卡的紧凑洞察行 */
+  .ai-insight-mini {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--text-muted);
+  }
+
+  .ai-mini-change::before {
+    content: "▲ ";
+    color: var(--accent);
+  }
+
+  .ai-mini-fwd::before {
+    content: "◎ ";
+    color: var(--accent);
+  }
+
+  .ai-tags {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .ai-tag {
+    font-size: 11px;
+    line-height: 1.4;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  }
+
   /* 收藏按钮：meta 行右侧 ghost 图标，默认低对比，悬停/已藏显主题色 */
   .star-btn {
     margin-left: auto;

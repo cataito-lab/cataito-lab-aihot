@@ -154,6 +154,17 @@ export async function ensureSchema(): Promise<void> {
   await ensureColumn("articles", "score_final", "score_final INTEGER");
   await ensureColumn("articles", "event_key", "event_key TEXT");
   await ensureColumn("articles", "entities", "entities TEXT");
+  await ensureColumn("articles", "key_change", "key_change TEXT");
+  await ensureColumn("articles", "key_change_en", "key_change_en TEXT");
+  await ensureColumn("articles", "why_it_matters", "why_it_matters TEXT");
+  await ensureColumn("articles", "why_it_matters_en", "why_it_matters_en TEXT");
+  await ensureColumn("articles", "forward_signal", "forward_signal TEXT");
+  await ensureColumn("articles", "forward_signal_en", "forward_signal_en TEXT");
+  await ensureColumn("articles", "impact", "impact TEXT");
+  await ensureColumn("articles", "impact_en", "impact_en TEXT");
+  await ensureColumn("articles", "category", "category TEXT");
+  await ensureColumn("articles", "category_en", "category_en TEXT");
+  await ensureColumn("articles", "importance_score", "importance_score INTEGER");
   await ensureColumn("articles", "event_id", "event_id TEXT");
   await getDb().execute("CREATE INDEX IF NOT EXISTS idx_articles_event ON articles (event_id)");
   await ensureColumn("sources", "authority", "authority INTEGER");
@@ -370,11 +381,21 @@ export async function countSummariesToday(): Promise<number> {
 
 export interface SummarizeResultV3 {
   summary: string | null;
-  keyPoints: string[] | null;
-  industryImpact: string | null;
+  summaryEn: string | null;
+  keyChange: string | null;
+  keyChangeEn: string | null;
+  whyItMatters: string | null;
+  whyItMattersEn: string | null;
+  forwardSignal: string | null;
+  forwardSignalEn: string | null;
+  impact: string | null; // JSON: {audience,description}[]
+  impactEn: string | null; // JSON: {audience,description}[]
+  category: string | null; // JSON: string[]
+  categoryEn: string | null; // JSON: string[]
   relevance: number | null;
   quality: number | null;
-  impact: number | null;
+  impactScore: number | null;
+  importanceScore: number | null;
   final: number | null;
   eventKey: string | null;
   entities: string[] | null;
@@ -386,19 +407,35 @@ export async function markSummarized(
 ): Promise<void> {
   await getDb().execute({
     sql: `UPDATE articles SET
-            summary = ?, key_points = ?, industry_impact = ?,
+            summary = ?, summary_en = ?,
+            key_change = ?, key_change_en = ?,
+            why_it_matters = ?, why_it_matters_en = ?,
+            forward_signal = ?, forward_signal_en = ?,
+            impact = ?, impact_en = ?,
+            category = ?, category_en = ?,
             score_relevance = ?, score_quality = ?, score_impact = ?, score_final = ?,
+            importance_score = ?,
             event_key = ?, entities = ?,
             summarized_at = ?
           WHERE id = ?`,
     args: [
       dbVal(result.summary),
-      result.keyPoints ? JSON.stringify(result.keyPoints) : null,
-      dbVal(result.industryImpact),
+      dbVal(result.summaryEn),
+      dbVal(result.keyChange),
+      dbVal(result.keyChangeEn),
+      dbVal(result.whyItMatters),
+      dbVal(result.whyItMattersEn),
+      dbVal(result.forwardSignal),
+      dbVal(result.forwardSignalEn),
+      dbVal(result.impact),
+      dbVal(result.impactEn),
+      dbVal(result.category),
+      dbVal(result.categoryEn),
       dbVal(result.relevance),
       dbVal(result.quality),
-      dbVal(result.impact),
+      dbVal(result.impactScore),
       dbVal(result.final),
+      dbVal(result.importanceScore),
       dbVal(result.eventKey),
       result.entities ? JSON.stringify(result.entities) : null,
       new Date().toISOString(),

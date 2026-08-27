@@ -34,6 +34,17 @@ export interface ArticleRow {
   event_id: unknown;
   event_summary: unknown;
   event_key: unknown;
+  key_change: unknown;
+  key_change_en: unknown;
+  why_it_matters: unknown;
+  why_it_matters_en: unknown;
+  forward_signal: unknown;
+  forward_signal_en: unknown;
+  impact: unknown;
+  impact_en: unknown;
+  ai_category: unknown;
+  ai_category_en: unknown;
+  importance_score: unknown;
   url: unknown;
   author: unknown;
   published_at: unknown;
@@ -63,6 +74,17 @@ export function toFeedArticle(row: ArticleRow): FeedArticle {
     eventId: row.event_id == null ? null : String(row.event_id),
     eventSummary: str(row.event_summary),
     eventKey: row.event_key == null ? null : String(row.event_key),
+    keyChange: str(row.key_change),
+    keyChangeEn: str(row.key_change_en),
+    whyItMatters: str(row.why_it_matters),
+    whyItMattersEn: str(row.why_it_matters_en),
+    forwardSignal: str(row.forward_signal),
+    forwardSignalEn: str(row.forward_signal_en),
+    impact: str(row.impact),
+    impactEn: str(row.impact_en),
+    aiCategory: str(row.ai_category),
+    aiCategoryEn: str(row.ai_category_en),
+    importanceScore: row.importance_score == null ? null : Number(row.importance_score),
     url: String(row.url),
     author: str(row.author),
     publishedAt: String(row.published_at),
@@ -173,8 +195,11 @@ export async function listArticles(
            a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
            a.summary_es, a.summary_fr, a.url, a.author,
            a.published_at, a.fetched_at,
-            a.key_points, a.industry_impact, a.score_final,
-            a.event_id, e.summary AS event_summary, e.event_key AS event_key
+             a.key_points, a.industry_impact, a.score_final,
+             a.key_change, a.key_change_en, a.why_it_matters, a.why_it_matters_en,
+             a.forward_signal, a.forward_signal_en,
+             a.impact, a.impact_en, a.category AS ai_category, a.category_en AS ai_category_en, a.importance_score,
+             a.event_id, e.summary AS event_summary, e.event_key AS event_key
      FROM articles a
      JOIN sources s ON s.id = a.source_id
      LEFT JOIN events e ON e.id = a.event_id
@@ -340,8 +365,11 @@ export async function getEventMembers(eventId: string): Promise<EventMember[]> {
   const db = await getDb();
   const rs = await db.execute({
     sql: `SELECT a.id, a.source_id, s.name AS source_name, s.category, s.lang,
-                 a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
-                 a.summary_es, a.summary_fr, a.url, a.author, a.published_at, a.score_final
+                  a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
+                  a.summary_es, a.summary_fr, a.url, a.author, a.published_at, a.score_final,
+                  a.key_change, a.key_change_en, a.why_it_matters, a.why_it_matters_en,
+                  a.forward_signal, a.forward_signal_en,
+                  a.impact, a.impact_en, a.category AS ai_category, a.category_en AS ai_category_en, a.importance_score
           FROM articles a JOIN sources s ON s.id = a.source_id
           WHERE a.event_id = ?
           ORDER BY a.published_at DESC`,
@@ -361,6 +389,17 @@ export async function getEventMembers(eventId: string): Promise<EventMember[]> {
     summaryEs: str(r.summary_es),
     summaryFr: str(r.summary_fr),
     scoreFinal: r.score_final == null ? null : Number(r.score_final),
+    keyChange: str(r.key_change),
+    keyChangeEn: str(r.key_change_en),
+    whyItMatters: str(r.why_it_matters),
+    whyItMattersEn: str(r.why_it_matters_en),
+    forwardSignal: str(r.forward_signal),
+    forwardSignalEn: str(r.forward_signal_en),
+    impact: str(r.impact),
+    impactEn: str(r.impact_en),
+    aiCategory: str(r.ai_category),
+    aiCategoryEn: str(r.ai_category_en),
+    importanceScore: r.importance_score == null ? null : Number(r.importance_score),
     url: String(r.url),
     author: str(r.author),
     publishedAt: String(r.published_at),

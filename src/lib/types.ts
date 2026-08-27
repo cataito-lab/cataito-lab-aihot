@@ -32,6 +32,21 @@ export interface FeedArticle {
   eventKey: string | null;
   /** 事件级综合摘要（来自 events 表；仅当该文章属于多源事件且有综合时非空） */
   eventSummary: string | null;
+  /** AI Insight 子结构（智能洞察） */
+  keyChange: string | null;
+  keyChangeEn: string | null;
+  whyItMatters: string | null;
+  whyItMattersEn: string | null;
+  forwardSignal: string | null;
+  forwardSignalEn: string | null;
+  /** JSON: {audience,description}[] */
+  impact: string | null;
+  impactEn: string | null;
+  /** JSON: string[] */
+  aiCategory: string | null;
+  aiCategoryEn: string | null;
+  /** 综合新闻价值 0-100（来自 AI Insight） */
+  importanceScore: number | null;
 }
 
 /** 事件详情页中的单条成员报道 */
@@ -53,6 +68,18 @@ export interface EventMember {
   url: string;
   author: string | null;
   publishedAt: string;
+  /** AI Insight 子结构 */
+  keyChange: string | null;
+  keyChangeEn: string | null;
+  whyItMatters: string | null;
+  whyItMattersEn: string | null;
+  forwardSignal: string | null;
+  forwardSignalEn: string | null;
+  impact: string | null;
+  impactEn: string | null;
+  aiCategory: string | null;
+  aiCategoryEn: string | null;
+  importanceScore: number | null;
 }
 
 /** 事件详情（跨源聚类结果） */

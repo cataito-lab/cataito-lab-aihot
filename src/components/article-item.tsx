@@ -97,14 +97,49 @@ function pickSummary(article: FeedArticle, locale: string): string | null {
   return article.summaryEn;
 }
 
-/** 核心要点：仅中文界面展示（要点暂不翻译，避免语言混杂） */
-function pickKeyPoints(article: FeedArticle, locale: string): string[] | null {
-  if (locale !== "zh" || !article.keyPoints) return null;
+/** 单字段按 locale 取：中文界面用中文，其余界面优先英文回退中文 */
+function pickField(zh: string | null, en: string | null, locale: string): string | null {
+  if (locale === "zh") return zh ?? en;
+  if (locale === "en") return en ?? zh;
+  return en ?? zh;
+}
+
+/** 影响对象 JSON 按 locale 取 */
+function pickImpact(
+  zhJson: string | null,
+  enJson: string | null,
+  locale: string,
+): { audience: string; description: string }[] | null {
+  const raw = locale === "zh" ? zhJson : enJson ?? zhJson;
+  if (!raw) return null;
   try {
-    const arr = JSON.parse(article.keyPoints) as unknown;
+    const arr = JSON.parse(raw) as unknown;
     if (!Array.isArray(arr)) return null;
-    const points = arr.filter((p): p is string => typeof p === "string" && p.trim().length > 0);
-    return points.length > 0 ? points : null;
+    const out = arr
+      .filter(
+        (x): x is { audience: string; description: string } =>
+          !!x &&
+          typeof (x as Record<string, unknown>).audience === "string" &&
+          typeof (x as Record<string, unknown>).description === "string",
+      )
+      .slice(0, 4);
+    return out.length ? out : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 新闻类型标签 JSON 按 locale 取 */
+function pickTags(zhJson: string | null, enJson: string | null, locale: string): string[] | null {
+  const raw = locale === "zh" ? zhJson : enJson ?? zhJson;
+  if (!raw) return null;
+  try {
+    const arr = JSON.parse(raw) as unknown;
+    if (!Array.isArray(arr)) return null;
+    const out = arr
+      .filter((x): x is string => typeof x === "string" && x.trim().length > 0)
+      .slice(0, 3);
+    return out.length ? out : null;
   } catch {
     return null;
   }
@@ -140,7 +175,11 @@ export function ArticleItem({
     : article.scoreFinal >= 65 ? "important"
     : "normal";
   const summary = pickSummary(article, locale);
-  const keyPoints = pickKeyPoints(article, locale);
+  const keyChange = pickField(article.keyChange, article.keyChangeEn, locale);
+  const whyItMatters = pickField(article.whyItMatters, article.whyItMattersEn, locale);
+  const forwardSignal = pickField(article.forwardSignal, article.forwardSignalEn, locale);
+  const impact = pickImpact(article.impact, article.impactEn, locale);
+  const tags = pickTags(article.aiCategory, article.aiCategoryEn, locale);
   const hasSummary = Boolean(summary);
 
   return (
@@ -216,12 +255,49 @@ export function ArticleItem({
             {t("aiSummary")}
           </div>
           <div className="ai-summary-content">{summary}</div>
-          {keyPoints && (
-            <ul className="ai-key-points">
-              {keyPoints.map((p, i) => (
-                <li key={i}>{p}</li>
+          {keyChange && (
+            <div className="ai-insight-row ai-change">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M3 17l6-6 4 4 8-8" />
+                <path d="M21 7v6h-6" />
+              </svg>
+              <span>{keyChange}</span>
+            </div>
+          )}
+          {whyItMatters && (
+            <div className="ai-insight-row ai-why">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z" />
+                <path d="M9 21h6" />
+              </svg>
+              <span>{whyItMatters}</span>
+            </div>
+          )}
+          {impact && (
+            <ul className="ai-impact">
+              {impact.map((x, i) => (
+                <li key={i}>
+                  <span className="ai-impact-aud">{x.audience}</span>
+                  <span>{x.description}</span>
+                </li>
               ))}
             </ul>
+          )}
+          {forwardSignal && (
+            <div className="ai-insight-row ai-fwd">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <circle cx="12" cy="12" r="2" />
+                <path d="M7.5 7.5a6 6 0 000 9M16.5 7.5a6 6 0 010 9M4.5 4.5a10 10 0 000 15M19.5 4.5a10 10 0 010 15" />
+              </svg>
+              <span>{forwardSignal}</span>
+            </div>
+          )}
+          {tags && (
+            <div className="ai-tags">
+              {tags.map((tg, i) => (
+                <span key={i} className="ai-tag">{tg}</span>
+              ))}
+            </div>
           )}
         </div>
       )}
