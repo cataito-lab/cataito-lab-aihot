@@ -71,7 +71,8 @@
     "sortLabel": "並び順",
     "eventSources": "{n} メディア",
     "eventSynthesis": "総合",
-    "sourcesLabel": "各メディア"
+    "sourcesLabel": "各メディア",
+    "viewEvent": "イベントを見る"
   },
   "filters": {
     "query": "Q",
@@ -99,5 +100,17 @@
   "footer": {
     "copyright": "© 2026 AI 速報 — a Cataito project",
     "tzNote": "時刻はあなたの現地時間で表示"
+  },
+  "event": {
+    "back": "← タイムラインに戻る",
+    "overview": "イベント概要",
+    "sources": "情報源",
+    "synthesis": "イベント要約",
+    "firstSeen": "初出",
+    "lastSeen": "最終更新",
+    "notFoundTitle": "イベントが見つかりません",
+    "notFoundHint": "このイベントは統合されたか、リンクが正しくない可能性があります。",
+    "backHome": "ホームに戻る",
+    "untitled": "名称未設定のイベント"
   }
 }

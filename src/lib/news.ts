@@ -1,6 +1,14 @@
 import "server-only";
 import { getDb } from "./db";
-import type { BriefMeta, CategoryCount, FeedArticle, FeedFilters, FeedPage } from "./types";
+import type {
+  BriefMeta,
+  CategoryCount,
+  EventDetail,
+  EventMember,
+  FeedArticle,
+  FeedFilters,
+  FeedPage,
+} from "./types";
 
 const PAGE_SIZE = 50;
 
@@ -25,6 +33,7 @@ export interface ArticleRow {
   score_final: unknown;
   event_id: unknown;
   event_summary: unknown;
+  event_key: unknown;
   url: unknown;
   author: unknown;
   published_at: unknown;
@@ -53,6 +62,7 @@ export function toFeedArticle(row: ArticleRow): FeedArticle {
     scoreFinal: row.score_final == null ? null : Number(row.score_final),
     eventId: row.event_id == null ? null : String(row.event_id),
     eventSummary: str(row.event_summary),
+    eventKey: row.event_key == null ? null : String(row.event_key),
     url: String(row.url),
     author: str(row.author),
     publishedAt: String(row.published_at),
@@ -163,12 +173,12 @@ export async function listArticles(
            a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
            a.summary_es, a.summary_fr, a.url, a.author,
            a.published_at, a.fetched_at,
-           a.key_points, a.industry_impact, a.score_final,
-           a.event_id, e.summary AS event_summary
-    FROM articles a
-    JOIN sources s ON s.id = a.source_id
-    LEFT JOIN events e ON e.id = a.event_id
-    ${useFts ? "JOIN articles_fts ON articles_fts.article_id = a.id" : ""}
+            a.key_points, a.industry_impact, a.score_final,
+            a.event_id, e.summary AS event_summary, e.event_key AS event_key
+     FROM articles a
+     JOIN sources s ON s.id = a.source_id
+     LEFT JOIN events e ON e.id = a.event_id
+     ${useFts ? "JOIN articles_fts ON articles_fts.article_id = a.id" : ""}
     ${where.length > 0 ? `WHERE ${where.join(" AND ")}` : ""}
     ORDER BY ${sort === "importance" ? "COALESCE(a.score_final, -1) DESC, a.published_at DESC, a.id DESC" : "a.published_at DESC, a.id DESC"}
     LIMIT ?`;
@@ -252,12 +262,12 @@ export async function getDailyArticles(date: string): Promise<FeedArticle[]> {
                  a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
                  a.summary_es, a.summary_fr, a.url, a.author,
                  a.published_at, a.fetched_at,
-                 a.key_points, a.industry_impact, a.score_final,
-                 a.event_id, e.summary AS event_summary
-          FROM articles a
-          JOIN sources s ON s.id = a.source_id
-          LEFT JOIN events e ON e.id = a.event_id
-          WHERE a.published_at >= ? AND a.published_at < ?
+                  a.key_points, a.industry_impact, a.score_final,
+                  a.event_id, e.summary AS event_summary, e.event_key AS event_key
+           FROM articles a
+           JOIN sources s ON s.id = a.source_id
+           LEFT JOIN events e ON e.id = a.event_id
+           WHERE a.published_at >= ? AND a.published_at < ?
             AND (a.score_final IS NULL OR a.score_final >= ?)
           ORDER BY a.published_at DESC
           LIMIT 400`,
@@ -296,4 +306,73 @@ export async function getBriefMeta(): Promise<BriefMeta> {  const db = await get
     sourcesEnabled: Number(srcRs.rows[0]?.n ?? 0),
     categoryCounts,
   };
+}
+
+/** 取事件（按 event_key），含其全部成员报道；不存在返回 null */
+export async function getEvent(key: string): Promise<EventDetail | null> {
+  const db = await getDb();
+  const ev = await db.execute({
+    sql: `SELECT e.id, e.event_key, e.title, e.title_zh, e.summary, e.summary_en,
+                 e.source_count, e.first_seen, e.last_seen, e.peak_score
+          FROM events e WHERE e.event_key = ?`,
+    args: [key],
+  });
+  const row = ev.rows[0];
+  if (!row) return null;
+  const members = await getEventMembers(String(row.id));
+  return {
+    id: String(row.id),
+    eventKey: String(row.event_key),
+    title: str(row.title),
+    titleZh: str(row.title_zh),
+    summary: str(row.summary),
+    summaryEn: str(row.summary_en),
+    sourceCount: Number(row.source_count ?? 0),
+    firstSeen: String(row.first_seen),
+    lastSeen: String(row.last_seen),
+    peakScore: row.peak_score == null ? null : Number(row.peak_score),
+    members,
+  };
+}
+
+/** 事件的全部成员报道（按发布时间倒序） */
+export async function getEventMembers(eventId: string): Promise<EventMember[]> {
+  const db = await getDb();
+  const rs = await db.execute({
+    sql: `SELECT a.id, a.source_id, s.name AS source_name, s.category, s.lang,
+                 a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
+                 a.summary_es, a.summary_fr, a.url, a.author, a.published_at, a.score_final
+          FROM articles a JOIN sources s ON s.id = a.source_id
+          WHERE a.event_id = ?
+          ORDER BY a.published_at DESC`,
+    args: [eventId],
+  });
+  return rs.rows.map((r) => ({
+    id: String(r.id),
+    sourceId: String(r.source_id),
+    sourceName: String(r.source_name),
+    category: String(r.category),
+    lang: String(r.lang),
+    title: String(r.title),
+    titleZh: str(r.title_zh),
+    summary: str(r.summary),
+    summaryEn: str(r.summary_en),
+    summaryJa: str(r.summary_ja),
+    summaryEs: str(r.summary_es),
+    summaryFr: str(r.summary_fr),
+    scoreFinal: r.score_final == null ? null : Number(r.score_final),
+    url: String(r.url),
+    author: str(r.author),
+    publishedAt: String(r.published_at),
+  }));
+}
+
+/** 用于 sitemap：近期多源事件的 event_key 列表 */
+export async function listEventKeys(limit = 200): Promise<string[]> {
+  const db = await getDb();
+  const rs = await db.execute({
+    sql: `SELECT event_key FROM events WHERE source_count >= 2 ORDER BY last_seen DESC LIMIT ?`,
+    args: [limit],
+  });
+  return rs.rows.map((r) => String(r.event_key)).filter((k) => k.length > 0);
 }

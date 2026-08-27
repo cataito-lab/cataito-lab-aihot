@@ -71,7 +71,8 @@
     "sortLabel": "Sort",
     "eventSources": "{n} sources",
     "eventSynthesis": "Synthesis",
-    "sourcesLabel": "All sources"
+    "sourcesLabel": "All sources",
+    "viewEvent": "View event"
   },
   "filters": {
     "query": "Q",
@@ -99,5 +100,17 @@
   "footer": {
     "copyright": "© 2026 AI Hot Takes — a Cataito project",
     "tzNote": "Times shown in your local timezone"
+  },
+  "event": {
+    "back": "← Back to timeline",
+    "overview": "Event overview",
+    "sources": "Sources",
+    "synthesis": "Event synthesis",
+    "firstSeen": "First seen",
+    "lastSeen": "Last updated",
+    "notFoundTitle": "Event not found",
+    "notFoundHint": "This event may have been merged or the link is incorrect.",
+    "backHome": "Back to home",
+    "untitled": "Untitled event"
   }
 }

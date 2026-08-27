@@ -2,6 +2,7 @@
 
 import { useTranslations, useLocale } from "next-intl";
 import { Fire, Star } from "@phosphor-icons/react";
+import { Link } from "@/i18n/navigation";
 import type { FeedArticle } from "@/lib/types";
 
 const CAT_DOT: Record<string, string> = {
@@ -26,7 +27,15 @@ function pickSummary(a: FeedArticle, locale: string): string | null {
   return a.summaryEn;
 }
 
-export function EventCard({ items, index }: { items: FeedArticle[]; index: number }) {
+export function EventCard({
+  items,
+  index,
+  eventKey,
+}: {
+  items: FeedArticle[];
+  index: number;
+  eventKey?: string | null;
+}) {
   const tArticle = useTranslations("article");
   const tFeed = useTranslations("feed");
   const locale = useLocale();
@@ -123,6 +132,12 @@ export function EventCard({ items, index }: { items: FeedArticle[]; index: numbe
           </a>
         ))}
       </div>
+
+      {eventKey && (
+        <Link href={`/event/${eventKey}`} className="event-more">
+          {tFeed("viewEvent")} →
+        </Link>
+      )}
     </li>
   );
 }

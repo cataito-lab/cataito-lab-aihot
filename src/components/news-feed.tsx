@@ -224,7 +224,12 @@ export function NewsFeed({
               <ol className="timeline-cards">
                 {mergeIntoCards(group.items.map((x) => x.item)).map((card, i) =>
                   card.kind === "event" ? (
-                    <EventCard key={`e-${card.items[0].eventId}`} items={card.items} index={i} />
+                    <EventCard
+                      key={`e-${card.items[0].eventId}`}
+                      items={card.items}
+                      index={i}
+                      eventKey={card.items[0].eventKey}
+                    />
                   ) : (
                     <ArticleItem key={card.article.id} article={card.article} index={i} />
                   ),

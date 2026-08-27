@@ -71,7 +71,8 @@
     "sortLabel": "Trier",
     "eventSources": "{n} sources",
     "eventSynthesis": "Synthèse",
-    "sourcesLabel": "Toutes les sources"
+    "sourcesLabel": "Toutes les sources",
+    "viewEvent": "Voir l'événement"
   },
   "filters": {
     "query": "Q",
@@ -99,5 +100,17 @@
   "footer": {
     "copyright": "© 2026 AI Actualités — un projet Cataito",
     "tzNote": "Heures affichées dans votre fuseau horaire local"
+  },
+  "event": {
+    "back": "← Retour à la chronologie",
+    "overview": "Aperçu de l'événement",
+    "sources": "Sources",
+    "synthesis": "Synthèse de l'événement",
+    "firstSeen": "Première apparition",
+    "lastSeen": "Dernière mise à jour",
+    "notFoundTitle": "Événement introuvable",
+    "notFoundHint": "Cet événement a pu être fusionné ou le lien est incorrect.",
+    "backHome": "Retour à l'accueil",
+    "untitled": "Événement sans titre"
   }
 }

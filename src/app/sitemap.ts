@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getDailyDates } from "@/lib/news";
+import { getDailyDates, listEventKeys } from "@/lib/news";
 
 const BASE = "https://aihot.cataito.com";
 const LOCALES = ["en", "zh", "ja", "es", "fr"] as const;
@@ -40,6 +40,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: "weekly",
         priority: 0.6,
         lastModified: `${date}T23:59:59.000Z`,
+      });
+    }
+  }
+
+  // 跨源事件详情页
+  let eventKeys: string[] = [];
+  try {
+    eventKeys = await listEventKeys(200);
+  } catch {
+    // sitemap 不应因数据库抖动而失败
+  }
+  for (const ek of eventKeys) {
+    for (const locale of LOCALES) {
+      items.push({
+        url: `${BASE}/${locale}/event/${ek}`,
+        changeFrequency: "daily",
+        priority: 0.6,
       });
     }
   }

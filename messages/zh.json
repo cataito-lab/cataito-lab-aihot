@@ -71,7 +71,8 @@
     "sortLabel": "排序",
     "eventSources": "{n} 家媒体",
     "eventSynthesis": "综合",
-    "sourcesLabel": "各源报道"
+    "sourcesLabel": "各源报道",
+    "viewEvent": "查看事件"
   },
   "filters": {
     "query": "Q",
@@ -99,5 +100,17 @@
   "footer": {
     "copyright": "© 2026 AI 热点简报 — Cataito 项目",
     "tzNote": "时间按你的本地时区显示"
+  },
+  "event": {
+    "back": "← 返回时间线",
+    "overview": "事件概览",
+    "sources": "信息来源",
+    "synthesis": "事件综合",
+    "firstSeen": "首次出现",
+    "lastSeen": "最近更新",
+    "notFoundTitle": "事件不存在",
+    "notFoundHint": "该事件可能已合并或链接有误。",
+    "backHome": "返回首页",
+    "untitled": "未命名事件"
   }
 }

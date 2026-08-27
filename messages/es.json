@@ -71,7 +71,8 @@
     "sortLabel": "Ordenar",
     "eventSources": "{n} fuentes",
     "eventSynthesis": "Síntesis",
-    "sourcesLabel": "Todas las fuentes"
+    "sourcesLabel": "Todas las fuentes",
+    "viewEvent": "Ver evento"
   },
   "filters": {
     "query": "Q",
@@ -99,5 +100,17 @@
   "footer": {
     "copyright": "© 2026 AI Noticias — un proyecto de Cataito",
     "tzNote": "Horas mostradas en tu zona horaria local"
+  },
+  "event": {
+    "back": "← Volver a la línea de tiempo",
+    "overview": "Resumen del evento",
+    "sources": "Fuentes",
+    "synthesis": "Síntesis del evento",
+    "firstSeen": "Primera vez",
+    "lastSeen": "Última actualización",
+    "notFoundTitle": "Evento no encontrado",
+    "notFoundHint": "Este evento puede haberse fusionado o el enlace es incorrecto.",
+    "backHome": "Volver al inicio",
+    "untitled": "Evento sin título"
   }
 }

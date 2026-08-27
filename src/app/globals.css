@@ -468,6 +468,71 @@ body {
     white-space: nowrap;
   }
 
+  .event-back {
+    display: inline-block;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .event-back:hover { color: var(--accent); }
+
+  .event-detail { margin-bottom: 20px; }
+  .event-detail h1 {
+    font-size: 1.5rem;
+    line-height: 1.3;
+    margin: 6px 0 4px;
+    font-weight: 700;
+  }
+  .event-detail .title-secondary {
+    color: var(--text-muted);
+    font-size: 13.5px;
+    margin: 0 0 12px;
+  }
+  .event-members {
+    margin-top: 14px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 12px;
+  }
+  .event-members .event-sources-head {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .event-member { margin-bottom: 12px; padding: 12px 14px; }
+  .event-member h3 {
+    font-size: 15px;
+    line-height: 1.4;
+    margin: 4px 0 6px;
+    font-weight: 600;
+  }
+  .event-member h3 a { color: var(--text-primary); text-decoration: none; }
+  .event-member h3 a:hover { color: var(--accent); }
+  .member-summary {
+    color: var(--text-secondary);
+    font-size: 13.5px;
+    line-height: 1.55;
+    margin: 0 0 8px;
+  }
+  .verify-link {
+    font-size: 12px;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .verify-link:hover { text-decoration: underline; }
+
+  .event-more {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .event-more:hover { text-decoration: underline; }
+
   .meta-sep {
     color: var(--border-color);
     font-size: 11px;
