@@ -1,0 +1,51 @@
+name: backfill-insight
+
+# 手动触发：用新版「AI Insight 智能洞察」提示词，回填历史文章的结构化洞察。
+# 幂等：只处理 key_change IS NULL 的文章；跑完（pending 归零）自动重聚类。
+# 额度：每次运行上限 BACKFILL_INSIGHT_MAX（默认 180）次模型调用，避免击穿 Cloudflare 每日神经元额度；
+#       若文章数超出上限，分多次手动触发即可，每次自动续跑剩余部分。
+on:
+  workflow_dispatch:
+    inputs:
+      max_calls:
+        description: "单次运行最大模型调用次数（Cloudflare 每日神经元额度保护）"
+        required: false
+        default: "180"
+      no_recluster:
+        description: "完成时跳过重聚类（仅部分回填时设为 true）"
+        required: false
+        default: "false"
+      dry_run:
+        description: "只统计待处理数量，不调用模型、不写库"
+        required: false
+        default: "false"
+
+concurrency:
+  group: news-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Backfill AI Insight for historical articles
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_AI_API_TOKEN: ${{ secrets.CF_AI_API_TOKEN }}
+          BACKFILL_INSIGHT_MAX: ${{ github.event.inputs.max_calls }}
+        run: >-
+          npx tsx pipeline/scripts/backfill-insight.ts
+          ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
+          ${{ github.event.inputs.no_recluster == 'true' && '--no-recluster' || '' }}
