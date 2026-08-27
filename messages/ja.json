@@ -65,7 +65,10 @@
     "today": "今日",
     "yesterday": "昨日",
     "emptyTitle": "現在のフィルターに該当する速報はありません",
-    "emptyHint": "カテゴリ設定を変更するか、検索語をクリアしてみてください。"
+    "emptyHint": "カテゴリ設定を変更するか、検索語をクリアしてみてください。",
+    "sortLatest": "最新",
+    "sortImportant": "重要",
+    "sortLabel": "並び順"
   },
   "filters": {
     "query": "Q",

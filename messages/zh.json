@@ -65,7 +65,10 @@
     "today": "今天",
     "yesterday": "昨天",
     "emptyTitle": "当前筛选下暂无简报",
-    "emptyHint": "调整偏好类别或清除搜索关键词试试"
+    "emptyHint": "调整偏好类别或清除搜索关键词试试",
+    "sortLatest": "最新",
+    "sortImportant": "重要",
+    "sortLabel": "排序"
   },
   "filters": {
     "query": "Q",

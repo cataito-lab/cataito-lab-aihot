@@ -81,6 +81,7 @@ function buildQuery(filters: FeedFilters, cursor?: string | null): string {
   if (filters.sourceId) params.set("source", filters.sourceId);
   if (filters.q) params.set("q", filters.q);
   if (filters.hours) params.set("hours", String(filters.hours));
+  if (filters.sort && filters.sort !== "time") params.set("sort", filters.sort);
   if (cursor) params.set("cursor", cursor);
   return params.toString();
 }
@@ -101,13 +102,15 @@ export function NewsFeed({
   const [items, setItems] = useState(initialItems);
   const [cursor, setCursor] = useState(initialCursor);
   const [loading, setLoading] = useState(false);
+  const [sort, setSort] = useState<"time" | "importance">(filters.sort ?? "time");
+  const effectiveFilters = useMemo(() => ({ ...filters, sort }), [filters, sort]);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const loadMore = useCallback(async () => {
     if (!cursor || loading) return;
     setLoading(true);
     try {
-      const qs = buildQuery(filters, cursor);
+      const qs = buildQuery(effectiveFilters, cursor);
       const res = await fetch(`/api/news${qs ? `?${qs}` : ""}`);
       if (res.ok) {
         const page = (await res.json()) as FeedPage;
@@ -123,7 +126,28 @@ export function NewsFeed({
     } finally {
       setLoading(false);
     }
-  }, [cursor, loading, filters]);
+  }, [cursor, loading, effectiveFilters]);
+
+  const loadFirst = useCallback(async (s: "time" | "importance") => {
+    setLoading(true);
+    try {
+      const qs = buildQuery({ ...filters, sort: s }, undefined);
+      const res = await fetch(`/api/news${qs ? `?${qs}` : ""}`);
+      if (res.ok) {
+        const page = (await res.json()) as FeedPage;
+        setItems(page.items.map((i) => ({ ...i, isNew: isRecent(i.publishedAt) })));
+        setCursor(page.nextCursor);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [filters]);
+
+  function handleSort(s: "time" | "importance") {
+    if (s === sort) return;
+    setSort(s);
+    void loadFirst(s);
+  }
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -147,6 +171,27 @@ export function NewsFeed({
 
   return (
     <>
+      <div className="feed-toolbar">
+        <div className="sort-toggle" role="group" aria-label={tFeed("sortLabel")}>
+          <button
+            type="button"
+            className={sort === "time" ? "active" : ""}
+            aria-pressed={sort === "time"}
+            onClick={() => handleSort("time")}
+          >
+            {tFeed("sortLatest")}
+          </button>
+          <button
+            type="button"
+            className={sort === "importance" ? "active" : ""}
+            aria-pressed={sort === "importance"}
+            onClick={() => handleSort("importance")}
+          >
+            {tFeed("sortImportant")}
+          </button>
+        </div>
+      </div>
+
       <div className="timeline-container">
         {indexedGroups.map((group) => (
           <section key={group.key} className="timeline-group">

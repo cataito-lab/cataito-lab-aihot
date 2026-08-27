@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
         sourceId: sp.get("source") ?? undefined,
         q: sp.get("q") ?? undefined,
         hours: Number(sp.get("hours")) || undefined,
+        sort: sp.get("sort") === "importance" ? "importance" : undefined,
       },
       sp.get("cursor") ?? undefined,
       limit,

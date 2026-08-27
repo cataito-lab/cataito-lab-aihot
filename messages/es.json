@@ -65,7 +65,10 @@
     "today": "Hoy",
     "yesterday": "Ayer",
     "emptyTitle": "No hay noticias con los filtros actuales",
-    "emptyHint": "Prueba a ajustar tus categorías o borrar la búsqueda."
+    "emptyHint": "Prueba a ajustar tus categorías o borrar la búsqueda.",
+    "sortLatest": "Recientes",
+    "sortImportant": "Importante",
+    "sortLabel": "Ordenar"
   },
   "filters": {
     "query": "Q",

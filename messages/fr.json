@@ -65,7 +65,10 @@
     "today": "Aujourd'hui",
     "yesterday": "Hier",
     "emptyTitle": "Aucun briefing pour les filtres actuels",
-    "emptyHint": "Essayez d'ajuster vos catégories ou de vider la recherche."
+    "emptyHint": "Essayez d'ajuster vos catégories ou de vider la recherche.",
+    "sortLatest": "Récents",
+    "sortImportant": "Important",
+    "sortLabel": "Trier"
   },
   "filters": {
     "query": "Q",

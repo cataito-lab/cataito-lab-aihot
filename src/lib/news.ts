@@ -65,11 +65,11 @@ function toBase64Url(bytes: Uint8Array): string {
     .replace(/=+$/, "");
 }
 
-export function encodeCursor(publishedAt: string, id: string): string {
-  return toBase64Url(new TextEncoder().encode(`${publishedAt}|${id}`));
+export function encodeCursor(sort: string, vals: Array<string | number>): string {
+  return toBase64Url(new TextEncoder().encode(vals.join("|")));
 }
 
-function decodeCursor(cursor: string | undefined): { at: string; id: string } | null {
+function decodeCursor(cursor: string | undefined, sort: string): Array<string | number> | null {
   if (!cursor) return null;
   try {
     const b64 = cursor.replace(/-/g, "+").replace(/_/g, "/");
@@ -77,9 +77,15 @@ function decodeCursor(cursor: string | undefined): { at: string; id: string } | 
     const raw = new TextDecoder().decode(
       Uint8Array.from(bin, (c) => c.charCodeAt(0)),
     );
-    const idx = raw.indexOf("|");
-    if (idx <= 0 || idx === raw.length - 1) return null;
-    return { at: raw.slice(0, idx), id: raw.slice(idx + 1) };
+    const parts = raw.split("|");
+    if (sort === "importance") {
+      if (parts.length !== 3) return null;
+      const score = Number(parts[0]);
+      if (!Number.isFinite(score)) return null;
+      return [score, parts[1], parts[2]];
+    }
+    if (parts.length !== 2) return null;
+    return [parts[0], parts[1]];
   } catch {
     return null;
   }
@@ -94,6 +100,7 @@ export async function listArticles(
   cursor?: string,
   limit: number = PAGE_SIZE,
 ): Promise<FeedPage> {
+  const sort = filters.sort === "importance" ? "importance" : "time";
   const where: string[] = [];
   const args: (string | number)[] = [];
   let useFts = false;
@@ -129,10 +136,22 @@ export async function listArticles(
   where.push(`(a.score_final IS NULL OR a.score_final >= ?)`);
   args.push(SCORE_THRESHOLD);
 
-  const decoded = decodeCursor(cursor);
+  const decoded = decodeCursor(cursor, sort);
   if (decoded) {
-    where.push("(a.published_at < ? OR (a.published_at = ? AND a.id < ?))");
-    args.push(decoded.at, decoded.at, decoded.id);
+    if (sort === "importance") {
+      const c = decoded[0] as number;
+      const at = decoded[1] as string;
+      const id = decoded[2] as string;
+      where.push(
+        "(COALESCE(a.score_final, -1) < ? OR (COALESCE(a.score_final, -1) = ? AND a.published_at < ?) OR (COALESCE(a.score_final, -1) = ? AND a.published_at = ? AND a.id < ?))",
+      );
+      args.push(c, c, at, c, at, id);
+    } else {
+      const at = decoded[0] as string;
+      const id = decoded[1] as string;
+      where.push("(a.published_at < ? OR (a.published_at = ? AND a.id < ?))");
+      args.push(at, at, id);
+    }
   }
 
   const sql = `
@@ -145,7 +164,7 @@ export async function listArticles(
     JOIN sources s ON s.id = a.source_id
     ${useFts ? "JOIN articles_fts ON articles_fts.article_id = a.id" : ""}
     ${where.length > 0 ? `WHERE ${where.join(" AND ")}` : ""}
-    ORDER BY a.published_at DESC, a.id DESC
+    ORDER BY ${sort === "importance" ? "COALESCE(a.score_final, -1) DESC, a.published_at DESC, a.id DESC" : "a.published_at DESC, a.id DESC"}
     LIMIT ?`;
 
   args.push(limit + 1);
@@ -155,7 +174,14 @@ export async function listArticles(
   const items = hasMore ? rows.slice(0, limit) : rows;
   const last = items[items.length - 1];
   const nextCursor =
-    hasMore && last ? encodeCursor(last.publishedAt, last.id) : null;
+    hasMore && last
+      ? encodeCursor(
+          sort,
+          sort === "importance"
+            ? [(last.scoreFinal ?? -1), last.publishedAt, last.id]
+            : [last.publishedAt, last.id],
+        )
+      : null;
 
   return { items, nextCursor };
 }

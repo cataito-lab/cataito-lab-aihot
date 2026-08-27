@@ -65,7 +65,10 @@
     "today": "Today",
     "yesterday": "Yesterday",
     "emptyTitle": "No briefing for the current filters",
-    "emptyHint": "Try adjusting your category preferences or clearing the search."
+    "emptyHint": "Try adjusting your category preferences or clearing the search.",
+    "sortLatest": "Latest",
+    "sortImportant": "Important",
+    "sortLabel": "Sort"
   },
   "filters": {
     "query": "Q",

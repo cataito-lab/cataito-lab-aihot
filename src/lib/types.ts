@@ -39,6 +39,7 @@ export interface FeedFilters {
   sourceId?: string;
   q?: string;
   hours?: number;
+  sort?: "time" | "importance";
 }
 
 export const CATEGORY_IDS = ["official", "media-cn", "media-en", "community"] as const;
