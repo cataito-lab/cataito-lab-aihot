@@ -418,5 +418,45 @@
     "enabled": true,
     "authority": 85,
     "note": "Substack RSS 对数据中心 IP 返回 403，改经 Google News RSS 桥接恢复抓取"
+  },
+  {
+    "id": "weibo-ai",
+    "name": "微博 · AI 话题",
+    "category": "community",
+    "lang": "zh",
+    "siteUrl": "https://s.weibo.com/weibo?q=AI",
+    "feedUrl": "https://rsshub.app/weibo/keyword/AI大模型",
+    "fetcher": "rss",
+    "dedicated": false,
+    "enabled": false,
+    "authority": 55,
+    "note": "D10 实验性中文社媒源：经 RSSHub 公共实例（rsshub.app）桥接微博关键词搜索。公共实例不稳定、可能限流/失效，建议自建 RSSHub 或换源后启用。中文内容需保证摘要管线支持中文处理。"
+  },
+  {
+    "id": "zhihu-ai",
+    "name": "知乎 · 热榜",
+    "category": "media-cn",
+    "lang": "zh",
+    "siteUrl": "https://www.zhihu.com/hot",
+    "feedUrl": "https://rsshub.app/zhihu/hotlist",
+    "fetcher": "rss",
+    "dedicated": false,
+    "enabled": false,
+    "authority": 60,
+    "note": "D10 实验性中文社媒源：经 RSSHub 公共实例桥接知乎热榜（整体热榜，含 AI 相关条目）。公共实例不稳定，建议自建 RSSHub 后启用。非 AI 专属，依赖 isAiRelated 过滤。"
+  },
+  {
+    "id": "twitter-ai",
+    "name": "X / Twitter · AI",
+    "category": "community",
+    "lang": "en",
+    "siteUrl": "https://twitter.com/search?q=AI",
+    "feedUrl": null,
+    "fetcher": "twitter",
+    "twitterQuery": "AI OR OpenAI OR Anthropic OR LLM",
+    "dedicated": false,
+    "enabled": false,
+    "authority": 65,
+    "note": "C7 实时源脚手架：X API v2 recent search 需付费 Bearer Token（TWITTER_BEARER_TOKEN）。当前无凭证，保持禁用；配置 token 后启用方可生效。免费/基础层通常无 recent search 权限。"
   }
 ]

@@ -1,4 +1,4 @@
-import { countSummariesToday, markSummarized } from "./db";
+import { countSummariesToday, markSummarized, getRelatedByContent } from "./db";
 import type { SummarizeResultV3 } from "./db";
 import { httpFetch } from "./net";
 
@@ -266,6 +266,40 @@ export async function extractEventMeta(
   }
 }
 
+/**
+ * 组装发送给模型的"用户内容"，并注入 C8 检索到的过往相关报道作为对比上下文。
+ * 检索基于文章实体字典（已由模型抽取并存于 DB 的 entities 字段），纯词面匹配，
+ * 不额外消耗模型调用。检索失败时仅跳过上下文注入，不影响主流程。
+ */
+export async function buildInsightUserContent(row: SummarizableRow): Promise<string> {
+  const parts: string[] = [];
+  parts.push(`标题：${row.titleZh ?? row.title}`);
+  if (row.titleZh && row.titleZh !== row.title) parts.push(`原标题：${row.title}`);
+  parts.push(`来源：${row.sourceName}`);
+  parts.push(`正文摘录：${row.content}`);
+
+  try {
+    const related = await getRelatedByContent(row.content || row.title || "", row.id, 3);
+    if (related.length > 0) {
+      const lines = related
+        .map((r) => {
+          const when = r.publishedAt ? r.publishedAt.slice(0, 10) : "";
+          const kc = r.keyChange ? `（进展：${r.keyChange}）` : "";
+          const t = r.titleZh || r.title;
+          return `- ${when} 《${t}》${kc}`;
+        })
+        .join("\n");
+      parts.push(
+        `【检索到的过往相关报道】以下是与本报道内容相关的历史文章，仅供你对比"增量"与"新意"时参考；不要照抄其表述，也不要重复生成相同结论：\n${lines}`,
+      );
+    }
+  } catch (err) {
+    console.error("[rag] getRelatedByContent failed:", err);
+  }
+
+  return parts.join("\n");
+}
+
 export async function summarizePending(rows: SummarizableRow[]): Promise<number> {
   if (!process.env.CF_ACCOUNT_ID || !process.env.CF_AI_API_TOKEN) {
     console.log("  [summarize] skipped (CF_ACCOUNT_ID / CF_AI_API_TOKEN not set)");
@@ -311,11 +345,8 @@ export async function summarizePending(rows: SummarizableRow[]): Promise<number>
     }
 
     try {
-      const parts = [`标题：${row.titleZh ?? row.title}`];
-      if (row.titleZh && row.titleZh !== row.title) parts.push(`原标题：${row.title}`);
-      parts.push(`来源：${row.sourceName}`);
-      parts.push(`正文摘录：${row.content}`);
-      const raw = await runModel(parts.join("\n"));
+      const userContent = await buildInsightUserContent(row);
+      const raw = await runModel(userContent);
       const parsed = raw ? parseModelJson(raw) : null;
 
       if (!parsed && !raw) {

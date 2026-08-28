@@ -16,7 +16,7 @@
  */
 import "dotenv/config";
 import { getDb, markSummarized, ensureSchema } from "../src/db";
-import { runModel, parseModelJson, computeResult } from "../src/summarize";
+import { runModel, parseModelJson, computeResult, buildInsightUserContent } from "../src/summarize";
 import { clusterEvents } from "../src/cluster";
 
 const MAX_CALLS = Number(process.env.BACKFILL_INSIGHT_MAX ?? 180);
@@ -81,11 +81,8 @@ async function main(): Promise<void> {
       authority: r.authority ?? 60,
     };
     try {
-      const parts = [`标题：${r.title_zh ?? r.title}`];
-      if (r.title_zh && r.title_zh !== r.title) parts.push(`原标题：${r.title}`);
-      parts.push(`来源：${r.source_name ?? ""}`);
-      parts.push(`正文摘录：${content}`);
-      const raw = await runModel(parts.join("\n"));
+      const userContent = await buildInsightUserContent(row);
+      const raw = await runModel(userContent);
       if (!raw) {
         failures++;
         console.warn(`  [insight] ${r.id}: empty model response`);

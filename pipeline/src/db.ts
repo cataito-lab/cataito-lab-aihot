@@ -682,3 +682,92 @@ export async function finishRun(
     ],
   });
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// C8：跨文章检索（用于洞察时的"过往相关报道"上下文注入）
+// 纯词面匹配：用全站高频实体字典（来自已抽取并存入 entities 字段的实体）去匹配
+// 当前文章正文，命中后取共享实体的历史文章作为对比上下文。不引入 embedding，
+// 不额外消耗模型调用。
+// ─────────────────────────────────────────────────────────────────────────────
+
+let entityDictionaryCache: string[] | null = null;
+let entityDictionaryCachedAt = 0;
+const ENTITY_DICTIONARY_TTL_MS = 60 * 60 * 1000;
+
+/**
+ * 返回近期文章中出现频次最高的实体（已小写化）。带模块级缓存，避免每条文章重复全表聚合。
+ */
+export async function getEntityDictionary(days = 30, max = 300): Promise<string[]> {
+  const now = Date.now();
+  if (entityDictionaryCache && now - entityDictionaryCachedAt < ENTITY_DICTIONARY_TTL_MS) {
+    return entityDictionaryCache;
+  }
+  const since = new Date(Date.now() - days * 86400000).toISOString();
+  const rs = await getDb().execute({
+    sql: `SELECT lower(value) AS e
+          FROM articles, json_each(entities)
+          WHERE published_at >= ? AND json_valid(entities) AND value IS NOT NULL
+          GROUP BY e
+          ORDER BY COUNT(*) DESC
+          LIMIT ?`,
+    args: [since, max],
+  });
+  entityDictionaryCache = rs.rows.map((r) => String(r.e));
+  entityDictionaryCachedAt = now;
+  return entityDictionaryCache;
+}
+
+export interface RelatedArticle {
+  id: string;
+  title: string;
+  titleZh: string | null;
+  keyChange: string | null;
+  publishedAt: string;
+}
+
+/**
+ * 基于正文内容，找出共享实体的历史文章（排除自身），用于为洞察提供对比上下文。
+ * 命中实体超过上限时仅取前若干个，避免上下文过长。
+ */
+export async function getRelatedByContent(
+  content: string,
+  excludeId: string,
+  limit = 3,
+): Promise<RelatedArticle[]> {
+  const dict = await getEntityDictionary();
+  if (dict.length === 0) return [];
+
+  const lower = (content || "").toLowerCase();
+  const matched: string[] = [];
+  for (const e of dict) {
+    if (e && lower.includes(e)) {
+      matched.push(e);
+      if (matched.length >= 8) break;
+    }
+  }
+  if (matched.length === 0) return [];
+
+  const placeholders = matched.map(() => "?").join(",");
+  const rs = await getDb().execute({
+    sql: `SELECT a.id AS id, a.title AS title, a.title_zh AS title_zh,
+                 a.key_change AS key_change, a.published_at AS published_at
+          FROM articles a
+          WHERE a.id != ?
+            AND json_valid(a.entities)
+            AND EXISTS (
+              SELECT 1 FROM json_each(a.entities) j
+              WHERE lower(j.value) IN (${placeholders})
+            )
+          ORDER BY a.published_at DESC
+          LIMIT ?`,
+    args: [excludeId, ...matched, limit],
+  });
+
+  return rs.rows.map((r) => ({
+    id: String(r.id),
+    title: String(r.title),
+    titleZh: r.title_zh == null ? null : String(r.title_zh),
+    keyChange: r.key_change == null ? null : String(r.key_change),
+    publishedAt: String(r.published_at),
+  }));
+}

@@ -4,6 +4,7 @@ import { fetchRss } from "./fetchers/rss";
 import { fetchGoogleNews } from "./fetchers/google-news";
 import { fetchHnAlgolia } from "./fetchers/hn-algolia";
 import { fetchReddit } from "./fetchers/reddit";
+import { fetchTwitter } from "./fetchers/twitter";
 import { assignIds } from "./dedup";
 import { isAiRelated } from "./filter";
 import { loadSources } from "./config";
@@ -58,6 +59,8 @@ async function fetchSource(source: SourceDef, windowHours: number): Promise<Fetc
         return { sourceId: source.id, items: await fetchHnAlgolia(source, windowHours) };
       case "reddit":
         return { sourceId: source.id, items: await fetchReddit(source, windowHours) };
+      case "twitter":
+        return { sourceId: source.id, items: await fetchTwitter(source, windowHours) };
       default:
         return { sourceId: source.id, items: [], error: `fetcher '${source.fetcher}' not implemented` };
     }
