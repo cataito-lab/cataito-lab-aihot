@@ -341,13 +341,13 @@
     "category": "official",
     "lang": "en",
     "siteUrl": "https://ai.meta.com/blog/",
-    "feedUrl": "https://ai.meta.com/blog/feed/",
-    "fetcher": "rss",
+    "feedUrl": null,
+    "fetcher": "google-news",
+    "gnQuery": "Meta AI (blog OR Llama OR research)",
     "dedicated": true,
     "enabled": true,
     "authority": 90,
-    "publishedAtTz": "America/Los_Angeles",
-    "note": "Meta WAF 可能拦截数据中心 IP（同 microsoft-ai），Actions 验证后若 403 则禁用"
+    "note": "官方 RSS 被 Meta WAF 拦截（400），改经 Google News RSS 桥接恢复抓取"
   },
   {
     "id": "bair",
@@ -355,12 +355,13 @@
     "category": "official",
     "lang": "en",
     "siteUrl": "https://bair.berkeley.edu/blog",
-    "feedUrl": "https://bair.berkeley.edu/blog/feed",
-    "fetcher": "rss",
+    "feedUrl": null,
+    "fetcher": "google-news",
+    "gnQuery": "BAIR Berkeley AI research",
     "dedicated": true,
     "enabled": true,
     "authority": 90,
-    "publishedAtTz": "America/Los_Angeles"
+    "note": "官方 RSS 抓取超时，改经 Google News RSS 桥接恢复抓取"
   },
   {
     "id": "stanford-hai",
@@ -368,13 +369,13 @@
     "category": "official",
     "lang": "en",
     "siteUrl": "https://hai.stanford.edu/",
-    "feedUrl": "https://hai.stanford.edu/feed",
-    "fetcher": "rss",
+    "feedUrl": null,
+    "fetcher": "google-news",
+    "gnQuery": "Stanford HAI",
     "dedicated": true,
     "enabled": true,
     "authority": 85,
-    "publishedAtTz": "America/Los_Angeles",
-    "note": "Stanford 站点常经 Cloudflare，若返回挑战页则改抓取路径"
+    "note": "官方 RSS 经 Cloudflare 挑战页无法解析，改经 Google News RSS 桥接恢复抓取"
   },
   {
     "id": "semianalysis",
@@ -382,12 +383,13 @@
     "category": "media-en",
     "lang": "en",
     "siteUrl": "https://semianalysis.com/",
-    "feedUrl": "https://semianalysis.com/feed",
-    "fetcher": "rss",
+    "feedUrl": null,
+    "fetcher": "google-news",
+    "gnQuery": "Semianalysis (AI OR semiconductor OR GPU)",
     "dedicated": true,
     "enabled": true,
     "authority": 90,
-    "note": "AI 算力/半导体深度分析顶流；若 403 需补 UA"
+    "note": "官方 RSS 对数据中心 IP 返回 403，改经 Google News RSS 桥接恢复抓取"
   },
   {
     "id": "import-ai",
@@ -395,11 +397,13 @@
     "category": "media-en",
     "lang": "en",
     "siteUrl": "https://importai.substack.com/",
-    "feedUrl": "https://importai.substack.com/feed",
-    "fetcher": "rss",
+    "feedUrl": null,
+    "fetcher": "google-news",
+    "gnQuery": "Import AI",
     "dedicated": true,
     "enabled": true,
-    "authority": 85
+    "authority": 85,
+    "note": "Substack RSS 对数据中心 IP 返回 403，改经 Google News RSS 桥接恢复抓取"
   },
   {
     "id": "the-batch",
@@ -407,10 +411,12 @@
     "category": "media-en",
     "lang": "en",
     "siteUrl": "https://www.deeplearning.ai/the-batch/",
-    "feedUrl": "https://thebatch.substack.com/feed",
-    "fetcher": "rss",
+    "feedUrl": null,
+    "fetcher": "google-news",
+    "gnQuery": "The Batch deeplearning.ai",
     "dedicated": true,
     "enabled": true,
-    "authority": 85
+    "authority": 85,
+    "note": "Substack RSS 对数据中心 IP 返回 403，改经 Google News RSS 桥接恢复抓取"
   }
 ]

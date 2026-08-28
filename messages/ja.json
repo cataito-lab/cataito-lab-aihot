@@ -38,7 +38,8 @@
     "unstar": "保存を解除",
     "hoursAgo": "{n}時間前",
     "daysAgo": "{n}日前",
-    "estimated": "約"
+    "estimated": "約",
+    "entities": "関連エンティティ"
   },
   "briefing": {
     "signal": "// SIGNAL BRIEFING SYSTEM",
@@ -117,5 +118,12 @@
     "notFoundHint": "このイベントは統合されたか、リンクが正しくない可能性があります。",
     "backHome": "ホームに戻る",
     "untitled": "名称未設定のイベント"
+  },
+  "entity": {
+    "title": "{name} に関する報道",
+    "description": "{name} に言及した AI ニュース・公式情報・解説を新着順にまとめ。",
+    "back": "← タイムラインに戻る",
+    "count": "関連記事 {n} 件",
+    "empty": "{name} に関する報道はまだありません"
   }
 }

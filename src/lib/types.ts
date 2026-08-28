@@ -47,6 +47,8 @@ export interface FeedArticle {
   aiCategoryEn: string | null;
   /** 综合新闻价值 0-100（来自 AI Insight） */
   importanceScore: number | null;
+  /** 涉及的实体（来自 AI Insight 的 entities 字段），用于实体页跳转 */
+  entities: string[] | null;
 }
 
 /** 事件详情页中的单条成员报道 */
@@ -80,6 +82,8 @@ export interface EventMember {
   aiCategory: string | null;
   aiCategoryEn: string | null;
   importanceScore: number | null;
+  /** 涉及的实体（来自 AI Insight 的 entities 字段），用于实体页跳转 */
+  entities: string[] | null;
 }
 
 /** 事件详情（跨源聚类结果） */

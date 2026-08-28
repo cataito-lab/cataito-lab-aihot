@@ -38,7 +38,8 @@
     "unstar": "取消收藏",
     "hoursAgo": "{n}小时前",
     "daysAgo": "{n}天前",
-    "estimated": "约"
+    "estimated": "约",
+    "entities": "涉及实体"
   },
   "briefing": {
     "signal": "// SIGNAL BRIEFING SYSTEM",
@@ -117,5 +118,12 @@
     "notFoundHint": "该事件可能已合并或链接有误。",
     "backHome": "返回首页",
     "untitled": "未命名事件"
+  },
+  "entity": {
+    "title": "关于 {name} 的报道",
+    "description": "汇总提及 {name} 的 AI 新闻、官方动态与深度分析，按时间倒序排列。",
+    "back": "← 返回时间线",
+    "count": "共 {n} 篇相关报道",
+    "empty": "暂无关于 {name} 的报道"
   }
 }

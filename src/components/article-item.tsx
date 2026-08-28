@@ -305,6 +305,20 @@ export function ArticleItem({
               {t("importance")} <b>{article.importanceScore}</b>/100
             </div>
           )}
+          {article.entities && article.entities.length > 0 && (
+            <div className="entity-chips">
+              <span className="entity-chips-label">{t("entities")}</span>
+              {article.entities.slice(0, 6).map((ent, i) => (
+                <a
+                  key={i}
+                  className="entity-chip"
+                  href={`/${locale}/entity/${encodeURIComponent(ent)}`}
+                >
+                  {ent}
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </li>

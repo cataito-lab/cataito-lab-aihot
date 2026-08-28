@@ -1,6 +1,6 @@
 export type SourceCategory = "official" | "media-cn" | "media-en" | "community";
 
-export type FetcherKind = "rss" | "hn-algolia" | "html" | "bridge" | "reddit";
+export type FetcherKind = "rss" | "hn-algolia" | "html" | "bridge" | "reddit" | "google-news";
 
 export interface SourceDef {
   id: string;
@@ -18,6 +18,9 @@ export interface SourceDef {
    * 前端 +8 换算后正好显示源站原始时间。 */
   publishedAtTz?: string;
   note?: string;
+  /** google-news 桥接源使用的检索式（如 "Meta AI"）。官方 RSS 被 WAF/Cloudflare/
+   * Substack 拦截时，经 Google News RSS 聚合恢复抓取（链接走 news.google.com 重定向）。 */
+  gnQuery?: string;
   /** 信源权威度 0-100（评分系统独立维度，见 docs/SCORING-ROADMAP.md） */
   authority?: number;
 }

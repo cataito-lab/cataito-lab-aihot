@@ -38,7 +38,8 @@
     "unstar": "Quitar guardado",
     "hoursAgo": "hace {n}h",
     "daysAgo": "hace {n}d",
-    "estimated": "aprox."
+    "estimated": "aprox.",
+    "entities": "Entidades"
   },
   "briefing": {
     "signal": "// SIGNAL BRIEFING SYSTEM",
@@ -117,5 +118,12 @@
     "notFoundHint": "Este evento puede haberse fusionado o el enlace es incorrecto.",
     "backHome": "Volver al inicio",
     "untitled": "Evento sin título"
+  },
+  "entity": {
+    "title": "Noticias sobre {name}",
+    "description": "Noticias de IA, actualizaciones oficiales y análisis que mencionan {name}, del más reciente al más antiguo.",
+    "back": "← Volver a la línea de tiempo",
+    "count": "{n} artículos relacionados",
+    "empty": "Aún no hay noticias sobre {name}"
   }
 }

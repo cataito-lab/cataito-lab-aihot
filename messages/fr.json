@@ -38,7 +38,8 @@
     "unstar": "Retirer des favoris",
     "hoursAgo": "il y a {n}h",
     "daysAgo": "il y a {n}j",
-    "estimated": "env."
+    "estimated": "env.",
+    "entities": "Entités"
   },
   "briefing": {
     "signal": "// SIGNAL BRIEFING SYSTEM",
@@ -117,5 +118,12 @@
     "notFoundHint": "Cet événement a pu être fusionné ou le lien est incorrect.",
     "backHome": "Retour à l'accueil",
     "untitled": "Événement sans titre"
+  },
+  "entity": {
+    "title": "Articles sur {name}",
+    "description": "Actualités IA, communiqués officiels et analyses mentionnant {name}, du plus récent au plus ancien.",
+    "back": "← Retour à la chronologie",
+    "count": "{n} articles liés",
+    "empty": "Aucun article sur {name} pour l'instant"
   }
 }

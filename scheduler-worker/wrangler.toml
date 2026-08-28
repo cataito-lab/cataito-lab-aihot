@@ -1,8 +1,0 @@
-name = "aihot-news-scheduler"
-main = "src/index.ts"
-compatibility_date = "2024-09-23"
-
-# 用 Cloudflare 可靠的 Cron 去触发 GitHub Actions 的 update-news workflow。
-# GitHub 自带的 schedule 对高频 cron 会节流/合并，导致站点数小时不更新。
-[[triggers]]
-crons = ["*/10 * * * *"]

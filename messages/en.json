@@ -38,7 +38,8 @@
     "unstar": "Remove save",
     "hoursAgo": "{n}h ago",
     "daysAgo": "{n}d ago",
-    "estimated": "est."
+    "estimated": "est.",
+    "entities": "Entities"
   },
   "briefing": {
     "signal": "// SIGNAL BRIEFING SYSTEM",
@@ -117,5 +118,12 @@
     "notFoundHint": "This event may have been merged or the link is incorrect.",
     "backHome": "Back to home",
     "untitled": "Untitled event"
+  },
+  "entity": {
+    "title": "Stories about {name}",
+    "description": "AI news, official updates and analysis mentioning {name}, newest first.",
+    "back": "← Back to timeline",
+    "count": "{n} related stories",
+    "empty": "No stories about {name} yet"
   }
 }

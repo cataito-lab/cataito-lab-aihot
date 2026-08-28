@@ -1,8 +1,8 @@
-import { ProxyAgent, fetch as undiciFetch, Agent, Dispatcher } from "undici";
+import { ProxyAgent, Agent, setGlobalDispatcher, type Dispatcher } from "undici";
 
-let dispatcher: Dispatcher | undefined; // global dispatcher, used by default
 let proxyBroken = false;
 let failures = 0;
+let current: Dispatcher | null = null;
 
 const DEAD_THRESHOLD = 2;
 
@@ -15,18 +15,18 @@ function proxyUrl(): string | undefined {
   );
 }
 
-function directAgent(): Dispatcher {
-  return new Agent();
+function makeDispatcher(direct: boolean): Dispatcher {
+  return direct ? new Agent() : new ProxyAgent(proxyUrl()!);
 }
 
-function setupDispatcher(direct: boolean): void {
-  dispatcher = direct ? directAgent() : new ProxyAgent(proxyUrl()!);
+function ensure(direct: boolean): void {
+  if (current) return;
+  current = makeDispatcher(direct);
+  setGlobalDispatcher(current);
 }
 
 function initDispatcher(): void {
-  if (dispatcher) return;
-  const p = proxyUrl();
-  setupDispatcher(!p); // no proxy string -> direct; proxy present -> proxy dispatcher
+  ensure(!proxyUrl()); // no proxy string -> direct; proxy present -> proxy dispatcher
 }
 
 /**
@@ -53,7 +53,8 @@ export function recordFailure(msg: string): boolean {
     const p = proxyUrl();
     console.warn(`[net] proxy ${p ?? "<none>"} appears dead (${failures} transport failures) -- switching to direct connect for the remainder of this run`);
     proxyBroken = true;
-    dispatcher = directAgent(); // all subsequent requests go direct immediately
+    current = new Agent();
+    setGlobalDispatcher(current); // all subsequent requests go direct immediately
     return true;
   }
   return false;
@@ -78,34 +79,21 @@ export async function httpFetch(
   init: HttpRequestInit = {},
 ): Promise<HttpResponse> {
   initDispatcher();
-
-  const fetchWith = (dp: Dispatcher) => undiciFetch(url, {
-    dispatcher: dp,
-    method: init.method,
-    headers: init.headers,
-    body: init.body,
-    signal: init.signal,
-  }) as unknown as HttpResponse;
-
-  const wrap = (res: unknown): HttpResponse => {
-    const r = res as Partial<HttpResponse>;
-    if (typeof r.text !== "function") {
-      r.text = () => Promise.resolve(typeof res === "string" ? res : "");
-    }
-    if (typeof r.json !== "function") {
-      r.json = async () => JSON.parse(await r.text!());
-    }
-    return r as HttpResponse;
-  };
-
+  const doFetch = () =>
+    fetch(url, {
+      method: init.method,
+      headers: init.headers,
+      body: init.body,
+      signal: init.signal,
+    }) as unknown as HttpResponse;
   try {
-    return wrap(await fetchWith(dispatcher as Dispatcher));
+    return await doFetch();
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    // If the proxy is dead, retry once directly (per-request direct agent).
+    // If the proxy is dead, retry once (global dispatcher already switched to direct).
     if (recordFailure(msg)) {
       try {
-        return wrap(await fetchWith(directAgent()));
+        return await doFetch();
       } catch (directErr) {
         throw directErr instanceof Error ? directErr : new Error(String(directErr));
       }

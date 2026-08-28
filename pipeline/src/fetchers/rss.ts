@@ -10,7 +10,7 @@ const parser = new Parser({
 });
 
 const MAX_PER_SOURCE = 50;
-const TIMEOUT_MS = 20000;
+const TIMEOUT_MS = 45000;
 
 function cleanXml(raw: string): string {
   return raw

@@ -1,6 +1,7 @@
 import "./env";
 import pLimit from "p-limit";
 import { fetchRss } from "./fetchers/rss";
+import { fetchGoogleNews } from "./fetchers/google-news";
 import { fetchHnAlgolia } from "./fetchers/hn-algolia";
 import { fetchReddit } from "./fetchers/reddit";
 import { assignIds } from "./dedup";
@@ -51,6 +52,8 @@ async function fetchSource(source: SourceDef, windowHours: number): Promise<Fetc
     switch (source.fetcher) {
       case "rss":
         return { sourceId: source.id, items: await fetchRss(source, windowHours) };
+      case "google-news":
+        return { sourceId: source.id, items: await fetchGoogleNews(source, windowHours) };
       case "hn-algolia":
         return { sourceId: source.id, items: await fetchHnAlgolia(source, windowHours) };
       case "reddit":

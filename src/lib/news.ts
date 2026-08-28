@@ -45,6 +45,7 @@ export interface ArticleRow {
   ai_category: unknown;
   ai_category_en: unknown;
   importance_score: unknown;
+  entities: unknown;
   url: unknown;
   author: unknown;
   published_at: unknown;
@@ -52,6 +53,19 @@ export interface ArticleRow {
 }
 function str(v: unknown): string | null {
   return v == null ? null : String(v);
+}
+
+/** JSON 数组文本 → string[] | null（供 entities 字段使用） */
+function parseJsonArray(v: unknown): string[] | null {
+  if (v == null) return null;
+  try {
+    const arr = JSON.parse(String(v));
+    if (!Array.isArray(arr)) return null;
+    const out = arr.filter((x): x is string => typeof x === "string");
+    return out.length ? out : null;
+  } catch {
+    return null;
+  }
 }
 
 export function toFeedArticle(row: ArticleRow): FeedArticle {
@@ -85,6 +99,7 @@ export function toFeedArticle(row: ArticleRow): FeedArticle {
     aiCategory: str(row.ai_category),
     aiCategoryEn: str(row.ai_category_en),
     importanceScore: row.importance_score == null ? null : Number(row.importance_score),
+    entities: parseJsonArray(row.entities),
     url: String(row.url),
     author: str(row.author),
     publishedAt: String(row.published_at),
@@ -198,12 +213,13 @@ export async function listArticles(
              a.key_points, a.industry_impact, a.score_final,
              a.key_change, a.key_change_en, a.why_it_matters, a.why_it_matters_en,
              a.forward_signal, a.forward_signal_en,
-             a.impact, a.impact_en, a.category AS ai_category, a.category_en AS ai_category_en, a.importance_score,
-             a.event_id, e.summary AS event_summary, e.event_key AS event_key
-     FROM articles a
-     JOIN sources s ON s.id = a.source_id
-     LEFT JOIN events e ON e.id = a.event_id
-     ${useFts ? "JOIN articles_fts ON articles_fts.article_id = a.id" : ""}
+              a.impact, a.impact_en, a.category AS ai_category, a.category_en AS ai_category_en, a.importance_score,
+              a.entities,
+              a.event_id, e.summary AS event_summary, e.event_key AS event_key
+      FROM articles a
+      JOIN sources s ON s.id = a.source_id
+      LEFT JOIN events e ON e.id = a.event_id
+      ${useFts ? "JOIN articles_fts ON articles_fts.article_id = a.id" : ""}
     ${where.length > 0 ? `WHERE ${where.join(" AND ")}` : ""}
     ORDER BY ${sort === "importance" ? "COALESCE(a.importance_score, a.score_final) DESC, a.published_at DESC, a.id DESC" : "a.published_at DESC, a.id DESC"}
     LIMIT ?`;
@@ -369,7 +385,8 @@ export async function getEventMembers(eventId: string): Promise<EventMember[]> {
                   a.summary_es, a.summary_fr, a.url, a.author, a.published_at, a.score_final,
                   a.key_change, a.key_change_en, a.why_it_matters, a.why_it_matters_en,
                   a.forward_signal, a.forward_signal_en,
-                  a.impact, a.impact_en, a.category AS ai_category, a.category_en AS ai_category_en, a.importance_score
+                 a.impact, a.impact_en, a.category AS ai_category, a.category_en AS ai_category_en, a.importance_score,
+                 a.entities
           FROM articles a JOIN sources s ON s.id = a.source_id
           WHERE a.event_id = ?
           ORDER BY a.published_at DESC`,
@@ -400,10 +417,37 @@ export async function getEventMembers(eventId: string): Promise<EventMember[]> {
     aiCategory: str(r.ai_category),
     aiCategoryEn: str(r.ai_category_en),
     importanceScore: r.importance_score == null ? null : Number(r.importance_score),
+    entities: parseJsonArray(r.entities),
     url: String(r.url),
     author: str(r.author),
     publishedAt: String(r.published_at),
   }));
+}
+
+/** 实体页：列出提到某实体的全部文章（按发布时间倒序），用于知识图谱跳转 */
+export async function getEntityArticles(name: string, limit = 200): Promise<FeedArticle[]> {
+  const db = await getDb();
+  const rs = await db.execute({
+    sql: `SELECT a.id, a.source_id, s.name AS source_name, s.category, s.lang,
+                 a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
+                 a.summary_es, a.summary_fr, a.url, a.author,
+                 a.published_at, a.fetched_at,
+                 a.key_points, a.industry_impact, a.score_final,
+                 a.key_change, a.key_change_en, a.why_it_matters, a.why_it_matters_en,
+                 a.forward_signal, a.forward_signal_en,
+                 a.impact, a.impact_en, a.category AS ai_category, a.category_en AS ai_category_en, a.importance_score,
+                 a.entities,
+                 a.event_id, e.summary AS event_summary, e.event_key AS event_key
+          FROM articles a
+          JOIN sources s ON s.id = a.source_id
+          LEFT JOIN events e ON e.id = a.event_id
+          WHERE json_valid(a.entities)
+            AND EXISTS (SELECT 1 FROM json_each(a.entities) j WHERE lower(j.value) = lower(?))
+          ORDER BY a.published_at DESC
+          LIMIT ?`,
+    args: [name, limit],
+  });
+  return rs.rows.map((r) => toFeedArticle(r as unknown as ArticleRow));
 }
 
 /** 用于 sitemap：近期多源事件的 event_key 列表 */
