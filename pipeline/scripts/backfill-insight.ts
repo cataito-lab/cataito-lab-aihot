@@ -2,7 +2,8 @@
  * backfill-insight.ts —— 用新版「AI Insight 智能洞察」提示词，对历史文章重算结构化洞察。
  *
  * 设计：
- * - 只处理 `key_change IS NULL` 的文章（即尚未用新提示词生成过洞察的）。
+ * - 只处理 `importance_score IS NULL` 的文章（即 P0 之前的文章尚未用新提示词生成过
+ *   含重要度评分/实体的完整洞察；已用新提示词的文章 importance_score 非空，会跳过）。
  * - 正文缺失时回退用旧 summary 作为上下文（与 backfill-history 同样的兜底思路）。
  * - 每次运行受 BACKFILL_INSIGHT_MAX（默认 180）上限保护，避免击穿 Cloudflare 每日神经元额度。
  * - 处理完成后（pending 归零）自动重聚类（wipe events + reset event_id + clusterEvents），
@@ -29,6 +30,7 @@ interface PendingRow {
   title_zh: string | null;
   article_content: string | null;
   summary: string | null;
+  summary_en: string | null;
   source_name: string | null;
   authority: number | null;
 }
@@ -40,10 +42,10 @@ function sleep(ms: number): Promise<void> {
 async function getPending(): Promise<PendingRow[]> {
   const db = await getDb();
   const rs = await db.execute({
-    sql: `SELECT a.id, a.title, a.title_zh, a.article_content, a.summary, s.name AS source_name, s.authority AS authority
+    sql: `SELECT a.id, a.title, a.title_zh, a.article_content, a.summary, a.summary_en, s.name AS source_name, s.authority AS authority
           FROM articles a
           LEFT JOIN sources s ON s.id = a.source_id
-          WHERE a.key_change IS NULL AND (a.article_content IS NOT NULL OR a.summary IS NOT NULL)
+          WHERE a.importance_score IS NULL AND (a.article_content IS NOT NULL OR a.summary IS NOT NULL OR a.summary_en IS NOT NULL OR a.title IS NOT NULL)
           ORDER BY a.published_at ASC`,
     args: [],
   });
@@ -68,7 +70,7 @@ async function main(): Promise<void> {
   let failures = 0;
   for (const r of pending) {
     if (done >= MAX_CALLS) break;
-    const content = r.article_content ?? r.summary;
+    const content = r.article_content ?? r.summary ?? r.summary_en ?? r.title;
     if (!content) continue;
     const row = {
       id: r.id,
@@ -117,7 +119,7 @@ async function main(): Promise<void> {
   console.log(`[insight] done=${done} failures=${failures}`);
 
   const leftRs = await getDb().execute({
-    sql: `SELECT COUNT(*) AS n FROM articles WHERE key_change IS NULL AND (article_content IS NOT NULL OR summary IS NOT NULL)`,
+    sql: `SELECT COUNT(*) AS n FROM articles WHERE importance_score IS NULL AND (article_content IS NOT NULL OR summary IS NOT NULL OR summary_en IS NOT NULL OR title IS NOT NULL)`,
     args: [],
   });
   const left = Number(((leftRs.rows[0] as Record<string, unknown>).n as unknown) ?? 0);
