@@ -16,14 +16,14 @@ GitHub Actions 定时抓取约 20 个中英文 AI 信源 → 标题自动翻译�
 ## 架构
 
 ```
-GitHub Actions (cron 0 8-22 * * *)
-  └─ pipeline/src：fetch → dedup(sha1) → filter → translate → summarize
+GitHub Actions (schedule */10) + Cloudflare Worker (cron */10, dispatch 补刀)
+  └─ pipeline/src：fetch → dedup(sha1) → filter → translate → summarize(AI Insight+评分)
         └─ Turso (libSQL)：articles / sources / events / fetch_logs / FTS
               └─ Next.js App Router @ Cloudflare Pages（edge runtime）
-                   / · /event/[key] · /api/news · /api/sources · /rss.xml · /sitemap.xml
+                   / · /hot · /event/[key] · /entity/[name] · /api/news · /api/sources · /rss.xml · /sitemap.xml
 ```
 
-技术细节见 [docs/TECH_SPEC.md](docs/TECH_SPEC.md)，执行与交接见 [docs/HANDOFF.md](docs/HANDOFF.md)。
+技术细节见 [docs/TECH_SPEC.md](docs/TECH_SPEC.md)，运维与交接见 [docs/OPERATIONS.md](docs/OPERATIONS.md)（旧 `HANDOFF.md` 按仓库规则为本地不入库文件）。
 
 ## 本地开发
 
@@ -44,4 +44,4 @@ npm run build               # 生产构建
 
 - 前端：Cloudflare Pages（`@cloudflare/next-on-pages` 适配），绑定域名 `aihot.cataito.com`
 - 数据：Turso（libSQL）；凭据配在 GH Actions secrets 与 CF Pages 环境变量
-- 抓取：`.github/workflows/update-news.yml`，全天候每小时整点运行
+- 抓取：`.github/workflows/update-news.yml`，每 10 分钟（`*/10`）；GitHub 自带 schedule 常被限流，另由 Cloudflare Worker `aihot-news-scheduler` 每 10 分钟 `workflow_dispatch` 补刀（详见 docs/OPERATIONS.md §调度）
