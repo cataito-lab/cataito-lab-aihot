@@ -117,10 +117,12 @@ function LocaleMenu() {
 
 function MobileMenu({
   current,
+  activeSort,
   open,
   onClose,
 }: {
   current: string;
+  activeSort?: "time" | "importance";
   open: boolean;
   onClose: () => void;
 }) {
@@ -145,6 +147,18 @@ function MobileMenu({
         className="absolute top-full left-0 right-0 z-[95] border-b border-[var(--border-color)] bg-[var(--bg-base)] px-4 py-3 flex flex-col gap-1"
         aria-label={t("categories")}
       >
+        <Link
+          href="/?sort=importance&hours=168"
+          onClick={onClose}
+          className={`px-3 py-2.5 rounded-md text-[14px] font-medium transition-colors ${
+            activeSort === "importance"
+              ? "text-[var(--text-primary)] bg-[var(--overlay-active)]"
+              : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--overlay-hover)]"
+          }`}
+          aria-current={activeSort === "importance" ? "page" : undefined}
+        >
+          {t("hot")}
+        </Link>
         {CATEGORY_TABS.map((tab) => {
           const active = current === tab.id;
           return (
@@ -176,12 +190,15 @@ function MobileMenu({
 
 export function Header({
   activeCategory,
+  activeSort,
   q,
 }: {
   activeCategory?: string;
+  activeSort?: "time" | "importance";
   q?: string;
 }) {
   const brand = useTranslations("brand");
+  const t = useTranslations("header");
   const [menuOpen, setMenuOpen] = useState(false);
   const current = activeCategory ?? "all";
   return (
@@ -194,6 +211,13 @@ export function Header({
       </Link>
 
       <nav className="nav-tabs hidden md:flex" aria-label="Categories">
+        <Link
+          href="/?sort=importance&hours=168"
+          className={activeSort === "importance" ? "active" : ""}
+          aria-current={activeSort === "importance" ? "page" : undefined}
+        >
+          {t("hot")}
+        </Link>
         {CATEGORY_TABS.map((tab) => (
           <TabLink key={tab.id} tab={tab} current={current} />
         ))}
@@ -221,7 +245,7 @@ export function Header({
         </button>
       </div>
 
-      <MobileMenu current={current} open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <MobileMenu current={current} activeSort={activeSort} open={menuOpen} onClose={() => setMenuOpen(false)} />
     </header>
   );
 }

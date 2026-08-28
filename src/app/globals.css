@@ -869,3 +869,14 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* 事件详情：事件进展（按时间线聚合各报道的核心变化）与前瞻信号 */
+.event-progression {
+  margin-top: 16px;
+}
+.event-step {
+  padding: 10px 12px;
+}
+.event-next {
+  margin-top: 16px;
+}

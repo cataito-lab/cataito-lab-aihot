@@ -165,6 +165,23 @@ export default async function EventPage({
   const secondary = event.titleZh && event.titleZh !== event.title ? event.title : null;
   const summary = locale === "zh" ? event.summary : event.summaryEn ?? event.summary;
 
+  const progression = [...event.members].sort(
+    (a, b) => new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime(),
+  );
+  const steps = progression
+    .map((m) => ({ m, kc: pickField(m.keyChange, m.keyChangeEn, locale) }))
+    .filter((x) => x.kc) as Array<{ m: EventMember; kc: string }>;
+  const nextSignal = (() => {
+    const desc = [...event.members].sort(
+      (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+    );
+    for (const m of desc) {
+      const v = pickField(m.forwardSignal, m.forwardSignalEn, locale);
+      if (v) return v;
+    }
+    return null;
+  })();
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsEvent",
@@ -219,9 +236,45 @@ export default async function EventPage({
               </div>
               <div className="ai-summary-content">{summary}</div>
             </div>
-          ) : null}
+           ) : null}
 
-          <div className="event-members">
+           {steps.length > 0 && (
+             <div className="event-progression">
+               <div className="event-sources-head">{t("progression")}</div>
+               <ol className="timeline-cards">
+                 {steps.map(({ m, kc }) => (
+                   <li key={m.id} className="card event-member event-step">
+                     <div className="card-meta">
+                       <span className="src-chip">
+                         <span className={`cat-dot cat-dot-${m.category}`} aria-hidden />
+                         {m.sourceName}
+                       </span>
+                       <span className="meta-sep" aria-hidden>|</span>
+                       <span className="meta-time">
+                         <time dateTime={m.publishedAt}>{fmt(m.publishedAt, locale)}</time>
+                       </span>
+                     </div>
+                     <div className="ai-mini-change">{kc}</div>
+                   </li>
+                 ))}
+               </ol>
+             </div>
+           )}
+
+           {nextSignal && (
+             <div className="ai-summary-box event-next">
+               <div className="ai-summary-title">
+                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                   <circle cx="12" cy="12" r="9" />
+                   <path d="M12 8v5l3 2" />
+                 </svg>
+                 {t("nextSignal")}
+               </div>
+               <div className="ai-summary-content">{nextSignal}</div>
+             </div>
+           )}
+
+           <div className="event-members">
             <div className="event-sources-head">
               {t("sources")} · {event.sourceCount}
             </div>

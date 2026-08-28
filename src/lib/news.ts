@@ -179,7 +179,7 @@ export async function listArticles(
       const at = decoded[1] as string;
       const id = decoded[2] as string;
       where.push(
-        "(COALESCE(a.score_final, -1) < ? OR (COALESCE(a.score_final, -1) = ? AND a.published_at < ?) OR (COALESCE(a.score_final, -1) = ? AND a.published_at = ? AND a.id < ?))",
+        "(COALESCE(a.importance_score, a.score_final) < ? OR (COALESCE(a.importance_score, a.score_final) = ? AND a.published_at < ?) OR (COALESCE(a.importance_score, a.score_final) = ? AND a.published_at = ? AND a.id < ?))",
       );
       args.push(c, c, at, c, at, id);
     } else {
@@ -205,7 +205,7 @@ export async function listArticles(
      LEFT JOIN events e ON e.id = a.event_id
      ${useFts ? "JOIN articles_fts ON articles_fts.article_id = a.id" : ""}
     ${where.length > 0 ? `WHERE ${where.join(" AND ")}` : ""}
-    ORDER BY ${sort === "importance" ? "COALESCE(a.score_final, -1) DESC, a.published_at DESC, a.id DESC" : "a.published_at DESC, a.id DESC"}
+    ORDER BY ${sort === "importance" ? "COALESCE(a.importance_score, a.score_final) DESC, a.published_at DESC, a.id DESC" : "a.published_at DESC, a.id DESC"}
     LIMIT ?`;
 
   args.push(limit + 1);
@@ -219,7 +219,7 @@ export async function listArticles(
       ? encodeCursor(
           sort,
           sort === "importance"
-            ? [(last.scoreFinal ?? -1), last.publishedAt, last.id]
+            ? [(last.importanceScore ?? last.scoreFinal ?? -1), last.publishedAt, last.id]
             : [last.publishedAt, last.id],
         )
       : null;

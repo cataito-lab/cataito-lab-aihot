@@ -14,6 +14,7 @@ interface HomeSearchParams {
   source?: string | string[];
   q?: string | string[];
   hours?: string | string[];
+  sort?: string | string[];
 }
 
 function pick(value: string | string[] | undefined): string | undefined {
@@ -33,16 +34,18 @@ export default async function HomePage(
   const sp = (await props.searchParams) as HomeSearchParams;
 
   const urlCategory = pick(sp.category);
+  const urlSort = pick(sp.sort) === "importance" ? "importance" : "time";
   const filters: FeedFilters = {
     category: urlCategory,
     sourceId: pick(sp.source),
     q: pick(sp.q),
-    hours: Number(pick(sp.hours)) || 72,
+    hours: Number(pick(sp.hours)) || (urlSort === "importance" ? 168 : 72),
+    sort: urlSort,
   };
 
   const [page, meta] = await Promise.all([listArticles(filters), getBriefMeta()]);
   const items = withFreshness(page.items);
-  const feedKey = `${urlCategory ?? ""}|${filters.sourceId ?? ""}|${filters.q ?? ""}|${filters.hours ?? ""}`;
+  const feedKey = `${urlCategory ?? ""}|${filters.sourceId ?? ""}|${filters.q ?? ""}|${filters.hours ?? ""}|${urlSort}`;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -68,7 +71,7 @@ export default async function HomePage(
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Header activeCategory={urlCategory} q={filters.q} />
+      <Header activeCategory={urlCategory} activeSort={urlSort} q={filters.q} />
       <main className="site-main">
         <BriefingPanel meta={meta} />
 
