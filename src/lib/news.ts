@@ -459,3 +459,20 @@ export async function listEventKeys(limit = 200): Promise<string[]> {
   });
   return rs.rows.map((r) => String(r.event_key)).filter((k) => k.length > 0);
 }
+
+/** 用于 sitemap：近 30 天出现 ≥2 次的高频实体（保持原始大小写形式） */
+export async function listEntityNames(limit = 100): Promise<string[]> {
+  const db = await getDb();
+  const rs = await db.execute({
+    sql: `SELECT j.value AS name, COUNT(*) AS n
+          FROM articles a,
+               json_each(CASE WHEN json_valid(a.entities) THEN a.entities ELSE '[]' END) j
+          WHERE a.published_at >= datetime('now', '-30 days')
+          GROUP BY j.value
+          HAVING COUNT(*) >= 2
+          ORDER BY n DESC, name ASC
+          LIMIT ?`,
+    args: [limit],
+  });
+  return rs.rows.map((r) => String(r.name)).filter((n) => n.length > 0 && n.length <= 60);
+}

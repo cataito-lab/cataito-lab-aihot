@@ -168,6 +168,8 @@ export async function ensureSchema(): Promise<void> {
   await ensureColumn("articles", "event_id", "event_id TEXT");
   await getDb().execute("CREATE INDEX IF NOT EXISTS idx_articles_event ON articles (event_id)");
   await ensureColumn("sources", "authority", "authority INTEGER");
+  await ensureColumn("sources", "fail_streak", "fail_streak INTEGER NOT NULL DEFAULT 0");
+  await ensureColumn("sources", "next_attempt_at", "next_attempt_at TEXT");
   await migrateFts();
   for (const ddl of TRIGGER_DDLS) {
     await getDb().execute({ sql: ddl, args: [] });
@@ -770,4 +772,51 @@ export async function getRelatedByContent(
     keyChange: r.key_change == null ? null : String(r.key_change),
     publishedAt: String(r.published_at),
   }));
+}
+
+// ─── 源级熔断（circuit breaker）──────────────────────────────────────────────
+// 背景：Google News / Substack / Reddit 等对 GitHub Actions 数据中心 IP 区别对待，
+// 部分源持续失败（本地正常）。熔断避免死源每轮拖慢抓取，同时定期探测自动恢复。
+
+export interface SourceHealth {
+  failStreak: number;
+  nextAttemptAt: string | null;
+}
+
+export async function getSourceHealth(): Promise<Map<string, SourceHealth>> {
+  const map = new Map<string, SourceHealth>();
+  const rs = await getDb().execute("SELECT id, fail_streak, next_attempt_at FROM sources");
+  for (const row of rs.rows) {
+    map.set(String(row.id), {
+      failStreak: Number(row.fail_streak ?? 0),
+      nextAttemptAt: row.next_attempt_at == null ? null : String(row.next_attempt_at),
+    });
+  }
+  return map;
+}
+
+/** 冷却时长：从第 3 次连续失败起 2h 起，指数退避封顶 12h（3→2h, 4→4h, 5→8h, ≥6→12h） */
+function cooldownHoursFor(failStreak: number): number {
+  if (failStreak < 3) return 0;
+  return Math.min(2 ** (failStreak - 2), 12);
+}
+
+export async function markSourceOutcomes(
+  outcomes: { sourceId: string; ok: boolean }[],
+): Promise<void> {
+  if (outcomes.length === 0) return;
+  const now = Date.now();
+  const health = await getSourceHealth();
+  const statements: InStatement[] = [];
+  for (const { sourceId, ok } of outcomes) {
+    const prev = health.get(sourceId);
+    const streak = ok ? 0 : (prev?.failStreak ?? 0) + 1;
+    const hours = cooldownHoursFor(streak);
+    const next = ok || hours === 0 ? null : new Date(now + hours * 3_600_000).toISOString();
+    statements.push({
+      sql: `UPDATE sources SET fail_streak = ?, next_attempt_at = ? WHERE id = ?`,
+      args: [streak, next, sourceId],
+    });
+  }
+  await getDb().batch(statements, "write");
 }

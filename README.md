@@ -20,7 +20,7 @@ GitHub Actions (schedule */10) + Cloudflare Worker (cron */10, dispatch 补刀)
   └─ pipeline/src：fetch → dedup(sha1) → filter → translate → summarize(AI Insight+评分)
         └─ Turso (libSQL)：articles / sources / events / fetch_logs / FTS
               └─ Next.js App Router @ Cloudflare Pages（edge runtime）
-                   / · /hot · /event/[key] · /entity/[name] · /api/news · /api/sources · /rss.xml · /sitemap.xml
+                   / · /?sort=importance（热门） · /event/[key] · /entity/[name] · /daily · /api/news · /api/sources · /rss.xml · /sitemap.xml
 ```
 
 技术细节见 [docs/TECH_SPEC.md](docs/TECH_SPEC.md)，运维与交接见 [docs/OPERATIONS.md](docs/OPERATIONS.md)（旧 `HANDOFF.md` 按仓库规则为本地不入库文件）。

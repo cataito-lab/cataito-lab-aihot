@@ -20,6 +20,8 @@ import {
   applyTranslationUpdates,
   getUntranslated,
   getRecentWithoutSummary,
+  getSourceHealth,
+  markSourceOutcomes,
 } from "./db";
 import { translatePending } from "./translate";
 import { summarizePending } from "./summarize";
@@ -73,10 +75,32 @@ async function fetchSource(source: SourceDef, windowHours: number): Promise<Fetc
 async function main(): Promise<void> {
   const { windowHours, dryRun } = parseArgs();
   const sources = loadSources().filter((s) => s.enabled && s.fetcher !== "html" && s.fetcher !== "bridge");
-  console.log(`[pipeline] ${sources.length} enabled sources | window=${windowHours}h | dryRun=${dryRun}`);
+
+  // 源级熔断：冷却中的源本轮跳过（连续失败 ≥3 次后指数退避，最长 12h，成功即复位）
+  let activeSources = sources;
+  if (!dryRun) {
+    try {
+      const health = await getSourceHealth();
+      const now = Date.now();
+      activeSources = sources.filter((s) => {
+        const h = health.get(s.id);
+        if (h?.nextAttemptAt && new Date(h.nextAttemptAt).getTime() > now) {
+          console.log(`  [circuit] ${s.id} cooling down until ${h.nextAttemptAt} (streak=${h.failStreak})`);
+          return false;
+        }
+        return true;
+      });
+    } catch {
+      // 首次运行 schema 未就绪：不熔断，全部尝试
+    }
+  }
+
+  console.log(
+    `[pipeline] ${sources.length} enabled sources (${activeSources.length} active after circuit-break) | window=${windowHours}h | dryRun=${dryRun}`,
+  );
 
   const limit = pLimit(5);
-  const results = await Promise.all(sources.map((s) => limit(() => fetchSource(s, windowHours))));
+  const results = await Promise.all(activeSources.map((s) => limit(() => fetchSource(s, windowHours))));
 
   const failedFeeds = results.filter((r) => r.error).map((r) => `${r.sourceId}: ${r.error}`);
   for (const f of failedFeeds) console.warn(`  [fail] ${f}`);
@@ -104,6 +128,7 @@ async function main(): Promise<void> {
 
   await ensureSchema();
   await seedSources(loadSources());
+  await markSourceOutcomes(results.map((r) => ({ sourceId: r.sourceId, ok: !r.error })));
 
   const runId = `run-${Date.now()}`;
   await startRun(runId);
