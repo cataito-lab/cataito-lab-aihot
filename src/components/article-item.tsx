@@ -7,6 +7,7 @@ import type { FeedArticle } from "@/lib/types";
 import { isFavorite, subscribeFavorites, toggleFavorite } from "@/lib/favorites";
 import { useMounted } from "@/lib/use-mounted";
 import { pickTitle } from "@/lib/i18n";
+import { localizeAudience } from "@/lib/audiences";
 
 function useFavorite(id: string): boolean {
   return useSyncExternalStore(
@@ -149,7 +150,11 @@ function pickImpact(
           typeof (x as Record<string, unknown>).audience === "string" &&
           typeof (x as Record<string, unknown>).description === "string",
       )
-      .slice(0, 4);
+      .slice(0, 4)
+      .map((x) => ({
+        audience: localizeAudience(x.audience, locale),
+        description: x.description,
+      }));
     return out.length ? out : null;
   } catch {
     return null;

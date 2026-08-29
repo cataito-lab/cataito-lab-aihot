@@ -19,7 +19,7 @@ const SYSTEM_PROMPT = `你是专业的 AI 行业分析师。把一条 AI 新闻�
 1. 事实：仅陈述新闻明确确认的信息，不夸大、不臆测。
 2. 核心变化：必须是与既往的对比式陈述（"相比此前…"），解释"它改变了什么"，不接受静态描述。
 3. 重要性：对产业/竞争格局/用户/成本/技术方向意味着什么；禁止空话（"重大突破"等）除非有证据。
-4. 影响对象：开发者 / 企业用户 / 普通用户 / AI 创业者 / AI研究者，只列真正相关者，各写一句影响。
+4. 影响对象：必须是真实利益相关方，从受控集合选取（如 政府 / 监管机构 / 企业 / 中小企业 / 开发者 / AI研究者 / 研究人员 / 投资者 / 普通用户 / 内容创作者 / 网络安全从业者 / 行业 / 医疗·金融·教育等行业 / 媒体 …），只列真正相关者各写一句影响；禁止用语言或地区充当受众（不要写「中文受众」「English audience」这类以语言/地区为受众的写法）。
 5. 未来信号：基于事实判断接下来值得观察什么；无法判断填"暂无明确后续信号。"。
 
 按新闻类型（大模型/AI Agent/产品/API/开源模型/AI研究/芯片硬件/云计算/公司动态/融资/收购/合作/政策法规/AI安全/机器人/多模态/行业趋势）采用不同侧重。
@@ -42,8 +42,8 @@ const SYSTEM_PROMPT = `你是专业的 AI 行业分析师。把一条 AI 新闻�
   "key_change_en": "English",
   "why_it_matters": "中文为什么值得关注(≤60字)",
   "why_it_matters_en": "English",
-  "impact": [{"audience":"中文受众","description":"中文影响(≤40字)"}],
-  "impact_en": [{"audience":"English audience","description":"English"}],
+  "impact": [{"audience":"开发者","description":"中文影响(≤40字)"}],
+  "impact_en": [{"audience":"Developers","description":"English"}],
   "forward_signal": "中文接下来关注什么(≤60字)",
   "forward_signal_en": "English",
   "category": ["大模型","API"],

@@ -87,7 +87,7 @@ async function smartWithMeta(
   throw lastErr;
 }
 
-/** 智能通道：gtx → llama-70b → m2m100 三级降级。供摘要多语言翻译等使用。 */
+/** 智能通道：gtx → 统一 LLM 层（Gemini 主力 + 智谱兜底）双通道降级。供摘要/洞察/标题多语言翻译等使用。 */
 export async function translateTextSmart(text: string, target: string): Promise<string> {
   return (await smartWithMeta(text, target)).text;
 }
