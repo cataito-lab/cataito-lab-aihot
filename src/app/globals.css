@@ -505,7 +505,7 @@ body {
     font-weight: 700;
   }
   .event-detail .title-secondary {
-    color: var(--text-muted);
+    color: var(--text-secondary);
     font-size: 13.5px;
     margin: 0 0 12px;
   }
@@ -531,7 +531,7 @@ body {
   .member-summary {
     color: var(--text-secondary);
     font-size: 13.5px;
-    line-height: 1.55;
+    line-height: 1.5;
     margin: 0 0 8px;
   }
   .verify-link {
@@ -635,8 +635,8 @@ body {
 
   .title-secondary {
     font-size: 13px;
-    line-height: 1.45;
-    color: var(--text-muted);
+    line-height: 1.5;
+    color: var(--text-secondary);
     margin: 5px 0 12px;
   }
 
@@ -736,8 +736,8 @@ body {
     flex-direction: row;
     align-items: flex-start;
     gap: 8px;
-    font-size: 12.5px;
-    line-height: 1.45;
+    font-size: 13px;
+    line-height: 1.5;
   }
 
   .ai-impact-aud {
@@ -753,12 +753,12 @@ body {
     font-family: var(--font-code);
     font-size: 10.5px;
     font-weight: 600;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.05em;
     white-space: nowrap;
   }
 
   .ai-impact-desc {
-    color: var(--text-muted);
+    color: var(--text-secondary);
   }
 
   /* 事件卡 / 成员卡的紧凑洞察行 */
@@ -836,7 +836,7 @@ body {
     line-height: 1.4;
     padding: 1px 9px;
     border-radius: 999px;
-    background: color-mix(in srgb, var(--text) 8%, transparent);
+    background: color-mix(in srgb, var(--text-muted) 8%, transparent);
     color: var(--text-muted);
     border: 1px solid var(--border-color);
     text-decoration: none;
