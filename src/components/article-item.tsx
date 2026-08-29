@@ -295,7 +295,7 @@ export function ArticleItem({
                 {impact.map((x, i) => (
                   <li key={i}>
                     <span className="ai-impact-aud">{x.audience}</span>
-                    <span>{x.description}</span>
+                    <span className="ai-impact-desc">{x.description}</span>
                   </li>
                 ))}
               </ul>

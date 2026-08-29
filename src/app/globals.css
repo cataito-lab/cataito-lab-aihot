@@ -726,25 +726,39 @@ body {
   .ai-impact {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
     list-style: none;
     margin: 0;
   }
 
   .ai-impact li {
     display: flex;
-    flex-direction: column;
-    gap: 1px;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 8px;
     font-size: 12.5px;
     line-height: 1.45;
-    color: var(--text-muted);
   }
 
   .ai-impact-aud {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    margin-top: 1px;
+    padding: 1px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: var(--overlay-subtle);
+    color: var(--accent);
+    font-family: var(--font-code);
+    font-size: 10.5px;
     font-weight: 600;
-    color: var(--text-secondary);
-    font-size: 11.5px;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+
+  .ai-impact-desc {
+    color: var(--text-muted);
   }
 
   /* 事件卡 / 成员卡的紧凑洞察行 */
