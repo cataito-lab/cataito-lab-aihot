@@ -4,7 +4,10 @@ import { httpFetch } from "./net";
 
 const API_BASE = "https://api.cloudflare.com/client/v4/accounts";
 
-const MODEL = process.env.CF_AI_MODEL ?? "@cf/meta/llama-3.1-70b-instruct";
+// 默认用 8B 模型：70B 每次调用消耗神经元过多，免费额度(10,000 neurons/天)只够跑 ~10-25 次，
+// 导致抓取器与回填互相抢额度、全天大部分调用被 429 限流。8B 约 1/7 成本，免费额度下每天可跑 ~100-150 次。
+// 若已升级 Workers Paid，可在 workflow 里设 CF_AI_MODEL=@cf/meta/llama-3.1-70b-instruct-fp8-fast 切回高质量模型。
+const MODEL = process.env.CF_AI_MODEL ?? "@cf/meta/llama-3.1-8b-instruct-fp8";
 const DAILY_QUOTA = 200;
 const MAX_PER_RUN = 30;
 
@@ -89,34 +92,48 @@ export async function runModel(userContent: string): Promise<string | null> {
   const accountId = process.env.CF_ACCOUNT_ID;
   const token = process.env.CF_AI_API_TOKEN;
   if (!accountId || !token) return null;
-  const res = await httpFetch(`${API_BASE}/${accountId}/ai/run/${MODEL}`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userContent },
-      ],
-      max_tokens: 1600,
-    }),
-    signal: AbortSignal.timeout(45000),
+  const url = `${API_BASE}/${accountId}/ai/run/${MODEL}`;
+  const body = JSON.stringify({
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: userContent },
+    ],
+    max_tokens: 1600,
   });
-  if (!res.ok) throw new Error(`Workers AI HTTP ${res.status}`);
-  const data = (await res.json()) as { result?: { response?: unknown } };
-  const out = data.result?.response;
-  // CF 部分模型偶发返回字符串数组，归一化为字符串
-  const text =
-    typeof out === "string"
-      ? out.trim()
-      : Array.isArray(out)
-        ? out
-            .map((c) =>
-              typeof c === "string" ? c : String((c as { response?: string })?.response ?? ""),
-            )
-            .join("")
-            .trim()
-        : "";
-  return text || null;
+  // 429 = Cloudflare Workers AI 每日 neuron 额度/速率耗尽。瞬时限流可短退避重试一次；
+  // 若是每日额度耗尽，重试无意义（额度 UTC 00:00 才重置），交给上层提前退出。
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const res = await httpFetch(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body,
+      signal: AbortSignal.timeout(45000),
+    });
+    if (res.ok) {
+      const data = (await res.json()) as { result?: { response?: unknown } };
+      const out = data.result?.response;
+      // CF 部分模型偶发返回字符串数组，归一化为字符串
+      const text =
+        typeof out === "string"
+          ? out.trim()
+          : Array.isArray(out)
+            ? out
+                .map((c) =>
+                  typeof c === "string" ? c : String((c as { response?: string })?.response ?? ""),
+                )
+                .join("")
+                .trim()
+            : "";
+      return text || null;
+    }
+    if (res.status === 429 && attempt === 0) {
+      // 短退避后重试一次；若为每日额度耗尽则重试也无用，由上层(backfill)提前退出
+      await new Promise((r) => setTimeout(r, 5000));
+      continue;
+    }
+    throw new Error(`Workers AI HTTP ${res.status}`);
+  }
+  return null;
 }
 
 /** 把模型输出规整成统一的 event_key / entities（跨源聚类唯一依据） */

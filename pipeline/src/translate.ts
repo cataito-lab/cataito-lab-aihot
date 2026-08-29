@@ -2,7 +2,7 @@ import { httpFetch } from "./net";
 
 const ENDPOINT = "https://translate.googleapis.com/translate_a/single";
 const CF_API_BASE = "https://api.cloudflare.com/client/v4/accounts";
-const LLAMA_MODEL = "@cf/meta/llama-3.1-70b-instruct";
+const LLAMA_MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8"; // 与 summarize 一致：8B 模型，免费额度下可跑；如需更高质量可改 70B（须 Workers Paid）
 const M2M100_MODEL = "@cf/meta/m2m100-1.2b";
 
 const MAX_NEW_PER_RUN = 100;

@@ -68,6 +68,7 @@ async function main(): Promise<void> {
 
   let done = 0;
   let failures = 0;
+  let consecutive429 = 0;
   for (const r of pending) {
     if (done >= MAX_CALLS) break;
     const content = r.article_content ?? r.summary ?? r.summary_en ?? r.title;
@@ -107,8 +108,19 @@ async function main(): Promise<void> {
       });
       done++;
     } catch (err) {
-      failures++;
-      console.warn(`  [insight] ${r.id}: ${err instanceof Error ? err.message : err}`);
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("429")) {
+        consecutive429++;
+        console.warn(`  [insight] ${r.id}: ${msg}`);
+        if (consecutive429 >= 3) {
+          console.log("[insight] 连续 3 次 429：判定 Workers AI 每日额度耗尽，提前退出（UTC 00:00 重置后再跑）");
+          break;
+        }
+      } else {
+        consecutive429 = 0;
+        failures++;
+        console.warn(`  [insight] ${r.id}: ${msg}`);
+      }
     }
     await sleep(150);
   }
