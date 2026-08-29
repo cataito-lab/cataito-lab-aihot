@@ -39,7 +39,11 @@
     "hoursAgo": "{n}時間前",
     "daysAgo": "{n}日前",
     "estimated": "約",
-    "entities": "関連エンティティ"
+    "entities": "関連エンティティ",
+    "insightKeyChange": "核心ポイント",
+    "insightWhy": "なぜ重要か",
+    "insightImpact": "影響を受ける層",
+    "insightForward": "今後の注目点"
   },
   "briefing": {
     "signal": "// SIGNAL BRIEFING SYSTEM",

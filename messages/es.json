@@ -39,7 +39,11 @@
     "hoursAgo": "hace {n}h",
     "daysAgo": "hace {n}d",
     "estimated": "aprox.",
-    "entities": "Entidades"
+    "entities": "Entidades",
+    "insightKeyChange": "Conclusión clave",
+    "insightWhy": "Por qué importa",
+    "insightImpact": "A quién afecta",
+    "insightForward": "Qué sigue"
   },
   "briefing": {
     "signal": "// SIGNAL BRIEFING SYSTEM",

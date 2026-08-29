@@ -257,41 +257,53 @@ export function ArticleItem({
           </div>
           <div className="ai-summary-content">{summary}</div>
           {keyChange && (
-            <div className="ai-insight-row ai-change">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path d="M3 17l6-6 4 4 8-8" />
-                <path d="M21 7v6h-6" />
-              </svg>
-              <span>{keyChange}</span>
-            </div>
+            <>
+              <div className="ai-insight-label">{t("insightKeyChange")}</div>
+              <div className="ai-insight-row ai-change">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M3 17l6-6 4 4 8-8" />
+                  <path d="M21 7v6h-6" />
+                </svg>
+                <span>{keyChange}</span>
+              </div>
+            </>
           )}
           {whyItMatters && (
-            <div className="ai-insight-row ai-why">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path d="M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z" />
-                <path d="M9 21h6" />
-              </svg>
-              <span>{whyItMatters}</span>
-            </div>
+            <>
+              <div className="ai-insight-label">{t("insightWhy")}</div>
+              <div className="ai-insight-row ai-why">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z" />
+                  <path d="M9 21h6" />
+                </svg>
+                <span>{whyItMatters}</span>
+              </div>
+            </>
           )}
           {impact && (
-            <ul className="ai-impact">
-              {impact.map((x, i) => (
-                <li key={i}>
-                  <span className="ai-impact-aud">{x.audience}</span>
-                  <span>{x.description}</span>
-                </li>
-              ))}
-            </ul>
+            <>
+              <div className="ai-insight-label">{t("insightImpact")}</div>
+              <ul className="ai-impact">
+                {impact.map((x, i) => (
+                  <li key={i}>
+                    <span className="ai-impact-aud">{x.audience}</span>
+                    <span>{x.description}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
           {forwardSignal && (
-            <div className="ai-insight-row ai-fwd">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <circle cx="12" cy="12" r="2" />
-                <path d="M7.5 7.5a6 6 0 000 9M16.5 7.5a6 6 0 010 9M4.5 4.5a10 10 0 000 15M19.5 4.5a10 10 0 010 15" />
-              </svg>
-              <span>{forwardSignal}</span>
-            </div>
+            <>
+              <div className="ai-insight-label">{t("insightForward")}</div>
+              <div className="ai-insight-row ai-fwd">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <circle cx="12" cy="12" r="2" />
+                  <path d="M7.5 7.5a6 6 0 000 9M16.5 7.5a6 6 0 010 9M4.5 4.5a10 10 0 000 15M19.5 4.5a10 10 0 010 15" />
+                </svg>
+                <span>{forwardSignal}</span>
+              </div>
+            </>
           )}
           {tags && (
             <div className="ai-tags">

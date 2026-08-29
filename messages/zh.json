@@ -39,7 +39,11 @@
     "hoursAgo": "{n}小时前",
     "daysAgo": "{n}天前",
     "estimated": "约",
-    "entities": "涉及实体"
+    "entities": "涉及实体",
+    "insightKeyChange": "核心结论",
+    "insightWhy": "为什么重要",
+    "insightImpact": "影响谁",
+    "insightForward": "后续看点"
   },
   "briefing": {
     "signal": "// SIGNAL BRIEFING SYSTEM",
