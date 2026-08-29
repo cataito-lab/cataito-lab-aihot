@@ -711,10 +711,9 @@ body {
 
   .ai-insight-label {
     font-family: var(--font-code);
-    font-size: 10.5px;
-    color: var(--text-muted);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
   }
 
   .ai-insight-body {
