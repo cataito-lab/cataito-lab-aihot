@@ -26,6 +26,7 @@ import {
 import { translatePending } from "./translate";
 import { summarizePending } from "./summarize";
 import { translateSummariesPending } from "./summary-translate";
+import { translateInsightsPending } from "./insight-translate";
 import { clusterEvents } from "./cluster";
 import type { FetchResult, RawItem, SourceDef } from "./types";
 
@@ -178,6 +179,7 @@ async function main(): Promise<void> {
   const summarizable = await getRecentWithoutSummary(windowHours, 40);
   await summarizePending(summarizable);
   await translateSummariesPending();
+  await translateInsightsPending();
   await clusterEvents(windowHours);
 
   const hardFail = results.length > 0 && results.every((r) => r.error);

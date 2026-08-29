@@ -27,10 +27,22 @@ function pickSummary(a: FeedArticle, locale: string): string | null {
   return a.summaryEn;
 }
 
-function pickField(zh: string | null, en: string | null, locale: string): string | null {
-  if (locale === "zh") return zh ?? en;
-  if (locale === "en") return en ?? zh;
-  return en ?? zh;
+function pickField(
+  v: {
+    zh: string | null;
+    en: string | null;
+    ja: string | null;
+    es: string | null;
+    fr: string | null;
+  },
+  locale: string,
+): string | null {
+  if (locale === "zh") return v.zh ?? v.en;
+  if (locale === "en") return v.en ?? v.zh;
+  if (locale === "ja") return v.ja ?? v.en ?? v.zh;
+  if (locale === "es") return v.es ?? v.en ?? v.zh;
+  if (locale === "fr") return v.fr ?? v.en ?? v.zh;
+  return v.en ?? v.zh;
 }
 
 export function EventCard({
@@ -53,8 +65,14 @@ export function EventCard({
   const latest = items.reduce((m, i) => (i.publishedAt > m ? i.publishedAt : m), items[0].publishedAt);
   const eventSummary = items[0].eventSummary;
   const canonicalSummary = pickSummary(best, locale);
-  const kc = pickField(best.keyChange, best.keyChangeEn, locale);
-  const fs = pickField(best.forwardSignal, best.forwardSignalEn, locale);
+  const kc = pickField(
+    { zh: best.keyChange, en: best.keyChangeEn, ja: best.keyChangeJa, es: best.keyChangeEs, fr: best.keyChangeFr },
+    locale,
+  );
+  const fs = pickField(
+    { zh: best.forwardSignal, en: best.forwardSignalEn, ja: best.forwardSignalJa, es: best.forwardSignalEs, fr: best.forwardSignalFr },
+    locale,
+  );
 
   return (
     <li

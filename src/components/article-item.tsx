@@ -97,20 +97,46 @@ function pickSummary(article: FeedArticle, locale: string): string | null {
   return article.summaryEn;
 }
 
-/** 单字段按 locale 取：中文界面用中文，其余界面优先英文回退中文 */
-function pickField(zh: string | null, en: string | null, locale: string): string | null {
-  if (locale === "zh") return zh ?? en;
-  if (locale === "en") return en ?? zh;
-  return en ?? zh;
+/** 单字段按 locale 取：对应语言优先，缺失则回退英文，再回退中文 */
+function pickField(
+  v: {
+    zh: string | null;
+    en: string | null;
+    ja: string | null;
+    es: string | null;
+    fr: string | null;
+  },
+  locale: string,
+): string | null {
+  if (locale === "zh") return v.zh ?? v.en;
+  if (locale === "en") return v.en ?? v.zh;
+  if (locale === "ja") return v.ja ?? v.en ?? v.zh;
+  if (locale === "es") return v.es ?? v.en ?? v.zh;
+  if (locale === "fr") return v.fr ?? v.en ?? v.zh;
+  return v.en ?? v.zh;
 }
 
-/** 影响对象 JSON 按 locale 取 */
+/** 影响对象 JSON 按 locale 取：对应语言优先，缺失则回退英文，再回退中文 */
 function pickImpact(
-  zhJson: string | null,
-  enJson: string | null,
+  v: {
+    zh: string | null;
+    en: string | null;
+    ja: string | null;
+    es: string | null;
+    fr: string | null;
+  },
   locale: string,
 ): { audience: string; description: string }[] | null {
-  const raw = locale === "zh" ? zhJson : enJson ?? zhJson;
+  const raw =
+    locale === "zh"
+      ? v.zh
+      : locale === "ja"
+        ? v.ja ?? v.en ?? v.zh
+        : locale === "es"
+          ? v.es ?? v.en ?? v.zh
+          : locale === "fr"
+            ? v.fr ?? v.en ?? v.zh
+            : v.en ?? v.zh;
   if (!raw) return null;
   try {
     const arr = JSON.parse(raw) as unknown;
@@ -175,10 +201,22 @@ export function ArticleItem({
     : article.scoreFinal >= 65 ? "important"
     : "normal";
   const summary = pickSummary(article, locale);
-  const keyChange = pickField(article.keyChange, article.keyChangeEn, locale);
-  const whyItMatters = pickField(article.whyItMatters, article.whyItMattersEn, locale);
-  const forwardSignal = pickField(article.forwardSignal, article.forwardSignalEn, locale);
-  const impact = pickImpact(article.impact, article.impactEn, locale);
+  const keyChange = pickField(
+    { zh: article.keyChange, en: article.keyChangeEn, ja: article.keyChangeJa, es: article.keyChangeEs, fr: article.keyChangeFr },
+    locale,
+  );
+  const whyItMatters = pickField(
+    { zh: article.whyItMatters, en: article.whyItMattersEn, ja: article.whyItMattersJa, es: article.whyItMattersEs, fr: article.whyItMattersFr },
+    locale,
+  );
+  const forwardSignal = pickField(
+    { zh: article.forwardSignal, en: article.forwardSignalEn, ja: article.forwardSignalJa, es: article.forwardSignalEs, fr: article.forwardSignalFr },
+    locale,
+  );
+  const impact = pickImpact(
+    { zh: article.impact, en: article.impactEn, ja: article.impactJa, es: article.impactEs, fr: article.impactFr },
+    locale,
+  );
   const tags = pickTags(article.aiCategory, article.aiCategoryEn, locale);
   const hasSummary = Boolean(summary);
 

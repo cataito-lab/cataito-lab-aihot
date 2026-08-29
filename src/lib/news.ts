@@ -36,12 +36,24 @@ export interface ArticleRow {
   event_key: unknown;
   key_change: unknown;
   key_change_en: unknown;
+  key_change_ja: unknown;
+  key_change_es: unknown;
+  key_change_fr: unknown;
   why_it_matters: unknown;
   why_it_matters_en: unknown;
+  why_ja: unknown;
+  why_es: unknown;
+  why_fr: unknown;
   forward_signal: unknown;
   forward_signal_en: unknown;
+  forward_signal_ja: unknown;
+  forward_signal_es: unknown;
+  forward_signal_fr: unknown;
   impact: unknown;
   impact_en: unknown;
+  impact_ja: unknown;
+  impact_es: unknown;
+  impact_fr: unknown;
   ai_category: unknown;
   ai_category_en: unknown;
   importance_score: unknown;
@@ -195,12 +207,24 @@ export function toFeedArticle(row: ArticleRow): FeedArticle {
     eventKey: row.event_key == null ? null : String(row.event_key),
     keyChange: ensureEndPunct(cleanInsightText(str(row.key_change)), "。"),
     keyChangeEn: ensureEndPunct(cleanInsightText(str(row.key_change_en)), "."),
+    keyChangeJa: ensureEndPunct(cleanInsightText(str(row.key_change_ja)), "。"),
+    keyChangeEs: ensureEndPunct(cleanInsightText(str(row.key_change_es)), "。"),
+    keyChangeFr: ensureEndPunct(cleanInsightText(str(row.key_change_fr)), "."),
     whyItMatters: ensureEndPunct(cleanInsightText(str(row.why_it_matters)), "。"),
     whyItMattersEn: ensureEndPunct(cleanInsightText(str(row.why_it_matters_en)), "."),
+    whyItMattersJa: ensureEndPunct(cleanInsightText(str(row.why_ja)), "。"),
+    whyItMattersEs: ensureEndPunct(cleanInsightText(str(row.why_es)), "。"),
+    whyItMattersFr: ensureEndPunct(cleanInsightText(str(row.why_fr)), "."),
     forwardSignal: ensureEndPunct(cleanInsightText(str(row.forward_signal)), "。"),
     forwardSignalEn: ensureEndPunct(cleanInsightText(str(row.forward_signal_en)), "."),
+    forwardSignalJa: ensureEndPunct(cleanInsightText(str(row.forward_signal_ja)), "。"),
+    forwardSignalEs: ensureEndPunct(cleanInsightText(str(row.forward_signal_es)), "。"),
+    forwardSignalFr: ensureEndPunct(cleanInsightText(str(row.forward_signal_fr)), "."),
     impact: normalizeImpact(str(row.impact), "。"),
     impactEn: normalizeImpact(str(row.impact_en), "."),
+    impactJa: normalizeImpact(str(row.impact_ja), "。"),
+    impactEs: normalizeImpact(str(row.impact_es), "。"),
+    impactFr: normalizeImpact(str(row.impact_fr), "."),
     aiCategory: normalizeCategories(str(row.ai_category)),
     aiCategoryEn: normalizeCategories(str(row.ai_category_en)),
     importanceScore: row.importance_score == null ? null : Number(row.importance_score),
@@ -316,9 +340,10 @@ export async function listArticles(
            a.summary_es, a.summary_fr, a.url, a.author,
            a.published_at, a.fetched_at,
              a.key_points, a.industry_impact, a.score_final,
-             a.key_change, a.key_change_en, a.why_it_matters, a.why_it_matters_en,
-             a.forward_signal, a.forward_signal_en,
-              a.impact, a.impact_en, a.category AS ai_category, a.category_en AS ai_category_en, a.importance_score,
+              a.key_change, a.key_change_en, a.key_change_ja, a.key_change_es, a.key_change_fr,
+              a.why_it_matters, a.why_it_matters_en, a.why_ja, a.why_es, a.why_fr,
+              a.forward_signal, a.forward_signal_en, a.forward_signal_ja, a.forward_signal_es, a.forward_signal_fr,
+               a.impact, a.impact_en, a.impact_ja, a.impact_es, a.impact_fr, a.category AS ai_category, a.category_en AS ai_category_en, a.importance_score,
               a.entities,
               a.event_id, e.summary AS event_summary, e.event_key AS event_key
       FROM articles a
@@ -488,9 +513,10 @@ export async function getEventMembers(eventId: string): Promise<EventMember[]> {
     sql: `SELECT a.id, a.source_id, s.name AS source_name, s.category, s.lang,
                   a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
                   a.summary_es, a.summary_fr, a.url, a.author, a.published_at, a.score_final,
-                  a.key_change, a.key_change_en, a.why_it_matters, a.why_it_matters_en,
-                  a.forward_signal, a.forward_signal_en,
-                 a.impact, a.impact_en, a.category AS ai_category, a.category_en AS ai_category_en, a.importance_score,
+                  a.key_change, a.key_change_en, a.key_change_ja, a.key_change_es, a.key_change_fr,
+                  a.why_it_matters, a.why_it_matters_en, a.why_ja, a.why_es, a.why_fr,
+                  a.forward_signal, a.forward_signal_en, a.forward_signal_ja, a.forward_signal_es, a.forward_signal_fr,
+                 a.impact, a.impact_en, a.impact_ja, a.impact_es, a.impact_fr, a.category AS ai_category, a.category_en AS ai_category_en, a.importance_score,
                  a.entities
           FROM articles a JOIN sources s ON s.id = a.source_id
           WHERE a.event_id = ?
@@ -513,12 +539,24 @@ export async function getEventMembers(eventId: string): Promise<EventMember[]> {
     scoreFinal: r.score_final == null ? null : Number(r.score_final),
     keyChange: ensureEndPunct(cleanInsightText(str(r.key_change)), "。"),
     keyChangeEn: ensureEndPunct(cleanInsightText(str(r.key_change_en)), "."),
+    keyChangeJa: ensureEndPunct(cleanInsightText(str(r.key_change_ja)), "。"),
+    keyChangeEs: ensureEndPunct(cleanInsightText(str(r.key_change_es)), "。"),
+    keyChangeFr: ensureEndPunct(cleanInsightText(str(r.key_change_fr)), "."),
     whyItMatters: ensureEndPunct(cleanInsightText(str(r.why_it_matters)), "。"),
     whyItMattersEn: ensureEndPunct(cleanInsightText(str(r.why_it_matters_en)), "."),
+    whyItMattersJa: ensureEndPunct(cleanInsightText(str(r.why_ja)), "。"),
+    whyItMattersEs: ensureEndPunct(cleanInsightText(str(r.why_es)), "。"),
+    whyItMattersFr: ensureEndPunct(cleanInsightText(str(r.why_fr)), "."),
     forwardSignal: ensureEndPunct(cleanInsightText(str(r.forward_signal)), "。"),
     forwardSignalEn: ensureEndPunct(cleanInsightText(str(r.forward_signal_en)), "."),
+    forwardSignalJa: ensureEndPunct(cleanInsightText(str(r.forward_signal_ja)), "。"),
+    forwardSignalEs: ensureEndPunct(cleanInsightText(str(r.forward_signal_es)), "。"),
+    forwardSignalFr: ensureEndPunct(cleanInsightText(str(r.forward_signal_fr)), "."),
     impact: normalizeImpact(str(r.impact), "。"),
     impactEn: normalizeImpact(str(r.impact_en), "."),
+    impactJa: normalizeImpact(str(r.impact_ja), "。"),
+    impactEs: normalizeImpact(str(r.impact_es), "。"),
+    impactFr: normalizeImpact(str(r.impact_fr), "."),
     aiCategory: normalizeCategories(str(r.ai_category)),
     aiCategoryEn: normalizeCategories(str(r.ai_category_en)),
     importanceScore: r.importance_score == null ? null : Number(r.importance_score),

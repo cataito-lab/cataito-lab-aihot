@@ -24,10 +24,22 @@ function pickSummary(m: EventMember, locale: string): string | null {
   return m.summaryEn;
 }
 
-function pickField(zh: string | null, en: string | null, locale: string): string | null {
-  if (locale === "zh") return zh ?? en;
-  if (locale === "en") return en ?? zh;
-  return en ?? zh;
+function pickField(
+  v: {
+    zh: string | null;
+    en: string | null;
+    ja: string | null;
+    es: string | null;
+    fr: string | null;
+  },
+  locale: string,
+): string | null {
+  if (locale === "zh") return v.zh ?? v.en;
+  if (locale === "en") return v.en ?? v.zh;
+  if (locale === "ja") return v.ja ?? v.en ?? v.zh;
+  if (locale === "es") return v.es ?? v.en ?? v.zh;
+  if (locale === "fr") return v.fr ?? v.en ?? v.zh;
+  return v.en ?? v.zh;
 }
 
 function fmt(d: string, locale: string): string {
@@ -118,8 +130,14 @@ function MemberCard({ m, locale, verifyLabel }: {
       </h3>
       {summary && <p className="member-summary">{summary}</p>}
       {(() => {
-        const kc = pickField(m.keyChange, m.keyChangeEn, locale);
-        const fs = pickField(m.forwardSignal, m.forwardSignalEn, locale);
+        const kc = pickField(
+          { zh: m.keyChange, en: m.keyChangeEn, ja: m.keyChangeJa, es: m.keyChangeEs, fr: m.keyChangeFr },
+          locale,
+        );
+        const fs = pickField(
+          { zh: m.forwardSignal, en: m.forwardSignalEn, ja: m.forwardSignalJa, es: m.forwardSignalEs, fr: m.forwardSignalFr },
+          locale,
+        );
         if (!kc && !fs) return null;
         return (
           <div className="ai-insight-mini">
@@ -169,14 +187,23 @@ export default async function EventPage({
     (a, b) => new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime(),
   );
   const steps = progression
-    .map((m) => ({ m, kc: pickField(m.keyChange, m.keyChangeEn, locale) }))
+    .map((m) => ({
+      m,
+      kc: pickField(
+        { zh: m.keyChange, en: m.keyChangeEn, ja: m.keyChangeJa, es: m.keyChangeEs, fr: m.keyChangeFr },
+        locale,
+      ),
+    }))
     .filter((x) => x.kc) as Array<{ m: EventMember; kc: string }>;
   const nextSignal = (() => {
     const desc = [...event.members].sort(
       (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
     );
     for (const m of desc) {
-      const v = pickField(m.forwardSignal, m.forwardSignalEn, locale);
+      const v = pickField(
+        { zh: m.forwardSignal, en: m.forwardSignalEn, ja: m.forwardSignalJa, es: m.forwardSignalEs, fr: m.forwardSignalFr },
+        locale,
+      );
       if (v) return v;
     }
     return null;

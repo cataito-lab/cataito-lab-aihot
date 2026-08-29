@@ -35,13 +35,25 @@ export interface FeedArticle {
   /** AI Insight 子结构（智能洞察） */
   keyChange: string | null;
   keyChangeEn: string | null;
+  keyChangeJa: string | null;
+  keyChangeEs: string | null;
+  keyChangeFr: string | null;
   whyItMatters: string | null;
   whyItMattersEn: string | null;
+  whyItMattersJa: string | null;
+  whyItMattersEs: string | null;
+  whyItMattersFr: string | null;
   forwardSignal: string | null;
   forwardSignalEn: string | null;
+  forwardSignalJa: string | null;
+  forwardSignalEs: string | null;
+  forwardSignalFr: string | null;
   /** JSON: {audience,description}[] */
   impact: string | null;
   impactEn: string | null;
+  impactJa: string | null;
+  impactEs: string | null;
+  impactFr: string | null;
   /** JSON: string[] */
   aiCategory: string | null;
   aiCategoryEn: string | null;
@@ -73,12 +85,24 @@ export interface EventMember {
   /** AI Insight 子结构 */
   keyChange: string | null;
   keyChangeEn: string | null;
+  keyChangeJa: string | null;
+  keyChangeEs: string | null;
+  keyChangeFr: string | null;
   whyItMatters: string | null;
   whyItMattersEn: string | null;
+  whyItMattersJa: string | null;
+  whyItMattersEs: string | null;
+  whyItMattersFr: string | null;
   forwardSignal: string | null;
   forwardSignalEn: string | null;
+  forwardSignalJa: string | null;
+  forwardSignalEs: string | null;
+  forwardSignalFr: string | null;
   impact: string | null;
   impactEn: string | null;
+  impactJa: string | null;
+  impactEs: string | null;
+  impactFr: string | null;
   aiCategory: string | null;
   aiCategoryEn: string | null;
   importanceScore: number | null;

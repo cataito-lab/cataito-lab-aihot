@@ -162,6 +162,16 @@ export async function ensureSchema(): Promise<void> {
   await ensureColumn("articles", "forward_signal_en", "forward_signal_en TEXT");
   await ensureColumn("articles", "impact", "impact TEXT");
   await ensureColumn("articles", "impact_en", "impact_en TEXT");
+  // 洞察字段的 ja/es/fr 翻译列（由独立翻译任务补全，消除非中英界面的英文混杂）
+  await ensureColumn("articles", "key_change_ja", "key_change_ja TEXT");
+  await ensureColumn("articles", "key_change_es", "key_change_es TEXT");
+  await ensureColumn("articles", "key_change_fr", "key_change_fr TEXT");
+  await ensureColumn("articles", "forward_signal_ja", "forward_signal_ja TEXT");
+  await ensureColumn("articles", "forward_signal_es", "forward_signal_es TEXT");
+  await ensureColumn("articles", "forward_signal_fr", "forward_signal_fr TEXT");
+  await ensureColumn("articles", "impact_ja", "impact_ja TEXT");
+  await ensureColumn("articles", "impact_es", "impact_es TEXT");
+  await ensureColumn("articles", "impact_fr", "impact_fr TEXT");
   await ensureColumn("articles", "category", "category TEXT");
   await ensureColumn("articles", "category_en", "category_en TEXT");
   await ensureColumn("articles", "importance_score", "importance_score INTEGER");
@@ -653,6 +663,93 @@ export async function applySummaryTranslationUpdates(
     for (let i = 0; i < stmts.length; i += 50) {
       await getDb().batch(stmts.slice(i, i + 50), "write");
     }
+  }
+}
+
+// ---- 洞察字段多语言翻译（key_change / forward_signal / impact / why 的 ja/es/fr）----
+// 与摘要翻译同理：主摘要只生成中英，这里用翻译通道补全其余三语，消除非中英界面的英文混杂。
+
+export interface InsightTranslateConfig {
+  field: "key_change" | "forward_signal" | "why_it_matters" | "impact";
+  srcEn: string;
+  srcZh: string;
+  cols: { ja: string; es: string; fr: string };
+}
+
+export const INSIGHT_TRANSLATE_CONFIG: InsightTranslateConfig[] = [
+  { field: "key_change", srcEn: "key_change_en", srcZh: "key_change", cols: { ja: "key_change_ja", es: "key_change_es", fr: "key_change_fr" } },
+  { field: "forward_signal", srcEn: "forward_signal_en", srcZh: "forward_signal", cols: { ja: "forward_signal_ja", es: "forward_signal_es", fr: "forward_signal_fr" } },
+  { field: "why_it_matters", srcEn: "why_it_matters_en", srcZh: "why_it_matters", cols: { ja: "why_ja", es: "why_es", fr: "why_fr" } },
+  { field: "impact", srcEn: "impact_en", srcZh: "impact", cols: { ja: "impact_ja", es: "impact_es", fr: "impact_fr" } },
+];
+
+export type InsightLang = "ja" | "es" | "fr";
+
+export interface InsightTranslateRow {
+  id: string;
+  fields: Record<string, { src: string | null; missing: InsightLang[] }>;
+}
+
+export interface InsightTranslationUpdate {
+  id: string;
+  field: string;
+  lang: InsightLang;
+  text: string;
+}
+
+export async function getPendingInsightTranslations(
+  limit: number,
+): Promise<InsightTranslateRow[]> {
+  const selectParts: string[] = ["id"];
+  const conditions: string[] = [];
+  for (const c of INSIGHT_TRANSLATE_CONFIG) {
+    selectParts.push(`COALESCE(${c.srcEn}, ${c.srcZh}) AS ${c.field}_src`);
+    for (const lang of ["ja", "es", "fr"] as const) {
+      selectParts.push(`${c.cols[lang]} IS NULL AS ${c.field}_need_${lang}`);
+      conditions.push(`${c.cols[lang]} IS NULL`);
+    }
+  }
+  const rs = await getDb().execute({
+    sql: `SELECT ${selectParts.join(", ")} FROM articles
+          WHERE ${conditions.join(" OR ")}
+          ORDER BY published_at DESC LIMIT ?`,
+    args: [limit],
+  });
+  const rows: InsightTranslateRow[] = [];
+  for (const row of rs.rows) {
+    const fields: Record<string, { src: string | null; missing: InsightLang[] }> = {};
+    let hasAny = false;
+    for (const c of INSIGHT_TRANSLATE_CONFIG) {
+      const src = row[`${c.field}_src`] == null ? null : String(row[`${c.field}_src`]);
+      const missing: InsightLang[] = [];
+      for (const lang of ["ja", "es", "fr"] as const) {
+        if (Number(row[`${c.field}_need_${lang}`]) === 1) missing.push(lang);
+      }
+      if (src && missing.length > 0) {
+        fields[c.field] = { src, missing };
+        hasAny = true;
+      }
+    }
+    if (hasAny) rows.push({ id: String(row.id), fields });
+  }
+  return rows;
+}
+
+export async function applyInsightTranslationUpdates(
+  updates: InsightTranslationUpdate[],
+): Promise<void> {
+  if (updates.length === 0) return;
+  const colFor = (field: string, lang: InsightLang): string => {
+    const c = INSIGHT_TRANSLATE_CONFIG.find((x) => x.field === field);
+    if (!c) throw new Error(`unknown insight field ${field}`);
+    return c.cols[lang];
+  };
+  const stmts = updates.map((u) => ({
+    sql: `UPDATE articles SET ${colFor(u.field, u.lang)} = ? WHERE id = ?`,
+    args: [u.text, u.id] as (string | number)[],
+  }));
+  for (let i = 0; i < stmts.length; i += 50) {
+    await getDb().batch(stmts.slice(i, i + 50), "write");
   }
 }
 
