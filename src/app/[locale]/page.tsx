@@ -5,6 +5,7 @@ import { NewsFeed } from "@/components/news-feed";
 import { TzNote } from "@/components/tz-note";
 import { getBriefMeta, listArticles } from "@/lib/news";
 import { withFreshness } from "@/lib/article-utils";
+import { pickTitle } from "@/lib/i18n";
 import type { FeedFilters } from "@/lib/types";
 
 export const runtime = "edge";
@@ -59,7 +60,7 @@ export default async function HomePage(
       itemListElement: items.slice(0, 30).map((a, i) => ({
         "@type": "ListItem",
         position: i + 1,
-        name: locale === "zh" ? (a.titleZh ?? a.title) : a.title,
+        name: pickTitle(a, locale).primary,
         url: a.url,
       })),
     },

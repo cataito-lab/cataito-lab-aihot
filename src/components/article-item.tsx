@@ -6,6 +6,7 @@ import { Fire, BookmarkSimple } from "@phosphor-icons/react";
 import type { FeedArticle } from "@/lib/types";
 import { isFavorite, subscribeFavorites, toggleFavorite } from "@/lib/favorites";
 import { useMounted } from "@/lib/use-mounted";
+import { pickTitle } from "@/lib/i18n";
 
 function useFavorite(id: string): boolean {
   return useSyncExternalStore(
@@ -183,15 +184,7 @@ export function ArticleItem({
   const starred = useFavorite(article.id);
   const mounted = useMounted();
 
-  let primary: string;
-  let secondary: string | null;
-  if (locale === "zh") {
-    primary = article.titleZh ?? article.title;
-    secondary = article.titleZh ? article.title : null;
-  } else {
-    primary = article.title;
-    secondary = null;
-  }
+  const { primary, secondary } = pickTitle(article, locale);
 
   const cat = CAT_META[article.category] ?? CAT_META.community;
   // AIHOT 重要性分级（数据已在管线计算并随 FeedArticle 下发，此处仅 surfacing）：

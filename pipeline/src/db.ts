@@ -172,6 +172,9 @@ export async function ensureSchema(): Promise<void> {
   await ensureColumn("articles", "impact_ja", "impact_ja TEXT");
   await ensureColumn("articles", "impact_es", "impact_es TEXT");
   await ensureColumn("articles", "impact_fr", "impact_fr TEXT");
+  await ensureColumn("articles", "title_ja", "title_ja TEXT");
+  await ensureColumn("articles", "title_es", "title_es TEXT");
+  await ensureColumn("articles", "title_fr", "title_fr TEXT");
   await ensureColumn("articles", "category", "category TEXT");
   await ensureColumn("articles", "category_en", "category_en TEXT");
   await ensureColumn("articles", "importance_score", "importance_score INTEGER");
@@ -750,6 +753,71 @@ export async function applyInsightTranslationUpdates(
   }));
   for (let i = 0; i < stmts.length; i += 50) {
     await getDb().batch(stmts.slice(i, i + 50), "write");
+  }
+}
+
+// ---- 标题多语言翻译（ja/es/fr）----
+// 与摘要同理：标题只存原始语言 + title_zh，这里用翻译通道补全 ja/es/fr，消除非中英界面标题的英文/中文混杂。
+
+export const TITLE_LANG_COLUMNS = {
+  ja: "title_ja",
+  es: "title_es",
+  fr: "title_fr",
+} as const;
+
+export type TitleLang = keyof typeof TITLE_LANG_COLUMNS;
+
+export interface TitleTranslateRow {
+  id: string;
+  title: string;
+  missing: TitleLang[];
+}
+
+export async function getPendingTitleTranslations(
+  limit: number,
+): Promise<TitleTranslateRow[]> {
+  const rs = await getDb().execute({
+    sql: `SELECT id, title,
+            title_ja IS NULL AS need_ja,
+            title_es IS NULL AS need_es,
+            title_fr IS NULL AS need_fr
+          FROM articles
+          WHERE title IS NOT NULL
+            AND (title_ja IS NULL OR title_es IS NULL OR title_fr IS NULL)
+          ORDER BY published_at DESC LIMIT ?`,
+    args: [limit],
+  });
+  const rows: TitleTranslateRow[] = [];
+  for (const row of rs.rows) {
+    const missing: TitleLang[] = [];
+    if (Number(row.need_ja) === 1) missing.push("ja");
+    if (Number(row.need_es) === 1) missing.push("es");
+    if (Number(row.need_fr) === 1) missing.push("fr");
+    if (missing.length > 0) {
+      rows.push({ id: String(row.id), title: String(row.title), missing });
+    }
+  }
+  return rows;
+}
+
+export async function applyTitleTranslationUpdates(
+  updates: { id: string; lang: TitleLang; text: string }[],
+): Promise<void> {
+  if (updates.length === 0) return;
+  const byLang: Record<TitleLang, { sql: string; args: (string | number)[] }[]> = {
+    ja: [], es: [], fr: [],
+  };
+  for (const u of updates) {
+    byLang[u.lang].push({
+      sql: `UPDATE articles SET ${TITLE_LANG_COLUMNS[u.lang]} = ? WHERE id = ?`,
+      args: [u.text, u.id],
+    });
+  }
+  for (const lang of Object.keys(byLang) as TitleLang[]) {
+    const stmts = byLang[lang];
+    for (let i = 0; i < stmts.length; i += 50) {
+      await getDb().batch(stmts.slice(i, i + 50), "write");
+    }
   }
 }
 

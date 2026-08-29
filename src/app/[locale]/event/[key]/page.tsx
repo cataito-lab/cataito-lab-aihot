@@ -4,6 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { Header } from "@/components/header";
 import { getEvent } from "@/lib/news";
 import type { EventMember } from "@/lib/types";
+import { pickTitle } from "@/lib/i18n";
 
 const SITE_URL = "https://aihot.cataito.com";
 
@@ -62,7 +63,7 @@ export async function generateMetadata({
   const t = await getTranslations({ locale, namespace: "event" });
   const event = await getEvent(key);
   if (!event) return { title: t("notFoundTitle") };
-  const title = event.titleZh ?? event.title ?? "AI 事件";
+  const title = pickTitle(event, locale).primary || "AI 事件";
   const raw = locale === "zh" ? event.summary : event.summaryEn ?? event.summary;
   const description = raw ? (raw.length > 160 ? `${raw.slice(0, 157)}…` : raw) : title;
   const path = `/${locale}/event/${event.eventKey}`;
@@ -125,7 +126,7 @@ function MemberCard({ m, locale, verifyLabel }: {
       </div>
       <h3>
         <a href={m.url} target="_blank" rel="noopener noreferrer">
-          {m.titleZh ?? m.title}
+          {pickTitle(m, locale).primary}
         </a>
       </h3>
       {summary && <p className="member-summary">{summary}</p>}
@@ -179,8 +180,7 @@ export default async function EventPage({
     );
   }
 
-  const primary = event.titleZh ?? event.title ?? t("untitled");
-  const secondary = event.titleZh && event.titleZh !== event.title ? event.title : null;
+  const { primary, secondary } = pickTitle(event, locale);
   const summary = locale === "zh" ? event.summary : event.summaryEn ?? event.summary;
 
   const progression = [...event.members].sort(
@@ -219,7 +219,7 @@ export default async function EventPage({
     aggregator: { "@type": "Organization", name: "AI 热点简报" },
     subjectOf: event.members.map((m) => ({
       "@type": "NewsArticle",
-      headline: m.titleZh ?? m.title,
+      headline: pickTitle(m, locale).primary,
       url: m.url,
       datePublished: m.publishedAt,
     })),

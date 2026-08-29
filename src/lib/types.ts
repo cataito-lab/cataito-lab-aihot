@@ -6,6 +6,9 @@ export interface FeedArticle {
   lang: string;
   title: string;
   titleZh: string | null;
+  titleJa: string | null;
+  titleEs: string | null;
+  titleFr: string | null;
   summary: string | null;
   summaryEn: string | null;
   summaryJa: string | null;
@@ -72,6 +75,9 @@ export interface EventMember {
   lang: string;
   title: string;
   titleZh: string | null;
+  titleJa: string | null;
+  titleEs: string | null;
+  titleFr: string | null;
   summary: string | null;
   summaryEn: string | null;
   summaryJa: string | null;
@@ -116,6 +122,9 @@ export interface EventDetail {
   eventKey: string;
   title: string | null;
   titleZh: string | null;
+  titleJa: string | null;
+  titleEs: string | null;
+  titleFr: string | null;
   /** 事件级综合摘要（中文） */
   summary: string | null;
   /** 事件级综合摘要（英文） */

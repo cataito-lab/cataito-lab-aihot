@@ -23,6 +23,9 @@ export interface ArticleRow {
   lang: unknown;
   title: unknown;
   title_zh: unknown;
+  title_ja: unknown;
+  title_es: unknown;
+  title_fr: unknown;
   summary: unknown;
   summary_en: unknown;
   summary_ja: unknown;
@@ -194,6 +197,9 @@ export function toFeedArticle(row: ArticleRow): FeedArticle {
     lang: String(row.lang),
     title: String(row.title),
     titleZh: str(row.title_zh),
+    titleJa: str(row.title_ja),
+    titleEs: str(row.title_es),
+    titleFr: str(row.title_fr),
     summary: ensureEndPunct(cleanInsightText(str(row.summary)), "。"),
     summaryEn: ensureEndPunct(cleanInsightText(str(row.summary_en)), "."),
     summaryJa: ensureEndPunct(cleanInsightText(str(row.summary_ja)), "。"),
@@ -336,7 +342,7 @@ export async function listArticles(
 
   const sql = `
     SELECT a.id, a.source_id, s.name AS source_name, s.category, s.lang,
-           a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
+           a.title, a.title_zh, a.title_ja, a.title_es, a.title_fr, a.summary, a.summary_en, a.summary_ja,
            a.summary_es, a.summary_fr, a.url, a.author,
            a.published_at, a.fetched_at,
              a.key_points, a.industry_impact, a.score_final,
@@ -430,7 +436,7 @@ export async function getDailyArticles(date: string): Promise<FeedArticle[]> {
   endDate.setUTCDate(endDate.getUTCDate() + 1);
   const rs = await db.execute({
     sql: `SELECT a.id, a.source_id, s.name AS source_name, s.category, s.lang,
-                 a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
+                 a.title, a.title_zh, a.title_ja, a.title_es, a.title_fr, a.summary, a.summary_en, a.summary_ja,
                  a.summary_es, a.summary_fr, a.url, a.author,
                  a.published_at, a.fetched_at,
                   a.key_points, a.industry_impact, a.score_final,
@@ -496,6 +502,9 @@ export async function getEvent(key: string): Promise<EventDetail | null> {
     eventKey: String(row.event_key),
     title: str(row.title),
     titleZh: str(row.title_zh),
+    titleJa: str(row.title_ja),
+    titleEs: str(row.title_es),
+    titleFr: str(row.title_fr),
     summary: ensureEndPunct(cleanInsightText(str(row.summary)), "。"),
     summaryEn: ensureEndPunct(cleanInsightText(str(row.summary_en)), "."),
     sourceCount: Number(row.source_count ?? 0),
@@ -511,7 +520,7 @@ export async function getEventMembers(eventId: string): Promise<EventMember[]> {
   const db = await getDb();
   const rs = await db.execute({
     sql: `SELECT a.id, a.source_id, s.name AS source_name, s.category, s.lang,
-                  a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
+                  a.title, a.title_zh, a.title_ja, a.title_es, a.title_fr, a.summary, a.summary_en, a.summary_ja,
                   a.summary_es, a.summary_fr, a.url, a.author, a.published_at, a.score_final,
                   a.key_change, a.key_change_en, a.key_change_ja, a.key_change_es, a.key_change_fr,
                   a.why_it_matters, a.why_it_matters_en, a.why_ja, a.why_es, a.why_fr,
@@ -531,6 +540,9 @@ export async function getEventMembers(eventId: string): Promise<EventMember[]> {
     lang: String(r.lang),
     title: String(r.title),
     titleZh: str(r.title_zh),
+    titleJa: str(r.title_ja),
+    titleEs: str(r.title_es),
+    titleFr: str(r.title_fr),
     summary: ensureEndPunct(cleanInsightText(str(r.summary)), "。"),
     summaryEn: ensureEndPunct(cleanInsightText(str(r.summary_en)), "."),
     summaryJa: ensureEndPunct(cleanInsightText(str(r.summary_ja)), "。"),
@@ -572,7 +584,7 @@ export async function getEntityArticles(name: string, limit = 200): Promise<Feed
   const db = await getDb();
   const rs = await db.execute({
     sql: `SELECT a.id, a.source_id, s.name AS source_name, s.category, s.lang,
-                 a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
+                 a.title, a.title_zh, a.title_ja, a.title_es, a.title_fr, a.summary, a.summary_en, a.summary_ja,
                  a.summary_es, a.summary_fr, a.url, a.author,
                  a.published_at, a.fetched_at,
                  a.key_points, a.industry_impact, a.score_final,

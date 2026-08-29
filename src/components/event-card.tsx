@@ -4,6 +4,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { Fire } from "@phosphor-icons/react";
 import { Link } from "@/i18n/navigation";
 import type { FeedArticle } from "@/lib/types";
+import { pickTitle } from "@/lib/i18n";
 
 const CAT_DOT: Record<string, string> = {
   official: "cat-dot-official",
@@ -59,8 +60,7 @@ export function EventCard({
   const locale = useLocale();
 
   const best = [...items].sort((a, b) => (b.scoreFinal ?? -1) - (a.scoreFinal ?? -1))[0];
-  const primary = best.titleZh ?? best.title;
-  const secondary = best.titleZh && best.titleZh !== best.title ? best.title : null;
+  const { primary, secondary } = pickTitle(best, locale);
   const tier = tierOf(best.scoreFinal);
   const latest = items.reduce((m, i) => (i.publishedAt > m ? i.publishedAt : m), items[0].publishedAt);
   const eventSummary = items[0].eventSummary;
@@ -160,11 +160,11 @@ export function EventCard({
             href={it.url}
             target="_blank"
             rel="noopener noreferrer"
-            title={it.titleZh ?? it.title}
+            title={pickTitle(it, locale).primary}
           >
             <span className={`cat-dot ${CAT_DOT[it.category] ?? "cat-dot-community"}`} aria-hidden />
             <span className="src-name">{it.sourceName}</span>
-            <span className="src-title">{it.titleZh ?? it.title}</span>
+            <span className="src-title">{pickTitle(it, locale).primary}</span>
           </a>
         ))}
       </div>

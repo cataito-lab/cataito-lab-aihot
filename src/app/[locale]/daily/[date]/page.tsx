@@ -5,6 +5,7 @@ import { Header } from "@/components/header";
 import { TzNote } from "@/components/tz-note";
 import { ArticleItem } from "@/components/article-item";
 import { getDailyArticles } from "@/lib/news";
+import { pickTitle } from "@/lib/i18n";
 import type { FeedArticle } from "@/lib/types";
 
 export const runtime = "edge";
@@ -78,7 +79,7 @@ export default async function DailyPage({ params }: Props) {
       itemListElement: items.slice(0, 50).map((a, i) => ({
         "@type": "ListItem",
         position: i + 1,
-        name: locale === "zh" ? (a.titleZh ?? a.title) : a.title,
+        name: pickTitle(a, locale).primary,
         url: a.url,
       })),
     },
