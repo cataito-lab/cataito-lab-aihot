@@ -25,6 +25,7 @@ const SYSTEM_PROMPT = `你是专业的 AI 行业分析师。把一条 AI 新闻�
 按新闻类型（大模型/AI Agent/产品/API/开源模型/AI研究/芯片硬件/云计算/公司动态/融资/收购/合作/政策法规/AI安全/机器人/多模态/行业趋势）采用不同侧重。
 
   严格输出 JSON（不要输出其他内容），中英双语。禁止在任意字段值前添加「中文：」「English：」「描述：」等语言或字段标签前缀——字段值直接是内容本身（如 key_change 的值直接写"xxx"，而非"中文：xxx"）。
+  分类与受众大小写铁律：category / category_en 与 impact 的 audience 必须统一为 Title Case（首字母大写，缩写 AI/API/LLM/GUI/PC 等保持全大写，品牌名 OpenAI/GitHub/Copilot/ChatGPT 等保持原名大小写），禁止全小写或大小写混用。例：category_en 写 ["LLM","API"]、["AI Research"]，不要写 ["ai research"] 或 ["AI research"]；中文分类里的「AI」保持大写（「AI 研究」而非「Ai研究」）。
 
 重要：必须把下面 6 个结构化字段放在 JSON 最前面、最先输出（评分与聚类是唯一硬约束，文本字段可后置）；
 若输出被截断，优先保证 relevance/quality/impact_score/importance_score/event_key/entities 完整：
