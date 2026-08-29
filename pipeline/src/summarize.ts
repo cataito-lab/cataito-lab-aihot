@@ -162,6 +162,46 @@ function cleanInsightText(s: string | null): string | null {
   return t;
 }
 
+/** 分类短标签大小写规范化：首字母大写（保留空格与连字符），保护已知缩写与品牌名，与读取层一致。 */
+const CASING_ACRONYMS = new Set([
+  "AI", "API", "LLM", "GUI", "PC", "ML", "NLP", "GPU", "TPU", "CPU", "AGI", "ASI",
+  "AR", "VR", "MR", "XR", "UI", "UX", "JSON", "XML", "SQL", "CLI", "SDK", "IoT",
+  "QA", "DB", "MoE", "RL", "CV", "TS", "HUD", "3D", "2D",
+]);
+const CASING_BRANDS: Record<string, string> = {
+  openai: "OpenAI", github: "GitHub", copilot: "Copilot", chatgpt: "ChatGPT",
+  deepmind: "DeepMind", meta: "Meta", google: "Google", microsoft: "Microsoft",
+  nvidia: "Nvidia", "hugging face": "Hugging Face", anthropic: "Anthropic",
+  mistral: "Mistral", xai: "xAI", perplexity: "Perplexity", claude: "Claude",
+  gemini: "Gemini", llama: "Llama", gpt: "GPT", cursor: "Cursor", gradio: "Gradio",
+  langchain: "LangChain", pytorch: "PyTorch", tensorflow: "TensorFlow",
+  midjourney: "Midjourney", runway: "Runway", cohere: "Cohere", "stability ai": "Stability AI",
+};
+
+function normalizeCategoryToken(s: string): string {
+  return s
+    .split(/(\s+|-)/)
+    .map((part) => /^[\s-]*$/.test(part) || part === "" ? part : titleCaseWord(part))
+    .join("");
+}
+
+function titleCaseWord(w: string): string {
+  if (!w) return w;
+  const low = w.toLowerCase();
+  if (CASING_ACRONYMS.has(w.toUpperCase())) return w.toUpperCase();
+  if (CASING_BRANDS[low]) return CASING_BRANDS[low];
+  // 保护位于词首的缩写（无分隔符紧贴时），如「AI研究」=>「AI研究」而非「Ai研究」；
+  // 仅当缩写后紧跟非拉丁字母（中文等）才视为前缀，避免把 Artificial/Art 误判为 AR/AI 前缀
+  for (const a of CASING_ACRONYMS) {
+    if (w.length > a.length && w.toLowerCase().startsWith(a.toLowerCase())) {
+      const rest = w.slice(a.length);
+      const c = rest.charAt(0);
+      if (c && !/[a-zA-Z]/.test(c)) return a + titleCaseWord(rest);
+    }
+  }
+  return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+}
+
 export function computeResult(
   row: SummarizableRow,
   parsed: Record<string, unknown> | null,
@@ -201,8 +241,8 @@ export function computeResult(
   const forwardSignalEn = cleanInsightText(asStr(parsed.forward_signal_en));
   const impact = asImpactArray(parsed.impact, cleanInsightText);
   const impactEn = asImpactArray(parsed.impact_en, cleanInsightText);
-  const category = asStrArray(parsed.category);
-  const categoryEn = asStrArray(parsed.category_en);
+  const category = asStrArray(parsed.category)?.map(normalizeCategoryToken) ?? null;
+  const categoryEn = asStrArray(parsed.category_en)?.map(normalizeCategoryToken) ?? null;
   const relevance = clampScore(parsed.relevance);
   const quality = clampScore(parsed.quality);
   let impactScore = clampScore(parsed.impact_score);

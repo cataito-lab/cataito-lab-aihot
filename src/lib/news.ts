@@ -86,7 +86,7 @@ function ensureEndPunct(s: string | null, punct: string): string | null {
   return t + punct;
 }
 
-/** impact 为 JSON 数组（[{audience,description}]），逐条规范化 description 末尾标点。 */
+/** impact 为 JSON 数组（[{audience,description}]），逐条规范化受众大小写与 description 末尾标点。 */
 function normalizeImpact(json: string | null, punct: string): string | null {
   if (!json) return json;
   try {
@@ -95,9 +95,10 @@ function normalizeImpact(json: string | null, punct: string): string | null {
     const out = arr.map((x) => {
       if (x && typeof x === "object") {
         const o = x as Record<string, unknown>;
-        if (typeof o.description === "string") {
-          return { ...x, description: ensureEndPunct(cleanInsightText(o.description), punct) ?? "" };
-        }
+        const next: Record<string, unknown> = { ...x };
+        if (typeof o.audience === "string") next.audience = normalizeCategoryToken(cleanInsightText(o.audience) ?? "");
+        if (typeof o.description === "string") next.description = ensureEndPunct(cleanInsightText(o.description), punct) ?? "";
+        return next;
       }
       return x;
     });
@@ -115,6 +116,61 @@ function cleanInsightText(s: string | null): string | null {
   // 去掉开头语言/字段标签前缀：中文/英文/英语/English/EN/En/描述/Description/Desc + 可选空格 + 中英文冒号（大小写不敏感）
   t = t.replace(/^(中文|英文|英语|English|EN|En|描述|Description|Desc)\s*[:：]\s*/i, "");
   return t;
+}
+
+/** 分类/受众等短标签的大小写规范化：首字母大写（保留空格与连字符），并保护已知缩写与品牌名。 */
+const CASING_ACRONYMS = new Set([
+  "AI", "API", "LLM", "GUI", "PC", "ML", "NLP", "GPU", "TPU", "CPU", "AGI", "ASI",
+  "AR", "VR", "MR", "XR", "UI", "UX", "JSON", "XML", "SQL", "CLI", "SDK", "IoT",
+  "QA", "DB", "MoE", "RL", "CV", "TS", "HUD", "3D", "2D",
+]);
+const CASING_BRANDS: Record<string, string> = {
+  openai: "OpenAI", github: "GitHub", copilot: "Copilot", chatgpt: "ChatGPT",
+  deepmind: "DeepMind", meta: "Meta", google: "Google", microsoft: "Microsoft",
+  nvidia: "Nvidia", "hugging face": "Hugging Face", anthropic: "Anthropic",
+  mistral: "Mistral", xai: "xAI", perplexity: "Perplexity", claude: "Claude",
+  gemini: "Gemini", llama: "Llama", gpt: "GPT", cursor: "Cursor", gradio: "Gradio",
+  langchain: "LangChain", pytorch: "PyTorch", tensorflow: "TensorFlow",
+  midjourney: "Midjourney", runway: "Runway", cohere: "Cohere", "stability ai": "Stability AI",
+};
+
+function titleCaseWord(w: string): string {
+  if (!w) return w;
+  const low = w.toLowerCase();
+  if (CASING_ACRONYMS.has(w.toUpperCase())) return w.toUpperCase();
+  if (CASING_BRANDS[low]) return CASING_BRANDS[low];
+  // 保护位于词首的缩写（无分隔符紧贴时），如「AI研究」=>「AI研究」而非「Ai研究」；
+  // 仅当缩写后紧跟非拉丁字母（中文等）才视为前缀，避免把 Artificial/Art 误判为 AR/AI 前缀
+  for (const a of CASING_ACRONYMS) {
+    if (w.length > a.length && w.toLowerCase().startsWith(a.toLowerCase())) {
+      const rest = w.slice(a.length);
+      const c = rest.charAt(0);
+      if (c && !/[a-zA-Z]/.test(c)) return a + titleCaseWord(rest);
+    }
+  }
+  return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+}
+
+function normalizeCategoryToken(s: string): string {
+  return s
+    .split(/(\s+|-)/)
+    .map((part) => /^[\s-]*$/.test(part) || part === "" ? part : titleCaseWord(part))
+    .join("");
+}
+
+/** 分类字段为 JSON 字符串数组，逐条规范大小写（读取层统一，覆盖新旧数据）。 */
+function normalizeCategories(json: string | null): string | null {
+  if (!json) return json;
+  try {
+    const arr = JSON.parse(json);
+    if (!Array.isArray(arr)) return json;
+    const out = arr
+      .filter((x): x is string => typeof x === "string" && x.trim().length > 0)
+      .map((x) => normalizeCategoryToken(x.trim()));
+    return out.length ? JSON.stringify(out) : null;
+  } catch {
+    return json;
+  }
 }
 
 export function toFeedArticle(row: ArticleRow): FeedArticle {
@@ -145,8 +201,8 @@ export function toFeedArticle(row: ArticleRow): FeedArticle {
     forwardSignalEn: ensureEndPunct(cleanInsightText(str(row.forward_signal_en)), "."),
     impact: normalizeImpact(str(row.impact), "。"),
     impactEn: normalizeImpact(str(row.impact_en), "."),
-    aiCategory: str(row.ai_category),
-    aiCategoryEn: str(row.ai_category_en),
+    aiCategory: normalizeCategories(str(row.ai_category)),
+    aiCategoryEn: normalizeCategories(str(row.ai_category_en)),
     importanceScore: row.importance_score == null ? null : Number(row.importance_score),
     entities: parseJsonArray(row.entities),
     url: String(row.url),
@@ -463,8 +519,8 @@ export async function getEventMembers(eventId: string): Promise<EventMember[]> {
     forwardSignalEn: ensureEndPunct(cleanInsightText(str(r.forward_signal_en)), "."),
     impact: normalizeImpact(str(r.impact), "。"),
     impactEn: normalizeImpact(str(r.impact_en), "."),
-    aiCategory: str(r.ai_category),
-    aiCategoryEn: str(r.ai_category_en),
+    aiCategory: normalizeCategories(str(r.ai_category)),
+    aiCategoryEn: normalizeCategories(str(r.ai_category_en)),
     importanceScore: r.importance_score == null ? null : Number(r.importance_score),
     entities: parseJsonArray(r.entities),
     url: String(r.url),

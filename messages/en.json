@@ -23,7 +23,7 @@
     "justNow": "just now",
     "minutesAgo": "{n}m ago",
     "yesterday": "Yesterday",
-    "verify": "Verify source",
+    "verify": "Verify Source",
     "event": "Event",
     "discussion": "Discussion",
     "savedAt": "Saved",
@@ -40,10 +40,10 @@
     "daysAgo": "{n}d ago",
     "estimated": "est.",
     "entities": "Entities",
-    "insightKeyChange": "Key takeaway",
-    "insightWhy": "Why it matters",
-    "insightImpact": "Who's affected",
-    "insightForward": "What's next"
+    "insightKeyChange": "Key Takeaway",
+    "insightWhy": "Why It Matters",
+    "insightImpact": "Who's Affected",
+    "insightForward": "What's Next"
   },
   "briefing": {
     "signal": "// SIGNAL BRIEFING SYSTEM",
@@ -80,7 +80,7 @@
     "eventSources": "{n} sources",
     "eventSynthesis": "Synthesis",
     "sourcesLabel": "All sources",
-    "viewEvent": "View event"
+    "viewEvent": "View Event"
   },
   "filters": {
     "query": "Q",
