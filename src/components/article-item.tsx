@@ -257,32 +257,40 @@ export function ArticleItem({
           </div>
           <div className="ai-summary-content">{summary}</div>
           {keyChange && (
-            <>
-              <div className="ai-insight-label">{t("insightKeyChange")}</div>
-              <div className="ai-insight-row ai-change">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <div className="ai-insight-block">
+              <div className="ai-insight-head">
+                <svg className="ai-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <path d="M3 17l6-6 4 4 8-8" />
                   <path d="M21 7v6h-6" />
                 </svg>
-                <span>{keyChange}</span>
+                <span className="ai-insight-label">{t("insightKeyChange")}</span>
               </div>
-            </>
+              <div className="ai-insight-body">{keyChange}</div>
+            </div>
           )}
           {whyItMatters && (
-            <>
-              <div className="ai-insight-label">{t("insightWhy")}</div>
-              <div className="ai-insight-row ai-why">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <div className="ai-insight-block">
+              <div className="ai-insight-head">
+                <svg className="ai-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <path d="M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z" />
                   <path d="M9 21h6" />
                 </svg>
-                <span>{whyItMatters}</span>
+                <span className="ai-insight-label">{t("insightWhy")}</span>
               </div>
-            </>
+              <div className="ai-insight-body">{whyItMatters}</div>
+            </div>
           )}
           {impact && (
-            <>
-              <div className="ai-insight-label">{t("insightImpact")}</div>
+            <div className="ai-insight-block">
+              <div className="ai-insight-head">
+                <svg className="ai-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                <span className="ai-insight-label">{t("insightImpact")}</span>
+              </div>
               <ul className="ai-impact">
                 {impact.map((x, i) => (
                   <li key={i}>
@@ -291,19 +299,19 @@ export function ArticleItem({
                   </li>
                 ))}
               </ul>
-            </>
+            </div>
           )}
           {forwardSignal && (
-            <>
-              <div className="ai-insight-label">{t("insightForward")}</div>
-              <div className="ai-insight-row ai-fwd">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <div className="ai-insight-block">
+              <div className="ai-insight-head">
+                <svg className="ai-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <circle cx="12" cy="12" r="2" />
                   <path d="M7.5 7.5a6 6 0 000 9M16.5 7.5a6 6 0 010 9M4.5 4.5a10 10 0 000 15M19.5 4.5a10 10 0 010 15" />
                 </svg>
-                <span>{forwardSignal}</span>
+                <span className="ai-insight-label">{t("insightForward")}</span>
               </div>
-            </>
+              <div className="ai-insight-body">{forwardSignal}</div>
+            </div>
           )}
           {tags && (
             <div className="ai-tags">

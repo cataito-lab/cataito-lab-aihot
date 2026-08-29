@@ -691,20 +691,21 @@ body {
     color: var(--accent);
   }
 
-  /* AI Insight 子结构（关键变化 / 为何重要 / 影响对象 / 后续信号） */
-  .ai-insight-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    margin-top: 8px;
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--text-secondary);
+  /* AI Insight 子结构（关键变化 / 为何重要 / 影响对象 / 后续信号）
+     每个块：图标 + 小标签 组成统一小标题（同行），正文另起一行 */
+  .ai-insight-block {
+    margin-top: 10px;
   }
 
-  .ai-insight-row svg {
+  .ai-insight-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 3px;
+  }
+
+  .ai-insight-head .ai-ico {
     flex: 0 0 auto;
-    margin-top: 2px;
     color: var(--accent);
   }
 
@@ -714,7 +715,12 @@ body {
     color: var(--text-muted);
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    margin-top: 10px;
+  }
+
+  .ai-insight-body {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
   }
 
   .ai-impact {
@@ -722,6 +728,7 @@ body {
     flex-direction: column;
     gap: 5px;
     list-style: none;
+    margin: 0;
   }
 
   .ai-impact li {
