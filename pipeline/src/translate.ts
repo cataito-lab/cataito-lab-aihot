@@ -1,9 +1,7 @@
 import { httpFetch } from "./net";
+import { llmChat } from "./llm";
 
 const ENDPOINT = "https://translate.googleapis.com/translate_a/single";
-const CF_API_BASE = "https://api.cloudflare.com/client/v4/accounts";
-const LLAMA_MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8"; // 与 summarize 一致：8B 模型，免费额度下可跑；如需更高质量可改 70B（须 Workers Paid）
-const M2M100_MODEL = "@cf/meta/m2m100-1.2b";
 
 const MAX_NEW_PER_RUN = 100;
 const REQUEST_GAP_MS = 150;
@@ -49,66 +47,24 @@ async function translateGtx(text: string, target: string): Promise<string> {
   return segments.trim();
 }
 
-async function runLlama(system: string, user: string): Promise<string> {
-  const accountId = process.env.CF_ACCOUNT_ID;
-  const token = process.env.CF_AI_API_TOKEN;
-  if (!accountId || !token) throw new Error("workers-ai skipped (no creds)");
-  const res = await httpFetch(`${CF_API_BASE}/${accountId}/ai/run/${LLAMA_MODEL}`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      max_tokens: 400,
-    }),
-    signal: AbortSignal.timeout(30000),
-  });
-  if (!res.ok) throw new Error(`llama HTTP ${res.status}`);
-  const data = (await res.json()) as { result?: { response?: string } };
-  return (data.result?.response ?? "").trim();
-}
-
-/** 通道 2：llama-70b 指令式翻译，质量接近 gtx，成本约 1~2 neurons/条。 */
-async function translateViaLlama(text: string, target: string): Promise<string> {
+/** 通道 2（兜底）：用统一 LLM 层（Gemini 主力 + 智谱兜底）做指令式翻译。
+ *  仅在 gtx 免费端点被限流（数据中心 IP 常触发）时启用，质量接近 gtx。 */
+async function translateViaLlm(text: string, target: string): Promise<string> {
   const langName = LANG_NAMES[target] ?? target;
-  const out = await runLlama(
+  const out = await llmChat(
     `You are a professional news translator. Translate the user text into ${langName}. ` +
-      "Keep product/company/person names in their original form. Output ONLY the translation.",
+      "Keep product/company/person names in their original form. Output ONLY the translation, with no surrounding quotes or extra commentary.",
     text,
+    { maxTokens: 400 },
   );
   return out.replace(/^["'「『]|["'」』]$/g, "").trim();
 }
 
-/** 通道 3（末级兜底）：m2m100-1.2b 专用翻译小模型，速度快但中译英/日常残留原文词汇。 */
-async function translateViaM2m100(text: string, target: string): Promise<string> {
-  const accountId = process.env.CF_ACCOUNT_ID;
-  const token = process.env.CF_AI_API_TOKEN;
-  if (!accountId || !token) throw new Error("workers-ai skipped (no creds)");
-  const res = await httpFetch(`${CF_API_BASE}/${accountId}/ai/run/${M2M100_MODEL}`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ text, target_lang: target === "zh-CN" ? "zh" : target }),
-    signal: AbortSignal.timeout(15000),
-  });
-  if (!res.ok) throw new Error(`m2m100 HTTP ${res.status}`);
-  const data = (await res.json()) as { result?: { translated_text?: unknown } };
-  const out = data.result?.translated_text;
-  const zh = Array.isArray(out)
-    ? out.map((s) => String(s ?? "")).join("")
-    : typeof out === "string"
-      ? out
-      : "";
-  return zh.trim();
-}
-
-type ChannelName = "gtx" | "llama" | "m2m100";
+type ChannelName = "gtx" | "llm";
 
 const CHANNELS: [ChannelName, (text: string, target: string) => Promise<string>][] = [
   ["gtx", translateGtx],
-  ["llama", translateViaLlama],
-  ["m2m100", translateViaM2m100],
+  ["llm", translateViaLlm],
 ];
 
 async function smartWithMeta(

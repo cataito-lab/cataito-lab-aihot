@@ -1,14 +1,11 @@
 import { countSummariesToday, markSummarized, getRelatedByContent } from "./db";
 import type { SummarizeResultV3 } from "./db";
-import { httpFetch } from "./net";
+import { llmChat, runWorkersAi } from "./llm";
 
-const API_BASE = "https://api.cloudflare.com/client/v4/accounts";
-
-// 默认用 8B 模型：70B 每次调用消耗神经元过多，免费额度(10,000 neurons/天)只够跑 ~10-25 次，
-// 导致抓取器与回填互相抢额度、全天大部分调用被 429 限流。8B 约 1/7 成本，免费额度下每天可跑 ~100-150 次。
-// 若已升级 Workers Paid，可在 workflow 里设 CF_AI_MODEL=@cf/meta/llama-3.1-70b-instruct-fp8-fast 切回高质量模型。
-const MODEL = process.env.CF_AI_MODEL ?? "@cf/meta/llama-3.1-8b-instruct-fp8";
-const DAILY_QUOTA = 200;
+// 默认主力：Gemini 2.5 Flash（免费层 10 RPM / 250 RPD / 1M 上下文，质量顶尖）；
+// 自动兜底：智谱 GLM-4-Flash（永久免费、无 Token 上限）。详见 llm.ts。
+// 回退 Cloudflare Workers AI：设 LLM_PROVIDER=workersai 并保留 CF_* 凭据，CF_AI_MODEL 指定模型（默认 8B）。
+const DAILY_QUOTA = 240;
 const MAX_PER_RUN = 30;
 
 // Summarize v3：一段式摘要（事实→核心变化→行业意义）+ 要点 + 行业影响 + 三维评分。
@@ -89,51 +86,20 @@ export function parseModelJson(raw: string): Record<string, unknown> | null {
 }
 
 export async function runModel(userContent: string): Promise<string | null> {
-  const accountId = process.env.CF_ACCOUNT_ID;
-  const token = process.env.CF_AI_API_TOKEN;
-  if (!accountId || !token) return null;
-  const url = `${API_BASE}/${accountId}/ai/run/${MODEL}`;
-  const body = JSON.stringify({
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: userContent },
-    ],
-    max_tokens: 1600,
-  });
-  // 429 = Cloudflare Workers AI 每日 neuron 额度/速率耗尽。瞬时限流可短退避重试一次；
-  // 若是每日额度耗尽，重试无意义（额度 UTC 00:00 才重置），交给上层提前退出。
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const res = await httpFetch(url, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body,
-      signal: AbortSignal.timeout(45000),
-    });
-    if (res.ok) {
-      const data = (await res.json()) as { result?: { response?: unknown } };
-      const out = data.result?.response;
-      // CF 部分模型偶发返回字符串数组，归一化为字符串
-      const text =
-        typeof out === "string"
-          ? out.trim()
-          : Array.isArray(out)
-            ? out
-                .map((c) =>
-                  typeof c === "string" ? c : String((c as { response?: string })?.response ?? ""),
-                )
-                .join("")
-                .trim()
-            : "";
-      return text || null;
+  try {
+    if ((process.env.LLM_PROVIDER ?? "gemini").toLowerCase() === "workersai") {
+      return await runWorkersAi(SYSTEM_PROMPT, userContent, 1600);
     }
-    if (res.status === 429 && attempt === 0) {
-      // 短退避后重试一次；若为每日额度耗尽则重试也无用，由上层(backfill)提前退出
-      await new Promise((r) => setTimeout(r, 5000));
-      continue;
-    }
-    throw new Error(`Workers AI HTTP ${res.status}`);
+    // 默认走 OpenAI 兼容层（Gemini 主力 + 智谱兜底，429 自动切换）
+    return await llmChat(SYSTEM_PROMPT, userContent, { maxTokens: 1600, json: true });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    // 全 provider 限流：必须抛出含 "429" 的错误，供 backfill-insight 连续 429 提前退出
+    if (msg.includes("429")) throw err;
+    // 其它错误（网络/5xx/空响应）：视为本次失败、返回 null 留待下轮重试，不中断整轮
+    console.warn(`  [runModel] 调用失败（下轮重试）: ${msg}`);
+    return null;
   }
-  return null;
 }
 
 /** 把模型输出规整成统一的 event_key / entities（跨源聚类唯一依据） */
@@ -324,8 +290,15 @@ export async function buildInsightUserContent(row: SummarizableRow): Promise<str
 }
 
 export async function summarizePending(rows: SummarizableRow[]): Promise<number> {
-  if (!process.env.CF_ACCOUNT_ID || !process.env.CF_AI_API_TOKEN) {
-    console.log("  [summarize] skipped (CF_ACCOUNT_ID / CF_AI_API_TOKEN not set)");
+  const provider = (process.env.LLM_PROVIDER ?? "gemini").toLowerCase();
+  const hasLlm =
+    provider === "workersai"
+      ? !!(process.env.CF_ACCOUNT_ID && process.env.CF_AI_API_TOKEN)
+      : !!(process.env.GEMINI_API_KEY || process.env.ZHIPU_API_KEY);
+  if (!hasLlm) {
+    console.log(
+      "  [summarize] skipped (未配置任何 LLM provider：请设置 GEMINI_API_KEY / ZHIPU_API_KEY，或将 LLM_PROVIDER=workersai 并配 CF_* 凭据)",
+    );
     return 0;
   }
 
@@ -408,7 +381,7 @@ export async function summarizePending(rows: SummarizableRow[]): Promise<number>
   }
 
   console.log(
-    `  [summarize] model=${MODEL} summarized=${done} scored=${scored} failed=${failures} noContent=${noContent} quotaLeft=${remainingQuota}`,
+    `  [summarize] provider=${process.env.LLM_PROVIDER ?? "gemini"} summarized=${done} scored=${scored} failed=${failures} noContent=${noContent} quotaLeft=${remainingQuota}`,
   );
   return done;
 }
