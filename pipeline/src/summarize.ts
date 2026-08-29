@@ -24,8 +24,17 @@ const SYSTEM_PROMPT = `你是专业的 AI 行业分析师。把一条 AI 新闻�
 
 按新闻类型（大模型/AI Agent/产品/API/开源模型/AI研究/芯片硬件/云计算/公司动态/融资/收购/合作/政策法规/AI安全/机器人/多模态/行业趋势）采用不同侧重。
 
-严格输出 JSON（不要输出其他内容），中英双语：
+严格输出 JSON（不要输出其他内容），中英双语。
+
+重要：必须把下面 6 个结构化字段放在 JSON 最前面、最先输出（评分与聚类是唯一硬约束，文本字段可后置）；
+若输出被截断，优先保证 relevance/quality/impact_score/importance_score/event_key/entities 完整：
 {
+  "relevance": 0-100,
+  "quality": 0-100,
+  "impact_score": 0-100,
+  "importance_score": 0-100,
+  "event_key": "规范英文slug(小写连字符≤5词,仅a-z0-9-;无单一事件则空字符串\"\")",
+  "entities": ["实体1","实体2"],
   "insight": "中文：2-4句(≤120字)，含事实+核心变化+意义",
   "insight_en": "English equivalent",
   "key_change": "中文一句话最大变化(≤30字)",
@@ -37,13 +46,7 @@ const SYSTEM_PROMPT = `你是专业的 AI 行业分析师。把一条 AI 新闻�
   "forward_signal": "中文接下来关注什么(≤60字)",
   "forward_signal_en": "English",
   "category": ["大模型","API"],
-  "category_en": ["LLM","API"],
-  "relevance": 0-100,
-  "quality": 0-100,
-  "impact_score": 0-100,
-  "importance_score": 0-100,
-  "event_key": "规范英文slug(小写连字符≤5词,仅a-z0-9-;无单一事件则空字符串\"\")",
-  "entities": ["实体1","实体2"]
+  "category_en": ["LLM","API"]
 }
 必须输出 relevance/quality/impact_score/importance_score 四个 0-100 整数。impact_score 为对 AI 行业的影响面：有具体新事实/数据/能力跃迁的 ≥70，常规更新 40-59，营销/预告/观点类 ≤30；importance_score 为综合新闻价值（90-100改变行业方向,75-89重大,60-74明显价值,40-59普通,20-39小更新,0-19低价值）。event_key 同一事件不同媒体/语言必须完全相同（跨源聚类唯一依据）。`
 
@@ -94,7 +97,7 @@ export async function runModel(userContent: string): Promise<string | null> {
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userContent },
       ],
-      max_tokens: 1100,
+      max_tokens: 1600,
     }),
     signal: AbortSignal.timeout(45000),
   });
@@ -209,7 +212,7 @@ export function computeResult(
   const quality = clampScore(parsed.quality);
   let impactScore = clampScore(parsed.impact_score);
   if (impactScore != null && PROMO_TITLE_RE.test(row.title)) impactScore = Math.min(impactScore, 30);
-  const importanceScore = clampScore(parsed.importance_score);
+  const importanceScoreRaw = clampScore(parsed.importance_score);
 
   const { eventKey, entities: cleanEntities } = normalizeEventMeta(parsed);
 
@@ -218,6 +221,9 @@ export function computeResult(
     const authority = Math.max(0, Math.min(100, row.authority || 60));
     final = Math.round(0.2 * relevance + 0.2 * authority + 0.25 * quality + 0.35 * impactScore);
   }
+  // 兜底：模型常因 max_tokens 截断漏输 importance_score（它原排在 JSON 末尾）。
+  // 若缺失但有综合分 final，则用 final 顶上，避免 importance_score 恒为 NULL 导致前端不展示。
+  const importanceScore = importanceScoreRaw ?? final;
   return {
     summary: summary ?? fallbackSummary,
     summaryEn,
