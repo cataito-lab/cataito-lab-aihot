@@ -68,13 +68,21 @@ function parseJsonArray(v: unknown): string[] | null {
   }
 }
 
-/** 句末标点规范化：若最后一个字符不是句末标点（。.!?…），补上指定标点。
- *  用于统一 AI 洞察各字段的句号，消除"有的有句号、有的没有"。 */
+/** 句末标点规范化（跨语言安全）：按目标语言强制末尾为正确标点。
+ *  - 目标标点已存在 → 保留
+ *  - 结尾是其它标点（中英文句号/逗号/顿号/冒号/分号）→ 替换为目标标点
+ *    （解决英文 *En 字段误用中文句号「。」的问题）
+ *  - 结尾是 ！!？?… → 保留（有意义的叹/问/省略，不强行改句号）
+ *  - 其它（无标点/普通字符）→ 补目标标点
+ *  用于统一 AI 洞察各字段的句号，消除"有的有句号、有的没有 / 中英文句号混用"。 */
 function ensureEndPunct(s: string | null, punct: string): string | null {
   if (s == null) return null;
   const t = s.trim();
   if (!t) return s;
-  if (/[。.！!？?…]/.test(t.slice(-1))) return t;
+  const last = t.slice(-1);
+  if (last === punct) return t;
+  if (/[！!？?…]/.test(last)) return t;
+  if (/[。.，,、；;：:]/.test(last)) return t.slice(0, -1) + punct;
   return t + punct;
 }
 
