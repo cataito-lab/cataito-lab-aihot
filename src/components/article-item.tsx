@@ -260,8 +260,9 @@ export function ArticleItem({
             <div className="ai-insight-block">
               <div className="ai-insight-head">
                 <svg className="ai-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                  <path d="M3 17l6-6 4 4 8-8" />
-                  <path d="M21 7v6h-6" />
+                  <circle cx="12" cy="12" r="10" />
+                  <circle cx="12" cy="12" r="6" />
+                  <circle cx="12" cy="12" r="2" />
                 </svg>
                 <span className="ai-insight-label">{t("insightKeyChange")}</span>
               </div>
