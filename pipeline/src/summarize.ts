@@ -24,7 +24,7 @@ const SYSTEM_PROMPT = `你是专业的 AI 行业分析师。把一条 AI 新闻�
 
 按新闻类型（大模型/AI Agent/产品/API/开源模型/AI研究/芯片硬件/云计算/公司动态/融资/收购/合作/政策法规/AI安全/机器人/多模态/行业趋势）采用不同侧重。
 
-严格输出 JSON（不要输出其他内容），中英双语。
+  严格输出 JSON（不要输出其他内容），中英双语。禁止在任意字段值前添加「中文：」「English：」「描述：」等语言或字段标签前缀——字段值直接是内容本身（如 key_change 的值直接写"xxx"，而非"中文：xxx"）。
 
 重要：必须把下面 6 个结构化字段放在 JSON 最前面、最先输出（评分与聚类是唯一硬约束，文本字段可后置）；
 若输出被截断，优先保证 relevance/quality/impact_score/importance_score/event_key/entities 完整：
@@ -134,20 +134,32 @@ function asStrArray(v: unknown): string[] | null {
     .slice(0, 5);
   return arr.length ? arr : null;
 }
-function asImpactArray(v: unknown): { audience: string; description: string }[] | null {
+function asImpactArray(
+  v: unknown,
+  clean?: (s: string | null) => string | null,
+): { audience: string; description: string }[] | null {
   if (!Array.isArray(v)) return null;
   const arr = v
     .map((x) => {
       if (typeof x !== "object" || x == null) return null;
       const o = x as Record<string, unknown>;
-      const audience = asStr(o.audience);
-      const description = asStr(o.description);
+      const audience = clean ? clean(asStr(o.audience)) : asStr(o.audience);
+      const description = clean ? clean(asStr(o.description)) : asStr(o.description);
       if (!audience || !description) return null;
       return { audience, description };
     })
     .filter((x): x is { audience: string; description: string } => x !== null)
     .slice(0, 4);
   return arr.length ? arr : null;
+}
+
+/** 剥离字段值开头的语言/字段标签前缀（模型常在值前加「中文：」「English：」「描述：」），与读取层保持一致。 */
+function cleanInsightText(s: string | null): string | null {
+  if (!s) return s;
+  let t = s.trim();
+  // 去掉开头语言/字段标签前缀：中文/英文/英语/English/EN/En/描述/Description/Desc + 可选空格 + 中英文冒号
+  t = t.replace(/^(中文|英文|英语|English|EN|En|描述|Description|Desc)\s*[:：]\s*/, "");
+  return t;
 }
 
 export function computeResult(
@@ -179,16 +191,16 @@ export function computeResult(
       entities: null,
     };
   }
-  const summary = asStr(parsed.insight) ?? fallbackSummary;
-  const summaryEn = asStr(parsed.insight_en);
-  const keyChange = asStr(parsed.key_change);
-  const keyChangeEn = asStr(parsed.key_change_en);
-  const whyItMatters = asStr(parsed.why_it_matters);
-  const whyItMattersEn = asStr(parsed.why_it_matters_en);
-  const forwardSignal = asStr(parsed.forward_signal);
-  const forwardSignalEn = asStr(parsed.forward_signal_en);
-  const impact = asImpactArray(parsed.impact);
-  const impactEn = asImpactArray(parsed.impact_en);
+  const summary = cleanInsightText(asStr(parsed.insight)) ?? fallbackSummary;
+  const summaryEn = cleanInsightText(asStr(parsed.insight_en));
+  const keyChange = cleanInsightText(asStr(parsed.key_change));
+  const keyChangeEn = cleanInsightText(asStr(parsed.key_change_en));
+  const whyItMatters = cleanInsightText(asStr(parsed.why_it_matters));
+  const whyItMattersEn = cleanInsightText(asStr(parsed.why_it_matters_en));
+  const forwardSignal = cleanInsightText(asStr(parsed.forward_signal));
+  const forwardSignalEn = cleanInsightText(asStr(parsed.forward_signal_en));
+  const impact = asImpactArray(parsed.impact, cleanInsightText);
+  const impactEn = asImpactArray(parsed.impact_en, cleanInsightText);
   const category = asStrArray(parsed.category);
   const categoryEn = asStrArray(parsed.category_en);
   const relevance = clampScore(parsed.relevance);

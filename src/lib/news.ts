@@ -96,7 +96,7 @@ function normalizeImpact(json: string | null, punct: string): string | null {
       if (x && typeof x === "object") {
         const o = x as Record<string, unknown>;
         if (typeof o.description === "string") {
-          return { ...x, description: ensureEndPunct(o.description, punct) ?? "" };
+          return { ...x, description: ensureEndPunct(cleanInsightText(o.description), punct) ?? "" };
         }
       }
       return x;
@@ -105,6 +105,16 @@ function normalizeImpact(json: string | null, punct: string): string | null {
   } catch {
     return json;
   }
+}
+
+/** 剥离洞察文本开头的语言/字段标签前缀（模型常在字段值前加「中文：」「English：」「描述：」等），
+ *  避免在各语言界面下出现冗余标签或多语言混杂。仅去开头前缀，不改动正文其余内容。 */
+function cleanInsightText(s: string | null): string | null {
+  if (s == null) return null;
+  let t = s.trim();
+  // 去掉开头语言/字段标签前缀：中文/英文/英语/English/EN/En/描述/Description/Desc + 可选空格 + 中英文冒号
+  t = t.replace(/^(中文|英文|英语|English|EN|En|描述|Description|Desc)\s*[:：]\s*/, "");
+  return t;
 }
 
 export function toFeedArticle(row: ArticleRow): FeedArticle {
@@ -116,23 +126,23 @@ export function toFeedArticle(row: ArticleRow): FeedArticle {
     lang: String(row.lang),
     title: String(row.title),
     titleZh: str(row.title_zh),
-    summary: ensureEndPunct(str(row.summary), "。"),
-    summaryEn: ensureEndPunct(str(row.summary_en), "."),
-    summaryJa: ensureEndPunct(str(row.summary_ja), "。"),
-    summaryEs: ensureEndPunct(str(row.summary_es), "."),
-    summaryFr: ensureEndPunct(str(row.summary_fr), "."),
+    summary: ensureEndPunct(cleanInsightText(str(row.summary)), "。"),
+    summaryEn: ensureEndPunct(cleanInsightText(str(row.summary_en)), "."),
+    summaryJa: ensureEndPunct(cleanInsightText(str(row.summary_ja)), "。"),
+    summaryEs: ensureEndPunct(cleanInsightText(str(row.summary_es)), "."),
+    summaryFr: ensureEndPunct(cleanInsightText(str(row.summary_fr)), "."),
     keyPoints: str(row.key_points),
     industryImpact: str(row.industry_impact),
     scoreFinal: row.score_final == null ? null : Number(row.score_final),
     eventId: row.event_id == null ? null : String(row.event_id),
-    eventSummary: ensureEndPunct(str(row.event_summary), "。"),
+    eventSummary: ensureEndPunct(cleanInsightText(str(row.event_summary)), "。"),
     eventKey: row.event_key == null ? null : String(row.event_key),
-    keyChange: ensureEndPunct(str(row.key_change), "。"),
-    keyChangeEn: ensureEndPunct(str(row.key_change_en), "."),
-    whyItMatters: ensureEndPunct(str(row.why_it_matters), "。"),
-    whyItMattersEn: ensureEndPunct(str(row.why_it_matters_en), "."),
-    forwardSignal: ensureEndPunct(str(row.forward_signal), "。"),
-    forwardSignalEn: ensureEndPunct(str(row.forward_signal_en), "."),
+    keyChange: ensureEndPunct(cleanInsightText(str(row.key_change)), "。"),
+    keyChangeEn: ensureEndPunct(cleanInsightText(str(row.key_change_en)), "."),
+    whyItMatters: ensureEndPunct(cleanInsightText(str(row.why_it_matters)), "。"),
+    whyItMattersEn: ensureEndPunct(cleanInsightText(str(row.why_it_matters_en)), "."),
+    forwardSignal: ensureEndPunct(cleanInsightText(str(row.forward_signal)), "。"),
+    forwardSignalEn: ensureEndPunct(cleanInsightText(str(row.forward_signal_en)), "."),
     impact: normalizeImpact(str(row.impact), "。"),
     impactEn: normalizeImpact(str(row.impact_en), "."),
     aiCategory: str(row.ai_category),
@@ -405,8 +415,8 @@ export async function getEvent(key: string): Promise<EventDetail | null> {
     eventKey: String(row.event_key),
     title: str(row.title),
     titleZh: str(row.title_zh),
-    summary: ensureEndPunct(str(row.summary), "。"),
-    summaryEn: ensureEndPunct(str(row.summary_en), "."),
+    summary: ensureEndPunct(cleanInsightText(str(row.summary)), "。"),
+    summaryEn: ensureEndPunct(cleanInsightText(str(row.summary_en)), "."),
     sourceCount: Number(row.source_count ?? 0),
     firstSeen: String(row.first_seen),
     lastSeen: String(row.last_seen),
@@ -439,18 +449,18 @@ export async function getEventMembers(eventId: string): Promise<EventMember[]> {
     lang: String(r.lang),
     title: String(r.title),
     titleZh: str(r.title_zh),
-    summary: ensureEndPunct(str(r.summary), "。"),
-    summaryEn: ensureEndPunct(str(r.summary_en), "."),
-    summaryJa: ensureEndPunct(str(r.summary_ja), "。"),
-    summaryEs: ensureEndPunct(str(r.summary_es), "."),
-    summaryFr: ensureEndPunct(str(r.summary_fr), "."),
+    summary: ensureEndPunct(cleanInsightText(str(r.summary)), "。"),
+    summaryEn: ensureEndPunct(cleanInsightText(str(r.summary_en)), "."),
+    summaryJa: ensureEndPunct(cleanInsightText(str(r.summary_ja)), "。"),
+    summaryEs: ensureEndPunct(cleanInsightText(str(r.summary_es)), "."),
+    summaryFr: ensureEndPunct(cleanInsightText(str(r.summary_fr)), "."),
     scoreFinal: r.score_final == null ? null : Number(r.score_final),
-    keyChange: ensureEndPunct(str(r.key_change), "。"),
-    keyChangeEn: ensureEndPunct(str(r.key_change_en), "."),
-    whyItMatters: ensureEndPunct(str(r.why_it_matters), "。"),
-    whyItMattersEn: ensureEndPunct(str(r.why_it_matters_en), "."),
-    forwardSignal: ensureEndPunct(str(r.forward_signal), "。"),
-    forwardSignalEn: ensureEndPunct(str(r.forward_signal_en), "."),
+    keyChange: ensureEndPunct(cleanInsightText(str(r.key_change)), "。"),
+    keyChangeEn: ensureEndPunct(cleanInsightText(str(r.key_change_en)), "."),
+    whyItMatters: ensureEndPunct(cleanInsightText(str(r.why_it_matters)), "。"),
+    whyItMattersEn: ensureEndPunct(cleanInsightText(str(r.why_it_matters_en)), "."),
+    forwardSignal: ensureEndPunct(cleanInsightText(str(r.forward_signal)), "。"),
+    forwardSignalEn: ensureEndPunct(cleanInsightText(str(r.forward_signal_en)), "."),
     impact: normalizeImpact(str(r.impact), "。"),
     impactEn: normalizeImpact(str(r.impact_en), "."),
     aiCategory: str(r.ai_category),
