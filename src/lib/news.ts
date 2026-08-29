@@ -112,8 +112,8 @@ function normalizeImpact(json: string | null, punct: string): string | null {
 function cleanInsightText(s: string | null): string | null {
   if (s == null) return null;
   let t = s.trim();
-  // 去掉开头语言/字段标签前缀：中文/英文/英语/English/EN/En/描述/Description/Desc + 可选空格 + 中英文冒号
-  t = t.replace(/^(中文|英文|英语|English|EN|En|描述|Description|Desc)\s*[:：]\s*/, "");
+  // 去掉开头语言/字段标签前缀：中文/英文/英语/English/EN/En/描述/Description/Desc + 可选空格 + 中英文冒号（大小写不敏感）
+  t = t.replace(/^(中文|英文|英语|English|EN|En|描述|Description|Desc)\s*[:：]\s*/i, "");
   return t;
 }
 
