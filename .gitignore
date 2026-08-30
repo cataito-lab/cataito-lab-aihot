@@ -43,5 +43,10 @@ docs/SCORING-ROADMAP.md
 docs/SEO-PLAN.md
 docs/INSIGHT-PLAN.md
 docs/HANDOFF.md
+# 内部技术文档/交接文档（已从历史中清除），不入库不推送
+docs/OPERATIONS.md
+docs/TECH_SPEC.md
+# 临时备份
+.tmp_backup
 pipeline/data/
 pipeline/scripts/tmp-*
