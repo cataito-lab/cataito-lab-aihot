@@ -428,7 +428,7 @@
     "feedUrl": "https://rsshub.app/weibo/keyword/AI大模型",
     "fetcher": "rss",
     "dedicated": false,
-    "enabled": false,
+    "enabled": true,
     "authority": 55,
     "note": "D10 实验性中文社媒源：经 RSSHub 公共实例（rsshub.app）桥接微博关键词搜索。公共实例不稳定、可能限流/失效，建议自建 RSSHub 或换源后启用。中文内容需保证摘要管线支持中文处理。"
   },
