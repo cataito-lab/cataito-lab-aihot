@@ -2,7 +2,7 @@
 
 公开的 AI 行业新闻聚合站：**https://aihot.cataito.com**
 
-GitHub Actions 定时抓取约 20 个中英文 AI 信源 → 标题自动翻译、重点新闻 AI 摘要（Cloudflare Workers AI）→ 写入 Turso 云数据库 → Next.js 按事件时间倒序展示。
+GitHub Actions 定时抓取约 50 个中英文 AI 信源 → 标题自动翻译、重点新闻 AI 摘要（Gemini 2.5 Flash 主力 + 智谱 GLM-4-Flash 兜底）→ 写入 Turso 云数据库 → Next.js 按事件时间倒序展示。
 
 ## 功能
 
@@ -39,6 +39,7 @@ npm run build               # 生产构建
 
 - 环境：Node 20+；抓取管线走 `pipeline/src/net.ts` 的 httpFetch（支持代理环境变量）
 - 数据库初始化：`npm run db:init`；查看数据：`npx tsx pipeline/scripts/inspect-db.ts`
+- 本地化质量（改 UI 文案 / 加语言必跑）：`npm run i18n:check`（UI key 对齐）/ `npm run lint:i18n`（Linter+审计）/ `npm run i18n:status`（翻译覆盖）/ `npm run translate:all`（三语回填）；契约见 [docs/LOCALIZATION-CONTRACT.md](docs/LOCALIZATION-CONTRACT.md)
 
 ## 部署
 
