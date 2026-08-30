@@ -655,5 +655,33 @@
     "enabled": false,
     "authority": 75,
     "note": "理性/对齐社区，整体热帖依赖 isAiRelated 过滤；RSS 地址待 dry-run 验证"
+  },
+  {
+    "id": "wechat-oa",
+    "name": "微信公众号 · AI",
+    "category": "media-cn",
+    "lang": "zh",
+    "siteUrl": "https://weixin.qq.com/",
+    "feedUrl": "https://rsshub.example.com/wechat/account/REPLACE_WITH_WECHAT_ACCOUNT_ID",
+    "fetcher": "rss",
+    "dedicated": false,
+    "enabled": false,
+    "authority": 62,
+    "publishedAtTz": "Asia/Shanghai",
+    "note": "需自架 RSSHub 并启用 wechat 路由（依赖浏览器/selenium 抓取，ToS 灰色）。feedUrl 为占位：把 REPLACE_WITH_WECHAT_ACCOUNT_ID 换成目标公众号 ID（一个条目=一个账号，多个账号请复制条目）。启用前先 pipeline:dry 验证，并确认摘要管线对中文长文+图片处理达标。"
+  },
+  {
+    "id": "xiaohongshu",
+    "name": "小红书 · AI",
+    "category": "community",
+    "lang": "zh",
+    "siteUrl": "https://www.xiaohongshu.com/",
+    "feedUrl": "https://rsshub.example.com/xiaohongshu/user/REPLACE_WITH_XHS_USER_ID",
+    "fetcher": "rss",
+    "dedicated": false,
+    "enabled": false,
+    "authority": 55,
+    "publishedAtTz": "Asia/Shanghai",
+    "note": "需自架 RSSHub 并配置小红书 cookie（强反爬，路由极不稳定）。feedUrl 为占位：换 REPLACE_WITH_XHS_USER_ID 为目标用户 ID。启用前先 pipeline:dry 验证；UGC 噪声大，依赖 isAiRelated 过滤。"
   }
 ]
