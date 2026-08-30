@@ -24,6 +24,18 @@ const BIG_WINDOW = 24 * 365 * 10;
 const dry = process.argv.includes("--dry-run");
 const noRecluster = process.argv.includes("--no-recluster");
 
+/**
+ * 根据当前 LLM_PROVIDER 自适应请求间隔，避开速率墙：
+ * - gemini（默认）：免费层 10 RPM ≈ 6000ms/次，留 10% 余量 → 6100ms
+ * - zhipu：GLM-4-Flash 无 RPM 限制，150ms 即可
+ *
+ * 若 zhipu 请求失败自动 fallback 到 gemini 时，sleep 仍按 zhipu 的 150ms
+ * 执行，可能快速撞 gemini 10 RPM 墙；backfill-insight 主循环有
+ * 「连续 3 次 429 提前退出」保护，不会无限空转。
+ */
+const provider = (process.env.LLM_PROVIDER ?? "gemini").toLowerCase();
+const sleepMs = provider === "zhipu" ? 150 : 6100;
+
 interface PendingRow {
   id: string;
   title: string;
@@ -87,7 +99,7 @@ async function main(): Promise<void> {
       if (!raw) {
         failures++;
         console.warn(`  [insight] ${r.id}: empty model response`);
-        await sleep(150);
+        await sleep(sleepMs);
         continue;
       }
       const parsed = parseModelJson(raw);
@@ -97,7 +109,7 @@ async function main(): Promise<void> {
       if (result.summary == null) {
         failures++;
         console.warn(`  [insight] ${r.id}: no usable summary in response`);
-        await sleep(150);
+        await sleep(sleepMs);
         continue;
       }
       await markSummarized(r.id, result);
