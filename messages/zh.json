@@ -43,7 +43,8 @@
     "insightKeyChange": "核心结论",
     "insightWhy": "为什么重要",
     "insightImpact": "影响谁",
-    "insightForward": "后续看点"
+    "insightForward": "后续看点",
+    "translating": "AI 摘要与洞察翻译中…"
   },
   "briefing": {
     "signal": "// SIGNAL BRIEFING SYSTEM",

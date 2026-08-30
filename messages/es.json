@@ -43,7 +43,8 @@
     "insightKeyChange": "Conclusión clave",
     "insightWhy": "Por qué importa",
     "insightImpact": "A quién afecta",
-    "insightForward": "Qué sigue"
+    "insightForward": "Qué sigue",
+    "translating": "Resumen e ideas de IA en traducción…"
   },
   "briefing": {
     "signal": "// SIGNAL BRIEFING SYSTEM",

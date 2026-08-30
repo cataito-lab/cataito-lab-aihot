@@ -3,6 +3,7 @@
 import { useTranslations, useLocale } from "next-intl";
 import type { BriefMeta } from "@/lib/types";
 import { useMounted } from "@/lib/use-mounted";
+import { formatNumber, formatCompactNumber } from "@/lib/format";
 
 interface Props {
   meta: BriefMeta;
@@ -40,15 +41,15 @@ export function BriefingPanel({ meta }: Props) {
         </div>
         <div className="stat-card">
           <div className="stat-label">{t("last24h")}</div>
-          <div className="stat-value">{meta.last24h}</div>
+          <div className="stat-value">{formatNumber(meta.last24h, locale)}</div>
         </div>
         <div className="stat-card">
           <div className="stat-label">{t("total")}</div>
-          <div className="stat-value">{meta.total}</div>
+          <div className="stat-value">{formatCompactNumber(meta.total, locale)}</div>
         </div>
         <div className="stat-card">
           <div className="stat-label">{t("sources")}</div>
-          <div className="stat-value">{meta.sourcesEnabled}</div>
+          <div className="stat-value">{formatNumber(meta.sourcesEnabled, locale)}</div>
         </div>
       </div>
 

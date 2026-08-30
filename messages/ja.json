@@ -43,7 +43,8 @@
     "insightKeyChange": "核心ポイント",
     "insightWhy": "なぜ重要か",
     "insightImpact": "影響を受ける層",
-    "insightForward": "今後の注目点"
+    "insightForward": "今後の注目点",
+    "translating": "AI 要約と洞察を翻訳中…"
   },
   "briefing": {
     "signal": "// SIGNAL BRIEFING SYSTEM",

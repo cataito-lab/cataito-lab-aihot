@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { httpFetch } from "./net";
 import { llmChat } from "./llm";
 
@@ -5,6 +8,59 @@ const ENDPOINT = "https://translate.googleapis.com/translate_a/single";
 
 const MAX_NEW_PER_RUN = 100;
 const REQUEST_GAP_MS = 150;
+
+/**
+ * 术语表 / Terminology Glossary（Localization Contract #8：品牌名/产品名/技术术语遵循固定译法）。
+ * 翻译时优先采用本表约定，避免机械翻译把专有名词译错。
+ */
+type Glossary = Record<string, Record<string, string>>;
+const GLOSSARY: Glossary = (() => {
+  try {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const raw = readFileSync(join(here, "..", "data", "glossary.json"), "utf8");
+    const parsed = JSON.parse(raw) as Glossary;
+    delete (parsed as Record<string, unknown>)._comment;
+    return parsed;
+  } catch {
+    return {};
+  }
+})();
+
+const GLOSSARY_LOCALES = new Set(["zh", "ja", "es", "fr"]);
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * 术语表安全网：翻译结果里若仍残留英文规范术语（如 "Large Language Model"），
+ * 且本表对该 locale 有固定译法，则替换为本地表单。品牌名（form === canonical）
+ * 因不会进入此分支，由 LLM 提示词保障不被翻译。
+ */
+function applyGlossary(text: string, target: string): string {
+  if (!GLOSSARY_LOCALES.has(target)) return text;
+  let out = text;
+  for (const [canonical, forms] of Object.entries(GLOSSARY)) {
+    const wanted = forms[target];
+    if (!wanted || wanted === canonical) continue;
+    out = out.replace(new RegExp(escapeRegExp(canonical), "gi"), wanted);
+  }
+  return out;
+}
+
+/** 取术语表提示词片段（仅含目标语言相关条目），注入 LLM 翻译指令。 */
+function glossaryPrompt(target: string): string {
+  if (!GLOSSARY_LOCALES.has(target)) return "";
+  const lines = Object.entries(GLOSSARY)
+    .map(([canonical, forms]) => {
+      const wanted = forms[target];
+      if (!wanted || wanted === canonical) return null;
+      return `  - ${canonical} → ${wanted}`;
+    })
+    .filter((x): x is string => x !== null);
+  if (lines.length === 0) return "";
+  return `\n\nUse these fixed terminology renderings (do NOT translate the left side differently):\n${lines.join("\n")}`;
+}
 
 const LANG_NAMES: Record<string, string> = {
   "zh-CN": "Simplified Chinese",
@@ -14,6 +70,35 @@ const LANG_NAMES: Record<string, string> = {
   es: "Spanish",
   fr: "French",
 };
+
+/**
+ * 目标语言校验（Localization Contract：AI 输出语言验证）。
+ * 翻译结果若明显不是目标语言（脚本不符），视为污染，必须拒绝/重试。
+ * - ja：必须含假名（日语必有かな）
+ * - zh：必须含汉字
+ * - en/es/fr：以拉丁字母为主（非拉丁占比 < 30%），否则视为串语言
+ */
+function looksLikeTargetLang(text: string, target: string): boolean {
+  if (!text.trim()) return false;
+  const cjk = (text.match(/[㐀-鿿]/g) ?? []).length;
+  const kana = (text.match(/[぀-ヿ]/g) ?? []).length;
+  const latin = (text.match(/[A-Za-zÀ-ɏ]/g) ?? []).length;
+  const nonLatin = cjk + kana;
+  const denom = nonLatin + latin + 1;
+  switch (target) {
+    case "ja":
+      return kana > 0;
+    case "zh":
+    case "zh-CN":
+      return cjk > 0;
+    case "en":
+    case "es":
+    case "fr":
+      return nonLatin / denom < 0.3;
+    default:
+      return true;
+  }
+}
 
 export interface TranslatableRow {
   id: string;
@@ -53,11 +138,12 @@ async function translateViaLlm(text: string, target: string): Promise<string> {
   const langName = LANG_NAMES[target] ?? target;
   const out = await llmChat(
     `You are a professional news translator. Translate the user text into ${langName}. ` +
-      "Keep product/company/person names in their original form. Output ONLY the translation, with no surrounding quotes or extra commentary.",
+      "Keep product/company/person names in their original form. Output ONLY the translation, with no surrounding quotes or extra commentary." +
+      glossaryPrompt(target),
     text,
     { maxTokens: 400 },
   );
-  return out.replace(/^["'「『]|["'」』]$/g, "").trim();
+  return applyGlossary(out.replace(/^["'「『]|["'」』]$/g, "").trim(), target);
 }
 
 type ChannelName = "gtx" | "llm";
@@ -74,22 +160,40 @@ async function smartWithMeta(
   let lastErr: unknown = new Error("all channels failed");
   for (const [name, fn] of CHANNELS) {
     try {
-      const out = await fn(text, target);
-      if (out) return { text: out, channel: name };
-      lastErr = new Error(`${name} empty result`);
+      const out = applyGlossary(await fn(text, target), target);
+      if (!out) {
+        lastErr = new Error(`${name} empty result`);
+        continue;
+      }
+      if (!looksLikeTargetLang(out, target)) {
+        console.warn(
+          `  [translate] ${name} 输出语言不符目标 ${target}，重试其他通道`,
+        );
+        lastErr = new Error(`${name} language mismatch`);
+        continue;
+      }
+      return { text: out, channel: name };
     } catch (err) {
       lastErr = err;
     }
   }
   console.warn(
-    `  [translate] all channels failed: ${lastErr instanceof Error ? lastErr.message : lastErr}`,
+    `  [translate] 所有通道失败或语言不符目标 ${target}: ${lastErr instanceof Error ? lastErr.message : lastErr}`,
   );
   throw lastErr;
 }
 
-/** 智能通道：gtx → 统一 LLM 层（Gemini 主力 + 智谱兜底）双通道降级。供摘要/洞察/标题多语言翻译等使用。 */
-export async function translateTextSmart(text: string, target: string): Promise<string> {
-  return (await smartWithMeta(text, target)).text;
+/**
+ * 智能通道：gtx → 统一 LLM 层（Gemini 主力 + 智谱兜底）双通道降级，
+ * 并做目标语言校验（Localization Contract）。若全部通道失败或输出语言不符，
+ * 返回 null（调用方应跳过写入，避免污染数据库）。
+ */
+export async function translateTextSmart(text: string, target: string): Promise<string | null> {
+  try {
+    return (await smartWithMeta(text, target)).text;
+  } catch {
+    return null;
+  }
 }
 
 export async function translatePending(

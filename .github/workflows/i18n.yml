@@ -1,0 +1,36 @@
+name: i18n
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  localization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: UI key 一致性（5 语言 messages 对齐）
+        run: npm run i18n:check
+
+      - name: Localization Linter（防硬编码/串语言污染）
+        run: npm run lint:i18n
+
+      - name: 翻译状态审计（仅报告，不阻断）
+        continue-on-error: true
+        run: npm run i18n:status
+        env:
+          DB_PATH: pipeline/data/local.db

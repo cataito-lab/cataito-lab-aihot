@@ -7,7 +7,7 @@ import type { FeedArticle } from "@/lib/types";
 import { isFavorite, subscribeFavorites, toggleFavorite } from "@/lib/favorites";
 import { useMounted } from "@/lib/use-mounted";
 import { pickTitle } from "@/lib/i18n";
-import { localizeAudience } from "@/lib/audiences";
+import { pickField, pickSummary, pickImpact, pickTags } from "@/lib/localize";
 
 function useFavorite(id: string): boolean {
   return useSyncExternalStore(
@@ -88,95 +88,6 @@ function fmtTime(
   return tzLabel ? `${est}${abs} · ${tzLabel}` : `${est}${abs}`;
 }
 
-/** 按 locale 取摘要。非中文界面绝不回退中文摘要（避免语言混杂）：
- * 目标语缺失先回退英文（通用语），仍无则返回 null 隐藏摘要框，
- * 等管线补齐译文后下次渲染自然出现。 */
-function pickSummary(article: FeedArticle, locale: string): string | null {
-  if (locale === "zh") return article.summary;
-  if (locale === "ja") return article.summaryJa ?? article.summaryEn;
-  if (locale === "es") return article.summaryEs ?? article.summaryEn;
-  if (locale === "fr") return article.summaryFr ?? article.summaryEn;
-  return article.summaryEn;
-}
-
-/** 单字段按 locale 取：对应语言优先，缺失则回退英文，再回退中文 */
-function pickField(
-  v: {
-    zh: string | null;
-    en: string | null;
-    ja: string | null;
-    es: string | null;
-    fr: string | null;
-  },
-  locale: string,
-): string | null {
-  if (locale === "zh") return v.zh ?? v.en;
-  if (locale === "en") return v.en ?? v.zh;
-  if (locale === "ja") return v.ja ?? v.en ?? v.zh;
-  if (locale === "es") return v.es ?? v.en ?? v.zh;
-  if (locale === "fr") return v.fr ?? v.en ?? v.zh;
-  return v.en ?? v.zh;
-}
-
-/** 影响对象 JSON 按 locale 取：对应语言优先，缺失则回退英文，再回退中文 */
-function pickImpact(
-  v: {
-    zh: string | null;
-    en: string | null;
-    ja: string | null;
-    es: string | null;
-    fr: string | null;
-  },
-  locale: string,
-): { audience: string; description: string }[] | null {
-  const raw =
-    locale === "zh"
-      ? v.zh
-      : locale === "ja"
-        ? v.ja ?? v.en ?? v.zh
-        : locale === "es"
-          ? v.es ?? v.en ?? v.zh
-          : locale === "fr"
-            ? v.fr ?? v.en ?? v.zh
-            : v.en ?? v.zh;
-  if (!raw) return null;
-  try {
-    const arr = JSON.parse(raw) as unknown;
-    if (!Array.isArray(arr)) return null;
-    const out = arr
-      .filter(
-        (x): x is { audience: string; description: string } =>
-          !!x &&
-          typeof (x as Record<string, unknown>).audience === "string" &&
-          typeof (x as Record<string, unknown>).description === "string",
-      )
-      .slice(0, 4)
-      .map((x) => ({
-        audience: localizeAudience(x.audience, locale),
-        description: x.description,
-      }));
-    return out.length ? out : null;
-  } catch {
-    return null;
-  }
-}
-
-/** 新闻类型标签 JSON 按 locale 取 */
-function pickTags(zhJson: string | null, enJson: string | null, locale: string): string[] | null {
-  const raw = locale === "zh" ? zhJson : enJson ?? zhJson;
-  if (!raw) return null;
-  try {
-    const arr = JSON.parse(raw) as unknown;
-    if (!Array.isArray(arr)) return null;
-    const out = arr
-      .filter((x): x is string => typeof x === "string" && x.trim().length > 0)
-      .slice(0, 3);
-    return out.length ? out : null;
-  } catch {
-    return null;
-  }
-}
-
 export function ArticleItem({
   article,
   index,
@@ -216,7 +127,7 @@ export function ArticleItem({
     locale,
   );
   const tags = pickTags(article.aiCategory, article.aiCategoryEn, locale);
-  const hasSummary = Boolean(summary);
+  const hasAny = Boolean(summary || keyChange || whyItMatters || impact || forwardSignal);
 
   return (
     <li
@@ -283,7 +194,7 @@ export function ArticleItem({
       </h2>
       {secondary && <p className="title-secondary">{secondary}</p>}
 
-      {hasSummary && (
+      {hasAny ? (
         <div className="ai-summary-box">
           <div className="ai-summary-title">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -291,7 +202,7 @@ export function ArticleItem({
             </svg>
             {t("aiSummary")}
           </div>
-          <div className="ai-summary-content">{summary}</div>
+          {summary && <div className="ai-summary-content">{summary}</div>}
           {keyChange && (
             <div className="ai-insight-block">
               <div className="ai-insight-head">
@@ -376,6 +287,16 @@ export function ArticleItem({
               ))}
             </div>
           )}
+        </div>
+      ) : (
+        <div className="ai-summary-box">
+          <div className="ai-summary-title">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" />
+            </svg>
+            {t("aiSummary")}
+          </div>
+          <div className="ai-summary-content ai-translating">{t("translating")}</div>
         </div>
       )}
     </li>

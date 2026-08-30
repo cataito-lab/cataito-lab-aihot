@@ -97,7 +97,7 @@ function mergeIntoCards(items: FeedArticle[]): FeedCard[] {
   });
 }
 
-function buildQuery(filters: FeedFilters, cursor?: string | null): string {
+function buildQuery(filters: FeedFilters, cursor?: string | null, locale?: string): string {
   const params = new URLSearchParams();
   if (filters.categories && filters.categories.length > 0) params.set("cats", filters.categories.join(","));
   if (filters.category && filters.category !== "all") params.set("category", filters.category);
@@ -105,6 +105,7 @@ function buildQuery(filters: FeedFilters, cursor?: string | null): string {
   if (filters.q) params.set("q", filters.q);
   if (filters.hours) params.set("hours", String(filters.hours));
   if (filters.sort && filters.sort !== "time") params.set("sort", filters.sort);
+  if (locale) params.set("locale", locale);
   if (cursor) params.set("cursor", cursor);
   return params.toString();
 }
@@ -133,7 +134,7 @@ export function NewsFeed({
     if (!cursor || loading) return;
     setLoading(true);
     try {
-      const qs = buildQuery(effectiveFilters, cursor);
+      const qs = buildQuery(effectiveFilters, cursor, locale);
       const res = await fetch(`/api/news${qs ? `?${qs}` : ""}`);
       if (res.ok) {
         const page = (await res.json()) as FeedPage;
@@ -149,12 +150,12 @@ export function NewsFeed({
     } finally {
       setLoading(false);
     }
-  }, [cursor, loading, effectiveFilters]);
+  }, [cursor, loading, effectiveFilters, locale]);
 
   const loadFirst = useCallback(async (s: "time" | "importance") => {
     setLoading(true);
     try {
-      const qs = buildQuery({ ...filters, sort: s }, undefined);
+      const qs = buildQuery({ ...filters, sort: s }, undefined, locale);
       const res = await fetch(`/api/news${qs ? `?${qs}` : ""}`);
       if (res.ok) {
         const page = (await res.json()) as FeedPage;
@@ -164,7 +165,7 @@ export function NewsFeed({
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, locale]);
 
   function handleSort(s: "time" | "importance") {
     if (s === sort) return;

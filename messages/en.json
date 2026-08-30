@@ -43,7 +43,8 @@
     "insightKeyChange": "Key Takeaway",
     "insightWhy": "Why It Matters",
     "insightImpact": "Who's Affected",
-    "insightForward": "What's Next"
+    "insightForward": "What's Next",
+    "translating": "AI summary & insights translating…"
   },
   "briefing": {
     "signal": "// SIGNAL BRIEFING SYSTEM",

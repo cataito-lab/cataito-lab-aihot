@@ -5,6 +5,7 @@ import { Fire } from "@phosphor-icons/react";
 import { Link } from "@/i18n/navigation";
 import type { FeedArticle } from "@/lib/types";
 import { pickTitle } from "@/lib/i18n";
+import { pickField, pickSummary } from "@/lib/localize";
 
 const CAT_DOT: Record<string, string> = {
   official: "cat-dot-official",
@@ -18,32 +19,6 @@ function tierOf(score: number | null): "major" | "important" | "normal" | null {
   if (score >= 80) return "major";
   if (score >= 65) return "important";
   return "normal";
-}
-
-function pickSummary(a: FeedArticle, locale: string): string | null {
-  if (locale === "zh") return a.summary;
-  if (locale === "ja") return a.summaryJa ?? a.summaryEn;
-  if (locale === "es") return a.summaryEs ?? a.summaryEn;
-  if (locale === "fr") return a.summaryFr ?? a.summaryEn;
-  return a.summaryEn;
-}
-
-function pickField(
-  v: {
-    zh: string | null;
-    en: string | null;
-    ja: string | null;
-    es: string | null;
-    fr: string | null;
-  },
-  locale: string,
-): string | null {
-  if (locale === "zh") return v.zh ?? v.en;
-  if (locale === "en") return v.en ?? v.zh;
-  if (locale === "ja") return v.ja ?? v.en ?? v.zh;
-  if (locale === "es") return v.es ?? v.en ?? v.zh;
-  if (locale === "fr") return v.fr ?? v.en ?? v.zh;
-  return v.en ?? v.zh;
 }
 
 export function EventCard({

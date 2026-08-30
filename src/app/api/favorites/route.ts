@@ -10,10 +10,10 @@ export async function GET(request: NextRequest) {
   const ids = idsRaw.split(",").map((x) => x.trim()).filter(Boolean);
 
   if (ids.length === 0) {
-    return Response.json({ articles: [] });
+    return Response.json({ articles: [] }, { headers: { "Cache-Control": "no-store, must-revalidate" } });
   }
   if (ids.length > 200) {
-    return new Response("too many ids", { status: 400 });
+    return new Response("too many ids", { status: 400, headers: { "Cache-Control": "no-store, must-revalidate" } });
   }
 
   try {
@@ -34,9 +34,15 @@ export async function GET(request: NextRequest) {
     const articles = (rs.rows ?? []).map((row) =>
       toFeedArticle(row as unknown as ArticleRow),
     );
-    return Response.json({ articles });
+    return Response.json(
+      { articles },
+      { headers: { "Cache-Control": "no-store, must-revalidate" } },
+    );
   } catch (err) {
     console.error("[api/favorites]", err);
-    return Response.json({ error: "internal error" }, { status: 500 });
+    return Response.json(
+      { error: "internal error" },
+      { status: 500, headers: { "Cache-Control": "no-store, must-revalidate" } },
+    );
   }
 }

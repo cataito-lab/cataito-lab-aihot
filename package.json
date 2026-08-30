@@ -10,8 +10,12 @@
         "pages:build": "npx @cloudflare/next-on-pages@1.13.16",
         "pipeline": "tsx pipeline/src/index.ts",
         "pipeline:dry": "tsx pipeline/src/index.ts --dry-run",
-        "db:init": "tsx pipeline/scripts/init-db.ts",
-        "summary:backfill": "tsx pipeline/scripts/backfill-summary-langs.ts"
+    "db:init": "tsx pipeline/scripts/init-db.ts",
+    "summary:backfill": "tsx pipeline/scripts/backfill-summary-langs.ts",
+    "lint:i18n": "tsx scripts/localization-lint.ts",
+    "i18n:check": "tsx scripts/i18n-consistency.ts",
+    "i18n:status": "tsx scripts/translation-status.ts",
+    "translate:all": "tsx pipeline/scripts/backfill-i18n.ts"
     },
     "dependencies": {
         "@libsql/client": "^0.17.4",

@@ -5,6 +5,7 @@ import { Header } from "@/components/header";
 import { getEvent } from "@/lib/news";
 import type { EventMember } from "@/lib/types";
 import { pickTitle } from "@/lib/i18n";
+import { pickField, pickSummary } from "@/lib/localize";
 
 const SITE_URL = "https://aihot.cataito.com";
 
@@ -15,32 +16,6 @@ function tierOf(score: number | null): "major" | "important" | "normal" | null {
   if (score >= 80) return "major";
   if (score >= 65) return "important";
   return "normal";
-}
-
-function pickSummary(m: EventMember, locale: string): string | null {
-  if (locale === "zh") return m.summary;
-  if (locale === "ja") return m.summaryJa ?? m.summaryEn;
-  if (locale === "es") return m.summaryEs ?? m.summaryEn;
-  if (locale === "fr") return m.summaryFr ?? m.summaryEn;
-  return m.summaryEn;
-}
-
-function pickField(
-  v: {
-    zh: string | null;
-    en: string | null;
-    ja: string | null;
-    es: string | null;
-    fr: string | null;
-  },
-  locale: string,
-): string | null {
-  if (locale === "zh") return v.zh ?? v.en;
-  if (locale === "en") return v.en ?? v.zh;
-  if (locale === "ja") return v.ja ?? v.en ?? v.zh;
-  if (locale === "es") return v.es ?? v.en ?? v.zh;
-  if (locale === "fr") return v.fr ?? v.en ?? v.zh;
-  return v.en ?? v.zh;
 }
 
 function fmt(d: string, locale: string): string {
@@ -64,7 +39,7 @@ export async function generateMetadata({
   const event = await getEvent(key);
   if (!event) return { title: t("notFoundTitle") };
   const title = pickTitle(event, locale).primary || "AI 事件";
-  const raw = locale === "zh" ? event.summary : event.summaryEn ?? event.summary;
+  const raw = locale === "zh" ? event.summary : locale === "en" ? event.summaryEn : null;
   const description = raw ? (raw.length > 160 ? `${raw.slice(0, 157)}…` : raw) : title;
   const path = `/${locale}/event/${event.eventKey}`;
   return {
@@ -181,7 +156,7 @@ export default async function EventPage({
   }
 
   const { primary, secondary } = pickTitle(event, locale);
-  const summary = locale === "zh" ? event.summary : event.summaryEn ?? event.summary;
+  const summary = locale === "zh" ? event.summary : locale === "en" ? event.summaryEn : null;
 
   const progression = [...event.members].sort(
     (a, b) => new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime(),
