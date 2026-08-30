@@ -9,10 +9,14 @@ import type { FeedArticle, FeedFilters, FeedPage } from "@/lib/types";
 import { ArticleItem } from "./article-item";
 import { EventCard } from "./event-card";
 
+type FeedCard =
+  | { kind: "single"; article: FeedArticle }
+  | { kind: "event"; items: FeedArticle[] };
+
 interface TimeGroup {
   key: string;
   label: string;
-  items: FeedArticle[];
+  cards: { card: FeedCard; index: number }[];
 }
 
 /** 用统一 key 格式化器取出某时区下的 day/hour 标识 */
@@ -25,8 +29,41 @@ function tzStamp(
   return { day: `${get("year")}-${get("month")}-${get("day")}`, hour: get("hour") };
 }
 
+/** 卡片的时间锚点：单条=自身发布时间；事件=其成员的最新时间。 */
+function canonicalTime(card: FeedCard): string {
+  if (card.kind === "single") return card.article.publishedAt;
+  return card.items.reduce(
+    (m, i) => (i.publishedAt > m ? i.publishedAt : m),
+    card.items[0].publishedAt,
+  );
+}
+
+/**
+ * 全局折叠：同一 eventId 的多条报道合并为一张事件卡（无论它们跨不跨小时），
+ * 其余按 id 单列。返回顺序保留首见顺序（即最新在前，因 items 已按 publishedAt DESC 排序）。
+ * 非事件项（eventId 为 null）以自身成组，与旧行为一致。
+ */
+function foldCards(items: FeedArticle[]): FeedCard[] {
+  const byKey = new Map<string, FeedArticle[]>();
+  const order: string[] = [];
+  for (const it of items) {
+    const key = it.eventId ? `e:${it.eventId}` : `s:${it.id}`;
+    if (!byKey.has(key)) {
+      byKey.set(key, []);
+      order.push(key);
+    }
+    byKey.get(key)!.push(it);
+  }
+  return order.map((k) => {
+    const arr = byKey.get(k)!;
+    return arr.length > 1
+      ? { kind: "event" as const, items: arr }
+      : { kind: "single" as const, article: arr[0] };
+  });
+}
+
 function groupByTime(
-  items: FeedArticle[],
+  cards: FeedCard[],
   locale: string,
   t: ReturnType<typeof useTranslations<"feed">>,
   timeZone?: string,
@@ -49,8 +86,9 @@ function groupByTime(
   let seenToday = false;
   const groups: TimeGroup[] = [];
   let current: TimeGroup | null = null;
-  for (const item of items) {
-    const d = new Date(item.publishedAt);
+  let idx = -1;
+  for (const card of cards) {
+    const d = new Date(canonicalTime(card));
     const k = tzStamp(keyFmt, d);
     const time = fmtHour.format(d);
     // 紧凑宽度约定：今天的首个分组带「今日」日词，后续只显示 HH:MM；
@@ -67,34 +105,12 @@ function groupByTime(
     const label = dayPrefix ? `${dayPrefix}\n${time}` : time;
     const key = `${k.day}-${k.hour}`;
     if (!current || current.key !== key) {
-      current = { key: `${key}-${groups.length}`, label, items: [] };
+      current = { key: `${key}-${groups.length}`, label, cards: [] };
       groups.push(current);
     }
-    current.items.push(item);
+    current.cards.push({ card, index: ++idx });
   }
   return groups;
-}
-
-type FeedCard =
-  | { kind: "single"; article: FeedArticle }
-  | { kind: "event"; items: FeedArticle[] };
-
-/** 把同 eventId 的文章在当前时间分组内合并为一张事件卡 */
-function mergeIntoCards(items: FeedArticle[]): FeedCard[] {
-  const byEvent = new Map<string, FeedArticle[]>();
-  const order: string[] = [];
-  for (const it of items) {
-    const key = it.eventId ? `e:${it.eventId}` : `s:${it.id}`;
-    if (!byEvent.has(key)) {
-      byEvent.set(key, []);
-      order.push(key);
-    }
-    byEvent.get(key)!.push(it);
-  }
-  return order.map((k) => {
-    const arr = byEvent.get(k)!;
-    return arr.length > 1 ? { kind: "event", items: arr } : { kind: "single", article: arr[0] };
-  });
 }
 
 function buildQuery(filters: FeedFilters, cursor?: string | null, locale?: string): string {
@@ -184,14 +200,12 @@ export function NewsFeed({
     return () => observer.disconnect();
   }, [loadMore, cursor]);
 
+  // 先全局折叠（跨小时同源事件也合并），再按事件的时间锚点归组
+  const cards = useMemo(() => foldCards(items), [items]);
   const groups = useMemo(
-    () => groupByTime(items, locale, tFeed, mounted ? undefined : "UTC"),
-    [items, locale, tFeed, mounted],
+    () => groupByTime(cards, locale, tFeed, mounted ? undefined : "UTC"),
+    [cards, locale, tFeed, mounted],
   );
-  const indexedGroups = useMemo(() => {
-    let idx = -1;
-    return groups.map((g) => ({ ...g, items: g.items.map((item) => ({ item, index: ++idx })) }));
-  }, [groups]);
 
   return (
     <>
@@ -217,25 +231,25 @@ export function NewsFeed({
       </div>
 
       <div className="timeline-container">
-        {indexedGroups.map((group) => (
+        {groups.map((group) => (
           <section key={group.key} className="timeline-group">
             <div className="time-marker" suppressHydrationWarning>
               {group.label}
             </div>
-              <ol className="timeline-cards">
-                {mergeIntoCards(group.items.map((x) => x.item)).map((card, i) =>
-                  card.kind === "event" ? (
-                    <EventCard
-                      key={`e-${card.items[0].eventId}`}
-                      items={card.items}
-                      index={i}
-                      eventKey={card.items[0].eventKey}
-                    />
-                  ) : (
-                    <ArticleItem key={card.article.id} article={card.article} index={i} />
-                  ),
-                )}
-              </ol>
+            <ol className="timeline-cards">
+              {group.cards.map(({ card, index }) =>
+                card.kind === "event" ? (
+                  <EventCard
+                    key={`e-${card.items[0].eventId}`}
+                    items={card.items}
+                    index={index}
+                    eventKey={card.items[0].eventKey}
+                  />
+                ) : (
+                  <ArticleItem key={card.article.id} article={card.article} index={index} />
+                ),
+              )}
+            </ol>
           </section>
         ))}
 

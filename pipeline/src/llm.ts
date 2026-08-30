@@ -101,6 +101,10 @@ export async function llmChat(
       if (!res.ok) {
         allRateLimited = false;
         const detail = await res.text().catch(() => "");
+        // 打印具体 HTTP 状态和响应体前 300 字，避免被上层 catch 静默吞掉
+        console.warn(
+          `  [llm] ${p.name} HTTP ${res.status}: ${detail.slice(0, 300) || "<empty body>"}`,
+        );
         lastErr = new Error(
           `HTTP ${res.status} from ${p.name}${detail ? `: ${detail.slice(0, 200)}` : ""}`,
         );
@@ -120,6 +124,9 @@ export async function llmChat(
     } catch (err) {
       allRateLimited = false;
       lastErr = err instanceof Error ? err : new Error(String(err));
+      // 网络层异常（ETIMEDOUT / ECONNRESET / fetch failed 等）也会走这里，
+      // 之前完全静默导致排查困难；现在打印前 300 字，便于区分是网络问题还是别的问题。
+      console.warn(`  [llm] ${p.name} error: ${lastErr.message.slice(0, 300)}`);
     }
   }
 
