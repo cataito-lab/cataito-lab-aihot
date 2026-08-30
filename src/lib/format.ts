@@ -1,4 +1,4 @@
-/** BCP-47 映射：项目内部用短码（zh/en/ja/es/fr），Intl 需要完整区域码以保证格式正确�?*/
+/** BCP-47 映射：项目内部用短码（zh/en/ja/es/fr），Intl 需要完整区域码以保证格式正确。*/
 const INTL_LOCALE: Record<string, string> = {
   en: "en-US",
   zh: "zh-CN",
@@ -11,7 +11,7 @@ export function intlLocale(locale: string): string {
   return INTL_LOCALE[locale] ?? locale;
 }
 
-/** 数字�?locale 格式化（千位分隔随地区变化，�?1,234.5 / 1 234,5）�?*/
+/** 数字挒locale 格式化（千位分隔随地区变化，妄1,234.5 / 1 234,5）。*/
 export function formatNumber(value: number, locale: string): string {
   try {
     return new Intl.NumberFormat(intlLocale(locale)).format(value);
@@ -20,7 +20,7 @@ export function formatNumber(value: number, locale: string): string {
   }
 }
 
-/** 紧凑数字（如 1.2K / 1,2 K），用于计数展示�?*/
+/** 紧凑数字（如 1.2K / 1,2 K），用于计数展示。*/
 export function formatCompactNumber(value: number, locale: string): string {
   try {
     return new Intl.NumberFormat(intlLocale(locale), {
@@ -32,7 +32,7 @@ export function formatCompactNumber(value: number, locale: string): string {
   }
 }
 
-/** 评分/整数�?-100），不带小数�?*/
+/** 评分/整数（-100），不带小数。*/
 export function formatScore(value: number, locale: string): string {
   try {
     return new Intl.NumberFormat(intlLocale(locale), {
@@ -80,7 +80,7 @@ export function formatDateTime(
   }
 }
 
-/** 相对时间（如 "3分钟�? / "3 min ago"），统一�?Intl.RelativeTimeFormat�?*/
+/** 相对时间（如 "3分钟前 / "3 min ago"），统一甶Intl.RelativeTimeFormat。*/
 export function formatRelativeTime(
   iso: string,
   locale: string,
