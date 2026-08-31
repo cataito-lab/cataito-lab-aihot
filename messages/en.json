@@ -130,5 +130,22 @@
     "back": "← Back to timeline",
     "count": "{n} related stories",
     "empty": "No stories about {name} yet"
+  },
+  "about": {
+    "tag": "// ABOUT",
+    "title": "About AIHOT",
+    "subtitle": "A real-time index of global AI news.",
+    "what": "What AIHOT is",
+    "whatText": "AIHOT (AI Hot Takes) is a rolling timeline of global artificial-intelligence news, automatically aggregated from official product blogs, English and Chinese media, and community discussions. Every item in the timeline is a link to its original source — AIHOT is an index and aggregator, not a publisher of the underlying stories.",
+    "data": "How the data is gathered",
+    "dataText": "About twenty source feeds are crawled every thirty minutes. Each incoming item is deduplicated, categorized into one of three buckets — Official (product blogs and release notes), Media (English and Chinese press), or Community (forums and social posts) — and assigned a locale-aware headline and summary. Cross-source items that point to the same underlying event are grouped into an Event page, which adds a machine-written synthesis, a chronological source progression, and a forward-looking signal describing what to watch next.",
+    "scoring": "The AIHOT score",
+    "scoringText": "Every item carries an AIHOT importance score rendered as a colored tier badge. The score is a blended signal of recency, source weight, and how many independent sources are reporting the same event within a rolling window. The three visible tiers are: Major (score ≥ 80, shown in red), Important (score 65–79, shown in orange), and Normal (below 65, shown in muted gray). The score is a ranking aid, not a claim about factual accuracy or newsworthiness.",
+    "privacy": "Privacy and data",
+    "privacyText": "AIHOT requires no account, stores no personal data, and sets only a small theme-persistence cookie in your browser. The public site is served from Cloudflare Pages; data is stored on Turso (libSQL). News content copyright belongs to the original sources — clicking any card's verify link takes you to that source's original article.",
+    "lang": "Languages",
+    "langText": "The timeline, daily briefings, event pages, and entity views are available in five languages: English, 中文 (Chinese), 日本語 (Japanese), Español (Spanish), and Français (French). Headlines and summaries are localized per locale; original-source timestamps are preserved and rendered in your browser's local timezone.",
+    "team": "Built by",
+    "teamText": "AIHOT is maintained by the Cataito team. Cataito also publishes cataito.com, an international AI-tool directory and ranking. If you spot incorrect categorization, broken links, or want to request a source, reach us at hello@cataito.com or open an issue on the public GitHub repository."
   }
 }

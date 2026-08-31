@@ -65,12 +65,28 @@ export default async function HomePage(
       })),
     },
   };
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: locale === "zh" ? "AI 热点简报" : "AI Hot Takes",
+    url: "https://aihot.cataito.com",
+    sameAs: ["https://github.com/cataito-lab/aihot"],
+    contactPoint: {
+      "@type": "ContactPoint",
+      email: "hello@cataito.com",
+      contactType: "customer support",
+    },
+  };
 
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
       />
       <Header activeCategory={urlCategory} activeSort={urlSort} q={filters.q} />
       <main className="site-main">

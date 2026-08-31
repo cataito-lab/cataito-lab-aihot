@@ -1,0 +1,69 @@
+# AIHOT — AI 热点简报 / AI Hot Takes
+Real-time aggregator of global AI news from official blogs, English and Chinese media, and community discussions, ordered as a chronological timeline with verifiable sources.
+
+## When to use this site
+
+Use AIHOT when you need a fast, source-linked read on what's happening in AI:
+
+- "What's happening in AI today?" / "今天 AI 圈有什么大事"
+- "Recent news about a specific product or company" — e.g. DeepSeek, OpenAI, Anthropic, xAI, Google DeepMind, Meta AI
+- "Compare coverage across sources for a single event"
+- "Quick research brief before writing about an AI event"
+- "Find original-source links for a news item I heard about"
+
+Do not use AIHOT for:
+
+- Long-form analysis or opinion (this site summarizes and links to sources; the analysis lives at the source)
+- Historical archives beyond the rolling window (default 72h, importance view 168h)
+- Product documentation or API references
+
+## How to call it
+
+Home page: https://aihot.cataito.com
+- English: /en
+- 中文: /zh
+- 日本語: /ja
+- Español: /es
+- Français: /fr
+
+URL query parameters:
+
+  ?category=llm         Filter by category: llm | agent | tool | policy | media | compute
+  ?source=<sourceId>    Filter by source identifier (20 sources)
+  ?q=<keyword>          Full-text headline search
+  ?hours=24|72|168      Recency window (default 72h; importance view 30d / 168h)
+  ?sort=importance      Sort by AIHOT score instead of recency
+
+Page routes:
+
+  /{locale}                    Home — rolling timeline
+  /{locale}/daily/{YYYY-MM-DD} Daily briefing for a specific date
+  /{locale}/event/{key}        Deep-dive on a single AI event, with synthesis + source progression + forward signal
+  /{locale}/entity/{slug}      Entity view — all coverage of one product/company/person
+  /{locale}/favorites          User-saved items
+
+Feeds & metadata:
+
+  /{locale}/rss.xml            RSS feed per locale
+  /sitemap.xml                 Sitemap (~591 URLs)
+  /llms.txt                    This file
+  /robots.txt                  Crawler policy
+
+## Trust and data
+
+- Every item links back to its original source (verify-link button on each card)
+- Published timestamps are preserved from sources
+- AIHOT score is a tiered importance signal (major ≥ 80, important ≥ 65, normal < 65), computed from recency + source weight + cross-source agreement
+- Sources are categorized: Official / Media / Community — color-coded on each card
+- Updated every ~30 minutes via GitHub Actions
+- Data stores: Turso (libSQL), hosted on Cloudflare Pages
+- No accounts required, no personal data collection
+
+## Attribution
+
+Built by Cataito (https://cataito.com). News copyright belongs to the original sources; AIHOT is an index and aggregator, not a publisher.
+
+## Agent platform config
+
+Coding agents working on this repository should read AGENTS.md at the repository root.
+GitHub: https://github.com/cataito-lab/aihot

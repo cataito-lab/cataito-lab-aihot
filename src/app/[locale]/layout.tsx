@@ -64,9 +64,18 @@ export async function generateMetadata({
       siteName: t("titleSuffix"),
       locale: OG_LOCALES[locale] ?? locale,
       type: "website",
+      images: [
+        {
+          url: "/og-image.png",
+          width: 1200,
+          height: 630,
+          alt: t("title"),
+        },
+      ],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
+      images: ["/og-image.png"],
       title: t("title"),
       description: t("description"),
     },
