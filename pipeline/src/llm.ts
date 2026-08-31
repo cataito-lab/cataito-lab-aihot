@@ -3,20 +3,22 @@ import { httpFetch } from "./net";
 /**
  * 统一 LLM 调用层（OpenAI 兼容协议）。
  *
- * 默认主力：Gemini 2.5 Flash（Google AI Studio 免费层：10 RPM / 250 RPD / 1M 上下文，质量顶尖）。
- * 自动兜底：智谱 GLM-4-Flash（永久免费、无 Token 上限、30 并发、中文最强）。
+ * 默认主力：商汤日日新 sensenova-6.8-flash-lite（token.sensenova.cn 网关，OpenAI 兼容）。
+ * 自动兜底：DeepSeek V4 Flash / 智谱 GLM-5.2（同网关下多模型自动切换）。
  *
- * 任一 provider 限流(429) 时自动切换到另一个；全部 429 时抛出含 "429" 的错误，
+ * 任一 provider 限流(429) 时自动切换到下一个；全部 429 时抛出含 "429" 的错误，
  * 供 backfill-insight 的「连续 429 提前退出」逻辑使用（避免空跑烧额度）。
  *
  * 环境变量：
- *   LLM_PROVIDER     可选 "gemini"(默认) | "zhipu" | "workersai"(legacy Cloudflare)
- *   GEMINI_API_KEY   主力 provider 密钥
- *   ZHIPU_API_KEY    兜底 provider 密钥
+ *   LLM_PROVIDER        可选 "sensenova"(默认) | "deepseek" | "glm" | "workersai"(legacy)
+ *   SENSENOVA_API_KEY   商汤网关 API key（token.sensenova.cn）
+ *   SENSENOVA_BASE_URL  商汤网关 base_url（默认 https://token.sensenova.cn/v1）
+ *   SENSENOVA_MODEL     主力模型（默认 sensenova-6.8-flash-lite）
+ *   DEEPSEEK_API_KEY / GLM_API_KEY 兜底 provider（若同网关则用 SENSENOVA_* 即可）
  *   CF_ACCOUNT_ID / CF_AI_API_TOKEN  仅 LLM_PROVIDER=workersai 时使用
  */
 
-type ProviderName = "gemini" | "zhipu";
+type ProviderName = "sensenova" | "deepseek" | "glm" | "zhipu" | "gemini";
 
 interface Provider {
   name: ProviderName;
@@ -25,24 +27,39 @@ interface Provider {
   apiKey: string;
 }
 
+/** 商汤网关 base_url（token.sensenova.cn）—— 旗下所有模型共用同一端点 */
+const SENSENOVA_BASE =
+  process.env.SENSENOVA_BASE_URL || "https://token.sensenova.cn/v1";
+
 function buildProviderOrder(): Provider[] {
-  const forced = (process.env.LLM_PROVIDER ?? "gemini").toLowerCase();
-  const prefer: ProviderName[] =
-    forced === "zhipu" ? ["zhipu", "gemini"] : ["gemini", "zhipu"];
+  const forced = (process.env.LLM_PROVIDER ?? "sensenova").toLowerCase();
+
+  // 按优先级排列：forced provider 优先，其余按默认顺序兜底
+  const DEFAULT_ORDER: ProviderName[] = ["sensenova", "deepseek", "glm"];
+  const prefer: ProviderName[] = forced === "sensenova"
+    ? DEFAULT_ORDER
+    : forced === "deepseek"
+      ? ["deepseek", "sensenova", "glm"]
+      : forced === "glm"
+        ? ["glm", "sensenova", "deepseek"]
+        : DEFAULT_ORDER; // 未知 provider 回退默认
+
+  // 商汤网关下所有模型共用同一个 API key 和 base_url
+  const sensenovaKey = process.env.SENSENOVA_API_KEY;
 
   const out: Provider[] = [];
   for (const name of prefer) {
-    const apiKey = name === "gemini" ? process.env.GEMINI_API_KEY : process.env.ZHIPU_API_KEY;
-    if (!apiKey) continue; // 只保留已配置密钥的 provider
-    out.push({
-      name,
-      apiKey,
-      baseURL:
-        name === "gemini"
-          ? "https://generativelanguage.googleapis.com/v1beta/openai"
-          : "https://open.bigmodel.cn/api/paas/v4",
-      model: name === "gemini" ? "gemini-2.5-flash" : "glm-4-flash",
-    });
+    // 商汤网关下的模型：sensenova / deepseek / glm 共用 SENSENOVA_API_KEY
+    if (name === "sensenova" || name === "deepseek" || name === "glm") {
+      if (!sensenovaKey) continue;
+      const model =
+        name === "sensenova"
+          ? process.env.SENSENOVA_MODEL || "sensenova-6.8-flash-lite"
+          : name === "deepseek"
+            ? "deepseek-v4-flash"
+            : "glm-5.2";
+      out.push({ name, apiKey: sensenovaKey, baseURL: SENSENOVA_BASE, model });
+    }
   }
   return out;
 }
@@ -65,7 +82,7 @@ export async function llmChat(
   const providers = buildProviderOrder();
   if (providers.length === 0) {
     throw new Error(
-      "llm: 未配置任何 provider（需设置 GEMINI_API_KEY 或 ZHIPU_API_KEY；或将 LLM_PROVIDER=workersai 并配 CF_* 凭据）",
+      "llm: 未配置任何 provider（需设置 SENSENOVA_API_KEY；或将 LLM_PROVIDER=workersai 并配 CF_* 凭据）",
     );
   }
 

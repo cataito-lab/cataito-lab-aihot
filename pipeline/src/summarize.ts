@@ -343,14 +343,14 @@ export async function buildInsightUserContent(row: SummarizableRow): Promise<str
 }
 
 export async function summarizePending(rows: SummarizableRow[]): Promise<number> {
-  const provider = (process.env.LLM_PROVIDER ?? "gemini").toLowerCase();
+  const provider = (process.env.LLM_PROVIDER ?? "sensenova").toLowerCase();
   const hasLlm =
     provider === "workersai"
       ? !!(process.env.CF_ACCOUNT_ID && process.env.CF_AI_API_TOKEN)
-      : !!(process.env.GEMINI_API_KEY || process.env.ZHIPU_API_KEY);
+      : !!(process.env.SENSENOVA_API_KEY);
   if (!hasLlm) {
     console.log(
-      "  [summarize] skipped (未配置任何 LLM provider：请设置 GEMINI_API_KEY / ZHIPU_API_KEY，或将 LLM_PROVIDER=workersai 并配 CF_* 凭据)",
+      "  [summarize] skipped (未配置 LLM provider：请设置 SENSENOVA_API_KEY，或将 LLM_PROVIDER=workersai 并配 CF_* 凭据)",
     );
     return 0;
   }
