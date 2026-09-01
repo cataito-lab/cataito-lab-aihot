@@ -188,6 +188,8 @@ function MobileMenu({
   );
 }
 
+import { CATAITOLogo } from "@/components/cataito-logo";
+
 export function Header({
   activeCategory,
   activeSort,
@@ -204,10 +206,7 @@ export function Header({
   return (
     <header className="site-header">
       <Link href="/" className="logo-area" onClick={() => setMenuOpen(false)}>
-        <span className="logo-pulse" aria-hidden />
-        <span className="logo-text">
-          {brand("name")} <span>{"// v2.6 Neo"}</span>
-        </span>
+        <CATAITOLogo width={108} />
       </Link>
 
       <nav className="nav-tabs hidden md:flex" aria-label="Categories">

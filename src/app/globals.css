@@ -19,6 +19,9 @@
   --accent-bright: #34d399;
   --accent-glow: rgba(16, 185, 129, 0.15);
   --badge-bg: rgba(16, 185, 129, 0.1);
+  /* Logo decorative dots — dark theme */
+  --dot-primary: #60a5fa;
+  --dot-secondary: #a78bfa;
 
   /* 半透明叠层 / 容器背景（随主题切换为暗色或亮色 alpha） */
   --overlay-hover: rgba(255, 255, 255, 0.05);
@@ -49,6 +52,9 @@
   --accent-bright: #047857;
   --accent-glow: rgba(5, 150, 105, 0.12);
   --badge-bg: rgba(5, 150, 105, 0.1);
+  /* Logo decorative dots — light theme (darker for contrast on white) */
+  --dot-primary: #2563eb;
+  --dot-secondary: #7c3aed;
 
   --overlay-hover: rgba(0, 0, 0, 0.04);
   --overlay-active: rgba(0, 0, 0, 0.06);

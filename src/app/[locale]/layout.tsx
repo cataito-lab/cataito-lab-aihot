@@ -53,6 +53,10 @@ export async function generateMetadata({
       template: `%s · ${t("titleSuffix")}`,
     },
     description: t("description"),
+    icons: {
+      icon: "/catalio-favicon.png",
+      apple: "/catalio-favicon.png",
+    },
     alternates: {
       canonical: `/${locale}`,
       languages: { ...languages, "x-default": `${SITE_URL}/en` },
