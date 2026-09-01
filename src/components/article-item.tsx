@@ -127,7 +127,45 @@ export function ArticleItem({
     locale,
   );
   const tags = pickTags(article.aiCategory, article.aiCategoryEn, locale);
-  const hasAny = Boolean(summary || keyChange || whyItMatters || impact || forwardSignal);
+  const hasAny = Boolean(
+    summary || keyChange || whyItMatters || impact || forwardSignal,
+  );
+
+  // Title-only 源（Hacker News / Reddit / Twitter / Google News 等）没正文，
+  // 管线不跑摘要；前端用标题本身生成一行 fallback 摘要，避免显示 "translating" 占位。
+  const fallbackSummary: string | null = (() => {
+    if (hasAny) return null;
+    const src = article.sourceName || "Source";
+    if (locale === "zh") {
+      return article.titleZh
+        ? `${src}：${article.titleZh}`
+        : article.title
+          ? `${src}：${article.title}`
+          : null;
+    }
+    if (locale === "ja") {
+      return article.titleJa
+        ? `${src}：${article.titleJa}`
+        : article.title
+          ? `${src}：${article.title}`
+          : null;
+    }
+    if (locale === "es") {
+      return article.titleEs
+        ? `${src}：${article.titleEs}`
+        : article.title
+          ? `${src}：${article.title}`
+          : null;
+    }
+    if (locale === "fr") {
+      return article.titleFr
+        ? `${src}：${article.titleFr}`
+        : article.title
+          ? `${src}：${article.title}`
+          : null;
+    }
+    return article.title ? `${src}：${article.title}` : null;
+  })();
 
   return (
     <li
@@ -287,6 +325,16 @@ export function ArticleItem({
               ))}
             </div>
           )}
+        </div>
+      ) : fallbackSummary ? (
+        <div className="ai-summary-box">
+          <div className="ai-summary-title">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" />
+            </svg>
+            {t("aiSummary")}
+          </div>
+          <div className="ai-summary-content ai-fallback-summary">{fallbackSummary}</div>
         </div>
       ) : (
         <div className="ai-summary-box">

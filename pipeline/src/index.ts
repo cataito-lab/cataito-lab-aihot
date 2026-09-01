@@ -25,6 +25,7 @@ import {
 } from "./db";
 import { translatePending } from "./translate";
 import { summarizePending } from "./summarize";
+import { enrichContent } from "./enrich-content";
 import { translateSummariesPending } from "./summary-translate";
 import { translateInsightsPending } from "./insight-translate";
 import { translateTitlesPending } from "./title-translate";
@@ -140,8 +141,11 @@ async function main(): Promise<void> {
     return withIds.filter(({ id }) => !existing.has(id));
   })();
 
+  // C8 enrich：对 title-only 条目抓源文正文，让下游 LLM 摘要有正文可分析
+  const enriched = await enrichContent(newRows);
+
   const inserted = await insertArticles(
-    newRows.map(({ id, item }) => ({
+    enriched.map(({ id, item }) => ({
       id,
       sourceId: item.sourceId,
       title: item.title,
