@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: news-pipeline
+  group: news-pipeline-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
