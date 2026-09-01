@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Header } from "@/components/header";
-import { routing } from "@/i18n/routing";
 
 const SITE_URL = "https://aihot.cataito.com";
 
@@ -13,9 +12,7 @@ const OG_LOCALES: Record<string, string> = {
   fr: "fr_FR",
 };
 
-export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }));
-}
+export const runtime = "edge";
 
 export async function generateMetadata({
   params,
