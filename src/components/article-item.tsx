@@ -170,7 +170,7 @@ export function ArticleItem({
   return (
     <li
       className="card animate-fade-up"
-      style={{ animationDelay: `${Math.min(index * 28, 320)}ms` }}
+      style={{ animationDelay: "0ms" }}
     >
       <div className="card-meta">
         <a
