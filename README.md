@@ -2,7 +2,7 @@
 
 公开的 AI 行业新闻聚合站：**https://aihot.cataito.com**
 
-GitHub Actions 定时抓取约 50 个中英文 AI 信源 → 标题自动翻译、重点新闻 AI 摘要（Gemini 2.5 Flash 主力 + 智谱 GLM-4-Flash 兜底）→ 写入 Turso 云数据库 → Next.js 按事件时间倒序展示。
+GitHub Actions 定时抓取约 65 个中英文 AI 信源（启用 44 个） → 标题自动翻译、重点新闻 AI 摘要（Gemini 2.5 Flash 主力 + 智谱 GLM-4-Flash 兜底）→ 写入 Turso 云数据库 → Next.js 按事件时间倒序展示。
 
 ## 功能
 
