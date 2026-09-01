@@ -1,4 +1,19 @@
-# AIHOT — AI 热点简报 / AI Hot Takes
+export const runtime = "edge";
+
+/**
+ * /llms.txt — agent-facing site instructions.
+ *
+ * Served as a route handler (not a public/ static file) so we control the
+ * Content-Type (text/markdown) and the Vary header for content negotiation.
+ * The middleware matcher must exclude `llms.txt` so next-intl does not
+ * 307-redirect it to a /{locale}/ prefixed path (which would 404).
+ *
+ * Agent-readiness gaps this closes:
+ *   - Gap 02: markdown served with `Vary: Accept, Accept-Encoding`
+ *   - Gap 04: "when to use this site" guidance reachable at a clean URL
+ */
+
+const LLMS_TXT = `# AIHOT — AI 热点简报 / AI Hot Takes
 Real-time aggregator of global AI news from official blogs, English and Chinese media, and community discussions, ordered as a chronological timeline with verifiable sources.
 
 ## When to use this site
@@ -66,4 +81,16 @@ Built by Cataito (https://cataito.com). News copyright belongs to the original s
 ## Agent platform config
 
 Coding agents working on this repository should read AGENTS.md at the repository root.
-GitHub: https://github.com/cataito-lab/aihot
+GitHub: https://github.com/cataito-lab/aihot`;
+
+export function GET() {
+  return new Response(LLMS_TXT, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/markdown; charset=utf-8",
+      // Gap 02: markdown variant must key the cache on Accept + Accept-Encoding.
+      "Vary": "Accept, Accept-Encoding",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+    },
+  });
+}

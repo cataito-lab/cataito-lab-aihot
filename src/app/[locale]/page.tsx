@@ -76,6 +76,10 @@ export default async function HomePage(
       email: "hello@cataito.com",
       contactType: "customer support",
     },
+    address: {
+      "@type": "PostalAddress",
+      addressCountry: "CN",
+    },
   };
 
   return (

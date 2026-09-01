@@ -88,6 +88,10 @@ export default async function AboutPage({
         email: "hello@cataito.com",
         contactType: "customer support",
       },
+      address: {
+        "@type": "PostalAddress",
+        addressCountry: "CN",
+      },
     },
   };
 
