@@ -389,7 +389,7 @@ body {
   .cat-dot-community { background: #a78bfa; }
 
   .meta-type {
-    font-size: 11.5px;
+    font-size: 13px;
     color: var(--text-muted);
   }
 
@@ -428,7 +428,7 @@ body {
     background: var(--text-muted);
   }
   .tier-label {
-    font-size: 8.5px;
+    font-size: 10.5px;
     font-weight: 700;
     letter-spacing: 0.06em;
     opacity: 0.8;
@@ -657,7 +657,7 @@ body {
 
   .ai-summary-title {
     font-family: var(--font-code);
-    font-size: 11px;
+    font-size: 13px;
     color: var(--accent);
     letter-spacing: 0.05em;
     margin-bottom: 4px;
@@ -667,7 +667,7 @@ body {
   }
 
   .ai-summary-content {
-    font-size: 13.5px;
+    font-size: 14px;
     color: var(--text-secondary);
     line-height: 1.5;
   }
@@ -717,15 +717,16 @@ body {
 
   .ai-insight-label {
     font-family: var(--font-code);
-    font-size: 11px;
+    font-size: 13px;
     color: var(--accent);
     letter-spacing: 0.05em;
   }
 
   .ai-insight-body {
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.5;
     color: var(--text-secondary);
+    text-wrap: pretty;
   }
 
   .ai-impact {
@@ -756,7 +757,7 @@ body {
     background: var(--overlay-subtle);
     color: var(--accent);
     font-family: var(--font-code);
-    font-size: 10.5px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.05em;
     white-space: nowrap;
@@ -764,6 +765,7 @@ body {
 
   .ai-impact-desc {
     color: var(--text-secondary);
+    text-wrap: pretty;
   }
 
   /* 事件卡 / 成员卡的紧凑洞察行 */
@@ -772,9 +774,10 @@ body {
     display: flex;
     flex-direction: column;
     gap: 3px;
-    font-size: 12px;
-    line-height: 1.45;
+    font-size: 13px;
+    line-height: 1.5;
     color: var(--text-muted);
+    text-wrap: pretty;
   }
 
   .ai-mini-change::before {
