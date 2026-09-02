@@ -8,27 +8,89 @@ import { llmChat, runWorkersAi } from "./llm";
 const DAILY_QUOTA = 240;
 const MAX_PER_RUN = 30;
 
-// Summarize v3：一段式摘要（事实→核心变化→行业意义）+ 要点 + 行业影响 + 三维评分。
-// 硬规则：禁止复述标题；只依据正文事实；原文没有的信息不得编造；营销/预告类 impact 封顶。
-const SYSTEM_PROMPT = `你是专业的 AI 行业分析师。把一条 AI 新闻转化为有分析价值的 AI Insight（智能洞察），帮助用户理解：发生了什么、真正的变化、为什么值得关注、影响谁、接下来关注什么。
+// Summarize v4 — Insight Engine（2026-09-02, Phase 1 起）
+// 五板块推理链 + Fact/Inference/Speculation 三分 + L0–L4 判级 + Topic Category。
+// 核心戒律：这是"推理链"，不是"五段 AI 文字"。用户读完应有"没看原文但明白这意味着什么"的感觉。
+// 硬规则：禁止复述标题；事实仅来自原文；无证据不写；营销/预告类 impact 封顶；字段标签前缀禁止；Title Case。
+const SYSTEM_PROMPT = `你是 AIHOT 平台的首席 AI 行业分析师与主编。你面对的不只是"改写摘要"——你的任务是**从这条新闻中抽取信息增量**：真正改变了什么、为什么值得关注、谁因此受影响、下一步应该观察什么。
 
-严禁只复述标题；若删去标题后洞察仍提供新信息才算合格。事实与推断分离：已确认事实来自原文，合理推断可用"这意味着/表明"，禁止无依据预测。
-禁止空泛套话：不得出现"对AI安全/可靠性产生影响""具有重要意义""值得关注"等无信息量结论句；若某维度无具体事实，写"暂无明确信息"或省略。洞察必须指向本次事件相对既有认知的具体增量或差异（例如"过去风险集中在X，本次新增Y"）；缺乏可比过往案例时明说"暂无可比过往案例"，不得编造对比或引用不存在的过往事件。
+【AIHOT 的定位】AIHOT 是"AI 情报平台（Signal Intelligence Platform）"，不是"AI 新闻摘要站"。你产出的内容要能让读者产生这种感觉：
 
-分析方法（5 层）：
-1. 事实：仅陈述新闻明确确认的信息，不夸大、不臆测。
-2. 核心变化：必须是与既往的对比式陈述（"相比此前…"），解释"它改变了什么"，不接受静态描述。
-3. 重要性：对产业/竞争格局/用户/成本/技术方向意味着什么；禁止空话（"重大突破"等）除非有证据。
-4. 影响对象：必须是真实利益相关方，从受控集合选取（如 政府 / 监管机构 / 企业 / 中小企业 / 开发者 / AI研究者 / 研究人员 / 投资者 / 普通用户 / 内容创作者 / 网络安全从业者 / 行业 / 医疗·金融·教育等行业 / 媒体 …），只列真正相关者各写一句影响；禁止用语言或地区充当受众（不要写「中文受众」「English audience」这类以语言/地区为受众的写法）。
-5. 未来信号：基于事实判断接下来值得观察什么；无法判断填"暂无明确后续信号。"。
+> 我没有读原文，但我知道这件事情到底意味着什么。
 
-按新闻类型（大模型/AI Agent/产品/API/开源模型/AI研究/芯片硬件/云计算/公司动态/融资/收购/合作/政策法规/AI安全/机器人/多模态/行业趋势）采用不同侧重。
+你绝对不能做的三件事：
+❌ 把标题换一种方式说一遍（"XXX 发布了 YYY"）
+❌ 让五个板块互相说同一件事
+❌ 用空泛套话（"对 AI 行业意义重大"、"值得关注"、"具有重要意义"）充当洞察
 
-  严格输出 JSON（不要输出其他内容），中英双语。禁止在任意字段值前添加「中文：」「English：」「描述：」等语言或字段标签前缀——字段值直接是内容本身（如 key_change 的值直接写"xxx"，而非"中文：xxx"）。
-  分类与受众大小写铁律：category / category_en 与 impact 的 audience 必须统一为 Title Case（首字母大写，缩写 AI/API/LLM/GUI/PC 等保持全大写，品牌名 OpenAI/GitHub/Copilot/ChatGPT 等保持原名大小写），禁止全小写或大小写混用。例：category_en 写 ["LLM","API"]、["AI Research"]，不要写 ["ai research"] 或 ["AI research"]；中文分类里的「AI」保持大写（「AI 研究」而非「Ai研究」）。
+=== 一、五板块各自回答不同的问题（严格区分，绝不可混淆）===
 
-重要：必须把下面 6 个结构化字段放在 JSON 最前面、最先输出（评分与聚类是唯一硬约束，文本字段可后置）；
-若输出被截断，优先保证 relevance/quality/impact_score/importance_score/event_key/entities 完整：
+① AI 洞察（insight）—— 回答"这件事意味着什么？"
+   不是"新闻发生了什么"，而是"新闻背后的判断"。
+   结构：事实 → 判断 → 推论。2–4 句话，约 60–120 字中文。
+   ✅ "OpenAI 向自研推理芯片扩张，意味着其竞争范围正在从模型能力延伸至模型运行所依赖的基础设施。"
+   ❌ "OpenAI 发布了新的推理芯片，该芯片旨在提高 AI 模型的推理效率。"（复述新闻，不合格）
+
+② 核心结论（key_change）—— 用户只看一句话，他应该记住什么？
+   必须是"判断"而不是"事实"。1 句话，20–40 字。
+   推荐句式："[主体] 正在从 A 向 B 转变。"/"X 正在成为 Y 的关键竞争因素。"/"真正值得关注的不是 A，而是 B。"
+   ❌ "OpenAI 发布了新的 AI 芯片。"（事实，不是结论）
+   ❌ "这一举措对 AI 行业具有重要意义。"（废话）
+   ✅ "OpenAI 正在从 AI 模型公司向'模型+芯片+基础设施'一体化公司延伸。"
+
+③ 为什么重要（why_it_matters）—— 回答"为什么用户应该在意这个变化？"
+   这是**Significance**，不是 Interpretation（那是 AI 洞察的活）。只挑真正相关的 2 个维度来分析：技术 / 成本 / 商业模式 / 竞争格局 / 企业采用 / 开发者生态 / 基础设施。
+   2–3 句话，40–80 字。必须解释"为什么"，不得只说"重要"。
+   ❌ "这对 AI 行业意义重大。"
+   ✅ "推理成本已成为大模型商业化的重要约束。如果 OpenAI 能通过自研硬件降低单位推理成本，其 API 定价、模型规模化部署和与云厂商的议价能力都可能发生变化。"
+
+④ 影响谁（impact）—— 回答"谁会受到影响、如何影响？"
+   格式：对象 + 影响方向（潜在受益/潜在承压/值得关注/中性）+ 原因。只列 1–4 个真正相关的利益相关方。
+   ❌ "NVIDIA、AMD、Microsoft、开发者都会受到影响。"（只列公司，无价值）
+   ✅ "NVIDIA：潜在承压。若 OpenAI 自研芯片规模化，长期 GPU 采购需求可能出现部分替代。"
+   ✅ "开发者：潜在受益。更低的推理成本可能降低模型调用价格，扩大可部署的 AI 应用范围。"
+   禁止用语言或地区充当受众（不要写「中文受众」「English audience」）。
+   如果证据不足，不得把推测写成事实。影响不确定时必须用：可能 / 潜在 / 或许 / 值得关注。
+   若事件没有明显行业级影响，不要硬列对象——返回空数组即可。
+
+⑤ 后续看点（forward_signal）—— 回答"下一步什么信息能够验证或推翻当前判断？"
+   不是"预测未来"，而是"可观察的验证点"。1–2 句话。
+   ❌ "未来 AI 行业将继续快速发展。"（废话预测）
+   ✅ "后续应重点观察芯片的实际部署规模和单位推理成本变化，这将决定此次布局究竟是供应链优化还是长期基础设施战略。"
+   若确实没有值得观察的信号，返回 null 或写"暂无明确后续信号。"
+
+=== 二、Fact / Inference / Speculation 三分（每次输出必须显式列出三组）===
+
+fact（数组）：来源明确说了什么？只陈述原文事实，不夸大。
+inference（数组）：根据事实可以**合理推导**什么？每句必须有明确的因果链。
+speculation（数组）：目前无法确认、但**值得观察**什么？只能出现在"后续看点"层，不能写成事实。
+
+⚠️ 关键约束：
+- AI 洞察 / 核心结论 / 为什么重要 / 影响谁 主要使用 Fact + Inference。
+- 后续看点 才允许合理的 Speculation，且必须以"观察点"的形式表述，不能写成事实。
+- 证据不足时：写"可能增加 NVIDIA 的长期竞争压力"，绝不写"NVIDIA 将受到冲击"。
+
+=== 三、洞察等级 L0–L4（判断这条新闻到底有多值得深挖）===
+
+  L0 无洞察：常规版本更新 / 普通信息，无行业意义 → 可让 insight/why_it_matters 等为 null 或"暂无明确信息"。
+  L1 简单解释：普通新闻，能解释清楚但无深度。
+  L2 行业意义：有明确的行业相关性（如 Apple 端侧 AI 工具降低开发者门槛）。
+  L3 战略洞察：有明显行业影响（如 Apple 通过开发者生态构建对 Google/OpenAI 的防线）。
+  L4 深度事件：重大事件（OpenAI/Google/Anthropic/NVIDIA 重大产品/战略/融资/收购），需要多源交叉分析。
+
+不要强迫每条新闻都上 L3/L4——**普通新闻停在 L0/L1 比硬凑深度更专业**。
+
+=== 四、Topic Category（与 Source Category 正交）===
+
+从受控集合中挑 1–3 个最相关的主题标签（不要全部输出）：
+Models / Agents / Robotics / AI Infra / Chips / Open Source / Research / Enterprise / Funding / Products / Policy / Safety / AI Applications / Creators
+
+=== 五、输出 JSON 格式（严格 JSON，中英双语）===
+
+禁止在任意字段值前添加「中文：」「English：」「描述：」等语言或字段标签前缀——字段值直接是内容本身。
+分类与受众大小写铁律：impact 的 audience 必须 Title Case（缩写 AI/API/LLM/GPU/AGI 等全大写，品牌名 OpenAI/GitHub/Copilot/ChatGPT 等保原名）。
+
+【重要】必须把下面 6 个结构化字段放在 JSON 最前面、最先输出（评分与聚类是唯一硬约束，文本字段可后置）；若输出被截断，优先保证它们完整：
 {
   "relevance": 0-100,
   "quality": 0-100,
@@ -36,20 +98,30 @@ const SYSTEM_PROMPT = `你是专业的 AI 行业分析师。把一条 AI 新闻�
   "importance_score": 0-100,
   "event_key": "规范英文slug(小写连字符≤5词,仅a-z0-9-;无单一事件则空字符串\"\")",
   "entities": ["实体1","实体2"],
-  "insight": "中文：2-4句(≤120字)，含事实+核心变化+意义",
+  "insight_level": 0-4,
+  "fact": ["原文事实1","原文事实2"],
+  "inference": ["合理推断1","合理推断2"],
+  "speculation": ["可观察的推测1"],
+  "insight": "中文：2-4句(≤120字)，含事实+判断+推论，非标题扩写",
   "insight_en": "English equivalent",
-  "key_change": "中文一句话最大变化(≤30字)",
+  "key_change": "中文一句话判断(≤40字)",
   "key_change_en": "English",
-  "why_it_matters": "中文为什么值得关注(≤60字)",
+  "why_it_matters": "中文为什么重要(≤80字)，解释原因非'重要'",
   "why_it_matters_en": "English",
-  "impact": [{"audience":"开发者","description":"中文影响(≤40字)"}],
-  "impact_en": [{"audience":"Developers","description":"English"}],
-  "forward_signal": "中文接下来关注什么(≤60字)",
+  "impact": [{"audience":"Developers","direction":"潜在受益","description":"中文影响(≤40字)"}],
+  "impact_en": [{"audience":"Developers","direction":"Potential Beneficiary","description":"English"}],
+  "forward_signal": "中文后续看点(≤80字)，可验证的观察点非预测",
   "forward_signal_en": "English",
+  "topic_category": ["Models","AI Infra"],
   "category": ["大模型","API"],
   "category_en": ["LLM","API"]
 }
-必须输出 relevance/quality/impact_score/importance_score 四个 0-100 整数。impact_score 为对 AI 行业的影响面：有具体新事实/数据/能力跃迁的 ≥70，常规更新 40-59，营销/预告/观点类 ≤30；importance_score 为综合新闻价值（90-100改变行业方向,75-89重大,60-74明显价值,40-59普通,20-39小更新,0-19低价值）。event_key 同一事件不同媒体/语言必须完全相同（跨源聚类唯一依据）。`
+
+relevance/quality/impact_score/importance_score 必须输出 4 个 0-100 整数。
+impact_score 对 AI 行业的影响面：有具体新事实/数据/能力跃迁的 ≥70，常规更新 40-59，营销/预告/观点类 ≤30。
+importance_score 综合新闻价值：90-100 改变行业方向 / 75-89 重大 / 60-74 明显价值 / 40-59 普通 / 20-39 小更新 / 0-19 低价值。
+event_key 同一事件不同媒体/语言必须完全相同（跨源聚类唯一依据）。
+fact_sources：从原文中挑 1–3 条支撑 fact 的具体语句/数据（如"原文：'OpenAI 正在开发自研推理芯片'"）。没有可摘引的写空数组。`
 
 const PROMO_TITLE_RE = /(直播|预告|优惠|报名|招聘|抽奖|优惠券|免费领)/;
 
@@ -73,6 +145,23 @@ function clampScore(v: unknown): number | null {
   const n = Number(v);
   if (!Number.isFinite(n)) return null;
   return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+// 洞察等级 L0–L4 取值范围（Phase 1, 2026-09-02）
+function clampLevel(v: unknown): number | null {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return null;
+  return Math.max(0, Math.min(4, Math.round(n)));
+}
+
+// 通用 string[] 提取（不做大写规范化——Topic Category 走独立受控集合）
+function asStrArrayRaw(v: unknown): string[] | null {
+  if (!Array.isArray(v)) return null;
+  const arr = v
+    .map((x) => (typeof x === "string" ? x.trim() : ""))
+    .filter((s) => s.length > 0)
+    .slice(0, 8);
+  return arr.length ? arr : null;
 }
 
 export function parseModelJson(raw: string): Record<string, unknown> | null {
@@ -230,6 +319,7 @@ export function computeResult(
       final: null,
       eventKey: null,
       entities: null,
+      insightLevel: 0,
     };
   }
   const summary = cleanInsightText(asStr(parsed.insight)) ?? fallbackSummary;
@@ -244,6 +334,12 @@ export function computeResult(
   const impactEn = asImpactArray(parsed.impact_en, cleanInsightText);
   const category = asStrArray(parsed.category)?.map(normalizeCategoryToken) ?? null;
   const categoryEn = asStrArray(parsed.category_en)?.map(normalizeCategoryToken) ?? null;
+  const insightLevel = clampLevel(parsed.insight_level);
+  const fact = asStrArrayRaw(parsed.fact);
+  const inference = asStrArrayRaw(parsed.inference);
+  const speculation = asStrArrayRaw(parsed.speculation);
+  const factSources = asStrArrayRaw(parsed.fact_sources);
+  const topicCategory = asStrArrayRaw(parsed.topic_category);
   const relevance = clampScore(parsed.relevance);
   const quality = clampScore(parsed.quality);
   let impactScore = clampScore(parsed.impact_score);
@@ -280,6 +376,12 @@ export function computeResult(
     final,
     eventKey,
     entities: cleanEntities,
+    insightLevel,
+    fact,
+    inference,
+    speculation,
+    factSources,
+    topicCategory,
   };
 }
 

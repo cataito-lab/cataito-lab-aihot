@@ -179,6 +179,21 @@ export async function ensureSchema(): Promise<void> {
   await ensureColumn("articles", "category_en", "category_en TEXT");
   await ensureColumn("articles", "importance_score", "importance_score INTEGER");
   await ensureColumn("articles", "event_id", "event_id TEXT");
+  // Insight Engine Phase 1（2026-09-02 起）：五板块推理链 + 洞察等级 + 主题分类 + Fact/Inference/Speculation
+  await ensureColumn("articles", "insight_level", "insight_level INTEGER NOT NULL DEFAULT 1");
+  await ensureColumn("articles", "insight_reviewed", "insight_reviewed INTEGER NOT NULL DEFAULT 0");
+  await ensureColumn("articles", "insight_pass", "insight_pass INTEGER");
+  await ensureColumn("articles", "insight_review_score_info_gain", "insight_review_score_info_gain INTEGER");
+  await ensureColumn("articles", "insight_review_score_evidence", "insight_review_score_evidence INTEGER");
+  await ensureColumn("articles", "insight_review_score_specificity", "insight_review_score_specificity INTEGER");
+  await ensureColumn("articles", "insight_review_score_interpretation", "insight_review_score_interpretation INTEGER");
+  await ensureColumn("articles", "fact", "fact TEXT");
+  await ensureColumn("articles", "inference", "inference TEXT");
+  await ensureColumn("articles", "speculation", "speculation TEXT");
+  await ensureColumn("articles", "fact_sources", "fact_sources TEXT");
+  await ensureColumn("articles", "topic_category", "topic_category TEXT");
+  await getDb().execute("CREATE INDEX IF NOT EXISTS idx_articles_insight_level ON articles (insight_level)");
+  await getDb().execute("CREATE INDEX IF NOT EXISTS idx_articles_topic_category ON articles (topic_category)");
   await getDb().execute("CREATE INDEX IF NOT EXISTS idx_articles_event ON articles (event_id)");
   await ensureColumn("sources", "authority", "authority INTEGER");
   await ensureColumn("sources", "fail_streak", "fail_streak INTEGER NOT NULL DEFAULT 0");
@@ -414,6 +429,19 @@ export interface SummarizeResultV3 {
   final: number | null;
   eventKey: string | null;
   entities: string[] | null;
+  // Insight Engine（Phase 1，2026-09-02 起）
+  insightLevel?: number | null;        // L0–L4
+  insightReviewed?: number | null;     // 0/1
+  insightPass?: number | null;         // null=未审核, 0=FAIL, 1=PASS
+  insightReviewScoreInfoGain?: number | null;     // 审核 4 维
+  insightReviewScoreEvidence?: number | null;
+  insightReviewScoreSpecificity?: number | null;
+  insightReviewScoreInterpretation?: number | null;
+  fact?: string[] | null;              // JSON: string[]
+  inference?: string[] | null;
+  speculation?: string[] | null;
+  factSources?: string[] | null;
+  topicCategory?: string[] | null;     // JSON: string[]，与 category(Source) 正交
 }
 
 export async function markSummarized(
@@ -431,6 +459,11 @@ export async function markSummarized(
             score_relevance = ?, score_quality = ?, score_impact = ?, score_final = ?,
             importance_score = ?,
             event_key = ?, entities = ?,
+            insight_level = ?, insight_reviewed = ?, insight_pass = ?,
+            insight_review_score_info_gain = ?, insight_review_score_evidence = ?,
+            insight_review_score_specificity = ?, insight_review_score_interpretation = ?,
+            fact = ?, inference = ?, speculation = ?, fact_sources = ?,
+            topic_category = ?,
             summarized_at = ?
           WHERE id = ?`,
     args: [
@@ -453,6 +486,18 @@ export async function markSummarized(
       dbVal(result.importanceScore),
       dbVal(result.eventKey),
       result.entities ? JSON.stringify(result.entities) : null,
+      dbVal(result.insightLevel ?? 1),
+      dbVal(result.insightReviewed ?? 0),
+      dbVal(result.insightPass),
+      dbVal(result.insightReviewScoreInfoGain),
+      dbVal(result.insightReviewScoreEvidence),
+      dbVal(result.insightReviewScoreSpecificity),
+      dbVal(result.insightReviewScoreInterpretation),
+      result.fact ? JSON.stringify(result.fact) : null,
+      result.inference ? JSON.stringify(result.inference) : null,
+      result.speculation ? JSON.stringify(result.speculation) : null,
+      result.factSources ? JSON.stringify(result.factSources) : null,
+      result.topicCategory ? JSON.stringify(result.topicCategory) : null,
       new Date().toISOString(),
       id,
     ],
