@@ -5,7 +5,7 @@ import { llmChat, runWorkersAi } from "./llm";
 // 默认主力：Gemini 2.5 Flash（免费层 10 RPM / 250 RPD / 1M 上下文，质量顶尖）；
 // 自动兜底：智谱 GLM-4-Flash（永久免费、无 Token 上限）。详见 llm.ts。
 // 回退 Cloudflare Workers AI：设 LLM_PROVIDER=workersai 并保留 CF_* 凭据，CF_AI_MODEL 指定模型（默认 8B）。
-const DAILY_QUOTA = 240;
+const DAILY_QUOTA = 800; // 2026-09-02 上调：原 240 对日均 800+ 文章不够，导致当天后半段无摘要。Actions 免费 180 分钟/天约支持 12 次 run。
 const MAX_PER_RUN = 30;
 const INSIGHT_MAX_TOKENS = 2800;
 
@@ -460,6 +460,16 @@ export async function summarizePending(rows: SummarizableRow[]): Promise<number>
 
   const usedToday = await countSummariesToday();
   let remainingQuota = Math.max(0, DAILY_QUOTA - usedToday);
+  if (remainingQuota === 0) {
+    console.warn(
+      `  [summarize] ⚠️ 每日配额 ${DAILY_QUOTA} 已用完（今日已生成 ${usedToday} 条），本轮跳过。` +
+        " 需要提高配额请改 pipeline/src/summarize.ts 的 DAILY_QUOTA。",
+    );
+    return 0;
+  }
+  console.log(
+    `  [summarize] 今日已用 ${usedToday}/${DAILY_QUOTA}，剩余 ${remainingQuota} 条额度`,
+  );
   let done = 0;
   let scored = 0;
   let failures = 0;
