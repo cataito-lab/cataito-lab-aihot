@@ -152,12 +152,12 @@ async function sample(): Promise<void> {
       }
       console.log(summarizeBlock("⑤ 后续看点 (forward_signal)", result.forwardSignal ?? "(null)", 220));
       console.log(`  洞察等级：L${result.insightLevel ?? "?"}`);
-      console.log(
-        `  topic_category：${result.topicCategory ? JSON.parse(result.topicCategory).join(", ") : "(null)"}`,
-      );
-      console.log(
-        `  fact：${result.fact ? JSON.parse(result.fact).length : 0} 条 ｜ inference：${result.inference ? JSON.parse(result.inference).length : 0} 条 ｜ speculation：${result.speculation ? JSON.parse(result.speculation).length : 0} 条`,
-      );
+      const tc = Array.isArray(result.topicCategory) ? result.topicCategory : [];
+      console.log(`  topic_category：${tc.length > 0 ? tc.join(", ") : "(null)"}`);
+      const fl = Array.isArray(result.fact) ? result.fact.length : 0;
+      const il = Array.isArray(result.inference) ? result.inference.length : 0;
+      const sl = Array.isArray(result.speculation) ? result.speculation.length : 0;
+      console.log(`  fact：${fl} 条 ｜ inference：${il} 条 ｜ speculation：${sl} 条`);
       console.log(`  score: relevance=${result.relevance} quality=${result.quality} impact=${result.impactScore} importance=${result.importanceScore} final=${result.final}`);
       console.log("\n  ── 人工判定：推理链 ✓  还是  标题扩写 ✗  ──\n");
     } catch (err) {
