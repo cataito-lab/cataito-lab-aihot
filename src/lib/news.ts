@@ -1,5 +1,6 @@
 import "server-only";
 import { getDb } from "./db";
+import { localizeAudience } from "./audiences";
 import type {
   BriefMeta,
   CategoryCount,
@@ -101,8 +102,9 @@ function ensureEndPunct(s: string | null, punct: string): string | null {
   return t + punct;
 }
 
-/** impact 为 JSON 数组（[{audience,description}]），逐条规范化受众大小写与 description 末尾标点。 */
-function normalizeImpact(json: string | null, punct: string): string | null {
+/** impact 为 JSON 数组（[{audience,description}]），逐条规范化受众大小写与 description 末尾标点；
+ * zh 列的 audience 走 localizeAudience（词表兜底），其它列（ja/es/fr）已是翻译后文本，只补标点。 */
+function normalizeImpact(json: string | null, punct: string, locale: "zh" | "en" | "ja" | "es" | "fr" = "zh"): string | null {
   if (!json) return json;
   try {
     const arr = JSON.parse(json);
@@ -111,8 +113,20 @@ function normalizeImpact(json: string | null, punct: string): string | null {
       if (x && typeof x === "object") {
         const o = x as Record<string, unknown>;
         const next: Record<string, unknown> = { ...x };
-        if (typeof o.audience === "string") next.audience = normalizeCategoryToken(cleanInsightText(o.audience) ?? "");
-        if (typeof o.description === "string") next.description = ensureEndPunct(cleanInsightText(o.description), punct) ?? "";
+        const audience = typeof o.audience === "string" ? cleanInsightText(o.audience) ?? "" : "";
+        if (locale === "zh") {
+          // zh 列走词表映射（词表外兜底为 titleCase），避免中文 locale 下残留英文品牌/组织名
+          const mapped = localizeAudience(audience, "zh") || normalizeCategoryToken(audience);
+          next.audience = mapped || "";
+        } else if (locale === "en") {
+          next.audience = normalizeCategoryToken(audience);
+        } else {
+          next.audience = audience;
+        }
+        const desc = cleanInsightText(o.description);
+        if (typeof o.description === "string") {
+          next.description = ensureEndPunct(zhQuoteNormalize(desc, locale), punct) ?? "";
+        }
         return next;
       }
       return x;
@@ -121,6 +135,27 @@ function normalizeImpact(json: string | null, punct: string): string | null {
   } catch {
     return json;
   }
+}
+
+/** 中文文本内的引号规范化：把 ASCII 双/单引号替换为全角「」/『』，
+ * 避免中文摘要/影响字段出现 "主动式AI"、'foo' 这种半角引号。 */
+function zhQuoteNormalize(s: string | null, locale: "zh" | "en" | "ja" | "es" | "fr"): string | null {
+  if (!s || locale !== "zh") return s;
+  let out = "";
+  let openDq = false, openSq = false;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (c === '"') {
+      out += openDq ? "」" : "「";
+      openDq = !openDq;
+    } else if (c === "'") {
+      out += openSq ? "』" : "『";
+      openSq = !openSq;
+    } else {
+      out += c;
+    }
+  }
+  return out;
 }
 
 /** 剥离洞察文本开头的语言/字段标签前缀（模型常在字段值前加「中文：」「English：」「描述：」等），
@@ -226,11 +261,11 @@ export function toFeedArticle(row: ArticleRow): FeedArticle {
     forwardSignalJa: ensureEndPunct(cleanInsightText(str(row.forward_signal_ja)), "。"),
     forwardSignalEs: ensureEndPunct(cleanInsightText(str(row.forward_signal_es)), "。"),
     forwardSignalFr: ensureEndPunct(cleanInsightText(str(row.forward_signal_fr)), "."),
-    impact: normalizeImpact(str(row.impact), "。"),
-    impactEn: normalizeImpact(str(row.impact_en), "."),
-    impactJa: normalizeImpact(str(row.impact_ja), "。"),
-    impactEs: normalizeImpact(str(row.impact_es), "。"),
-    impactFr: normalizeImpact(str(row.impact_fr), "."),
+    impact: normalizeImpact(str(row.impact), "。", "zh"),
+    impactEn: normalizeImpact(str(row.impact_en), ".", "en"),
+    impactJa: normalizeImpact(str(row.impact_ja), "。", "ja"),
+    impactEs: normalizeImpact(str(row.impact_es), ".", "es"),
+    impactFr: normalizeImpact(str(row.impact_fr), ".", "fr"),
     aiCategory: normalizeCategories(str(row.ai_category)),
     aiCategoryEn: normalizeCategories(str(row.ai_category_en)),
     importanceScore: row.importance_score == null ? null : Number(row.importance_score),
@@ -564,11 +599,11 @@ export async function getEventMembers(eventId: string): Promise<EventMember[]> {
     forwardSignalJa: ensureEndPunct(cleanInsightText(str(r.forward_signal_ja)), "。"),
     forwardSignalEs: ensureEndPunct(cleanInsightText(str(r.forward_signal_es)), "。"),
     forwardSignalFr: ensureEndPunct(cleanInsightText(str(r.forward_signal_fr)), "."),
-    impact: normalizeImpact(str(r.impact), "。"),
-    impactEn: normalizeImpact(str(r.impact_en), "."),
-    impactJa: normalizeImpact(str(r.impact_ja), "。"),
-    impactEs: normalizeImpact(str(r.impact_es), "。"),
-    impactFr: normalizeImpact(str(r.impact_fr), "."),
+    impact: normalizeImpact(str(r.impact), "。", "zh"),
+    impactEn: normalizeImpact(str(r.impact_en), ".", "en"),
+    impactJa: normalizeImpact(str(r.impact_ja), "。", "ja"),
+    impactEs: normalizeImpact(str(r.impact_es), ".", "es"),
+    impactFr: normalizeImpact(str(r.impact_fr), ".", "fr"),
     aiCategory: normalizeCategories(str(r.ai_category)),
     aiCategoryEn: normalizeCategories(str(r.ai_category_en)),
     importanceScore: r.importance_score == null ? null : Number(r.importance_score),

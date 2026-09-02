@@ -89,6 +89,7 @@ Models / Agents / Robotics / AI Infra / Chips / Open Source / Research / Enterpr
 === 五、输出 JSON 格式（严格 JSON，中英双语）===
 
 禁止在任意字段值前添加「中文：」「English：」「描述：」等语言或字段标签前缀——字段值直接是内容本身。
+中文标点铁律：中文文本字段（insight / key_change / why_it_matters / forward_signal / impact[].description 的中文版本）内部引用或强调时，**必须使用全角「」和『』**，**禁止使用 ASCII 双引号 " 或单引号 '**；句末使用「。！？…」等全角标点；英文字段使用 ASCII 标点。
 分类与受众大小写铁律：impact 的 audience 必须 Title Case（缩写 AI/API/LLM/GPU/AGI 等全大写，品牌名 OpenAI/GitHub/Copilot/ChatGPT 等保原名）。
 
 【重要】必须把下面 6 个结构化字段放在 JSON 最前面、最先输出（评分与聚类是唯一硬约束，文本字段可后置）；若输出被截断，优先保证它们完整：

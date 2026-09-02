@@ -40,6 +40,21 @@ const TAXONOMY: AudienceEntry[] = [
   { key: "developers", zh: "开发者", en: "Developers", ja: "開発者", es: "Desarrolladores", fr: "Développeurs", aliases: ["开发", "程序员", "工程师", "开发团队", "研发人员", "研发者", "开发人员"] },
   { key: "researchers", zh: "研究人员", en: "Researchers", ja: "研究者", es: "Investigadores", fr: "Chercheurs", aliases: ["科研", "科研人员", "学者", "研究員"] },
   { key: "ai_researchers", zh: "AI 研究者", en: "AI Researchers", ja: "AI 研究者", es: "Investigadores de IA", fr: "Chercheurs en IA", aliases: ["人工智能研究者", "AI研究", "AI 研究", "人工智能研究"] },
+  { key: "logistics", zh: "物流企业", en: "Logistics Companies", ja: "物流企業", es: "Empresas de logística", fr: "Entreprises de logistique", aliases: ["物流行业", "货运", "快递", "供应链企业"] },
+  { key: "research_staff", zh: "科研人员", en: "Research Staff", ja: "研究員", es: "Personal de investigación", fr: "Personnel de recherche", aliases: ["科研工作者", "研究员"] },
+  { key: "enterprise_it", zh: "企业 IT 部门", en: "Enterprise IT Teams", ja: "企業IT部門", es: "Equipos de TI empresarial", fr: "Équipes IT d'entreprise", aliases: ["IT 团队", "信息化部门", "IT"] },
+  { key: "platform_teams", zh: "平台团队", en: "Platform Teams", ja: "プラットフォームチーム", es: "Equipos de plataforma", fr: "Équipes de plateforme", aliases: ["平台运营", "平台工程师"] },
+  { key: "cloud_ops", zh: "云运维团队", en: "Cloud Ops Teams", ja: "クラウド運用チーム", es: "Equipos de operaciones en la nube", fr: "Équipes d'exploitation cloud", aliases: ["运维", "SRE", "运维工程师", "云运维"] },
+  { key: "security_teams", zh: "安全团队", en: "Security Teams", ja: "セキュリティチーム", es: "Equipos de seguridad", fr: "Équipes de sécurité", aliases: ["安全工程师", "安全运营"] },
+  { key: "sales_marketing", zh: "销售与市场团队", en: "Sales & Marketing Teams", ja: "営業・マーケティングチーム", es: "Equipos de ventas y marketing", fr: "Équipes commerciales et marketing", aliases: ["销售", "市场", "营销团队", "品牌团队"] },
+  { key: "legal_compliance", zh: "法务与合规团队", en: "Legal & Compliance Teams", ja: "法務・コンプライアンスチーム", es: "Equipos jurídicos y de cumplimiento", fr: "Équipes juridiques et de conformité", aliases: ["法务", "合规", "法务团队"] },
+  { key: "hr_teams", zh: "人力资源团队", en: "HR Teams", ja: "人事チーム", es: "Equipos de RRHH", fr: "Équipes RH", aliases: ["HR", "人事", "人力", "组织发展"] },
+  { key: "supply_chain", zh: "供应链从业者", en: "Supply Chain Professionals", ja: "サプライチェーン従事者", es: "Profesionales de la cadena de suministro", fr: "Professionnels de la chaîne d'approvisionnement", aliases: ["供应链", "采购", "仓储"] },
+  { key: "manufacturers", zh: "制造业", en: "Manufacturers", ja: "製造業", es: "Fabricantes", fr: "Fabricants", aliases: ["制造", "工厂", "工厂企业"] },
+  { key: "agriculture", zh: "农业", en: "Agriculture", ja: "農業", es: "Agricultura", fr: "Agriculture", aliases: ["农", "农牧", "农业从业者"] },
+  { key: "energy", zh: "能源行业", en: "Energy Sector", ja: "エネルギー業界", es: "Sector energético", fr: "Secteur de l'énergie", aliases: ["能源", "电力", "油气"] },
+  { key: "automotive", zh: "汽车行业", en: "Automotive Industry", ja: "自動車業界", es: "Industria automotriz", fr: "Industrie automobile", aliases: ["汽车", "车企", "智能驾驶"] },
+  { key: "reality_hardware", zh: "AR/VR 硬件厂商", en: "AR/VR Hardware Makers", ja: "AR/VR ハードウェアメーカー", es: "Fabricantes de hardware AR/VR", fr: "Fabricants de matériel AR/VR", aliases: ["智能眼镜", "AR 眼镜", "VR 厂商", "可穿戴"] },
   { key: "academia", zh: "学术界", en: "Academia", ja: "学界", es: "Academia", fr: "Monde académique", aliases: ["高校", "大学", "学术圈"] },
   { key: "students", zh: "学生", en: "Students", ja: "学生", es: "Estudiantes", fr: "Étudiants", aliases: ["在校生", "学习者"] },
   { key: "investors", zh: "投资者", en: "Investors", ja: "投資家", es: "Inversores", fr: "Investisseurs", aliases: ["投资人", "资本", "风投", "VC"] },
@@ -78,15 +93,16 @@ for (const e of TAXONOMY) {
 /** 把受众名映射到指定 locale 的受控标签；未命中词表则原样返回（不破坏已翻译内容）。 */
 export function localizeAudience(
   audience: string | null | undefined,
-  locale: string,
+  locale: AudienceLocale,
 ): string {
-  if (!audience) return audience ?? "";
+  if (!audience) return "";
   const entry = LOOKUP.get(norm(audience));
   if (!entry) return audience.trim();
-  if (locale === "zh") return entry.zh;
-  if (locale === "en") return entry.en;
-  if (locale === "ja") return entry.ja;
-  if (locale === "es") return entry.es;
-  if (locale === "fr") return entry.fr;
-  return entry.en;
+  switch (locale) {
+    case "zh": return entry.zh;
+    case "en": return entry.en;
+    case "ja": return entry.ja;
+    case "es": return entry.es;
+    case "fr": return entry.fr;
+  }
 }

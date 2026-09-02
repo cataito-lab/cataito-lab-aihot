@@ -6,7 +6,7 @@ import {
 } from "./db";
 import { translateTextSmart } from "./translate";
 
-const MAX_ROWS_PER_RUN = 25;
+const MAX_ROWS_PER_RUN = 100;
 const REQUEST_GAP_MS = 150;
 const TARGETS: Record<InsightLang, string> = { ja: "ja", es: "es", fr: "fr" };
 
