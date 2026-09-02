@@ -7,6 +7,7 @@ import { llmChat, runWorkersAi } from "./llm";
 // 回退 Cloudflare Workers AI：设 LLM_PROVIDER=workersai 并保留 CF_* 凭据，CF_AI_MODEL 指定模型（默认 8B）。
 const DAILY_QUOTA = 240;
 const MAX_PER_RUN = 30;
+const INSIGHT_MAX_TOKENS = 2800;
 
 // Summarize v4 — Insight Engine（2026-09-02, Phase 1 起）
 // 五板块推理链 + Fact/Inference/Speculation 三分 + L0–L4 判级 + Topic Category。
@@ -181,7 +182,7 @@ export async function runModel(userContent: string): Promise<string | null> {
       return await runWorkersAi(SYSTEM_PROMPT, userContent, 1600);
     }
     // 默认走 OpenAI 兼容层（Gemini 主力 + 智谱兜底，429 自动切换）
-    return await llmChat(SYSTEM_PROMPT, userContent, { maxTokens: 1600, json: true });
+    return await llmChat(SYSTEM_PROMPT, userContent, { maxTokens: INSIGHT_MAX_TOKENS, json: true });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     // 全 provider 限流：必须抛出含 "429" 的错误，供 backfill-insight 连续 429 提前退出
