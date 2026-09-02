@@ -133,7 +133,7 @@ async function sample(): Promise<void> {
 
       // 展示 LLM 关键输出 —— 供人工判定"推理链 vs 五段 AI 文字"
       console.log("【LLM 原始输出（前 800 字）】");
-      console.log(`  ${raw.slice(0, 800)}\n`);
+      console.log(`  ${(raw || "").slice(0, 800)}\n`);
       console.log("【结构化五板块推理链】");
       console.log(summarizeBlock("① AI 洞察 (insight)", result.summary ?? "(null)", 260));
       console.log(summarizeBlock("② 核心结论 (key_change)", result.keyChange ?? "(null)", 140));
