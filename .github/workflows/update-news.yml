@@ -7,13 +7,15 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: news-pipeline-${{ github.event_name }}
-  cancel-in-progress: true
+  # 单一队列：schedule 与 workflow_dispatch 共享同一组，避免互相掐
+  group: news-pipeline
+  # 正在跑就排队等，不 cancel——pipeline 要 10-15 分钟，cancel 会导致 finished_at 永远 null
+  cancel-in-progress: false
 
 jobs:
   fetch:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 

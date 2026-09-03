@@ -188,12 +188,25 @@ async function main(): Promise<void> {
   await translateTitlesPending();
   await clusterEvents(windowHours);
 
+  // 判定本轮是否算成功：
+  // - hardFail：所有源都抓失败 → 真故障
+  // - totalSeen=0 且非 hardFail：本轮无新内容（正常情况，例如凌晨低活跃）→ 仍记 ok，让首页"数据更新于"正常刷新
+  // - 部分源失败但抓到内容：ok
   const hardFail = results.length > 0 && results.every((r) => r.error);
+  const ok = (results.length === 0 && !hardFail) ||
+    (totalSeen === 0 && !hardFail) ||
+    (!hardFail && failedFeeds.length < results.length);
+  if (!ok) {
+    console.error("[pipeline] run marked failed: hardFail=", hardFail, "totalSeen=", totalSeen, "failedFeeds=", failedFeeds.length, "of", results.length);
+  }
+  if (totalSeen === 0 && !hardFail) {
+    console.warn("[pipeline] total_seen=0 — no fresh items this round; run still counts as success so the site clock refreshes.");
+  }
   await finishRun(runId, {
     inserted,
     totalSeen,
     failedFeeds,
-    ok: !hardFail && failedFeeds.length < results.length,
+    ok,
     translateOk: translateStats?.ok,
     translateFailed: translateStats?.failed,
   });
