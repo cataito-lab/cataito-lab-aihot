@@ -93,16 +93,11 @@ for (const e of TAXONOMY) {
 /** 把受众名映射到指定 locale 的受控标签；未命中词表则原样返回（不破坏已翻译内容）。 */
 export function localizeAudience(
   audience: string | null | undefined,
-  locale: AudienceLocale,
+  locale: string,
 ): string {
   if (!audience) return "";
   const entry = LOOKUP.get(norm(audience));
   if (!entry) return audience.trim();
-  switch (locale) {
-    case "zh": return entry.zh;
-    case "en": return entry.en;
-    case "ja": return entry.ja;
-    case "es": return entry.es;
-    case "fr": return entry.fr;
-  }
+  const key = locale as AudienceLocale;
+  return entry[key] ?? entry.zh ?? audience.trim();
 }
