@@ -123,7 +123,7 @@ function normalizeImpact(json: string | null, punct: string, locale: "zh" | "en"
         } else {
           next.audience = audience;
         }
-        const desc = cleanInsightText(o.description);
+        const desc = typeof o.description === "string" ? cleanInsightText(o.description) : null;
         if (typeof o.description === "string") {
           next.description = ensureEndPunct(zhQuoteNormalize(desc, locale), punct) ?? "";
         }
