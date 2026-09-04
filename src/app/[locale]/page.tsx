@@ -16,6 +16,7 @@ interface HomeSearchParams {
   q?: string | string[];
   hours?: string | string[];
   sort?: string | string[];
+  topic?: string | string[];
 }
 
 function pick(value: string | string[] | undefined): string | undefined {
@@ -36,17 +37,19 @@ export default async function HomePage(
 
   const urlCategory = pick(sp.category);
   const urlSort = pick(sp.sort) === "importance" ? "importance" : "time";
+  const urlTopic = pick(sp.topic);
   const filters: FeedFilters = {
     category: urlCategory,
     sourceId: pick(sp.source),
     q: pick(sp.q),
     hours: Number(pick(sp.hours)) || (urlSort === "importance" ? 168 : 72),
     sort: urlSort,
+    topicCategory: urlTopic,
   };
 
   const [page, meta] = await Promise.all([listArticles(filters), getBriefMeta()]);
   const items = withFreshness(page.items);
-  const feedKey = `${urlCategory ?? ""}|${filters.sourceId ?? ""}|${filters.q ?? ""}|${filters.hours ?? ""}|${urlSort}`;
+  const feedKey = `${urlCategory ?? ""}|${filters.sourceId ?? ""}|${filters.q ?? ""}|${filters.hours ?? ""}|${urlSort}|${urlTopic ?? ""}`;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -92,11 +95,11 @@ export default async function HomePage(
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
       />
-      <Header activeCategory={urlCategory} activeSort={urlSort} q={filters.q} />
+      <Header activeCategory={urlCategory} activeSort={urlSort} q={filters.q} activeTopic={urlTopic} />
       <main className="site-main">
         <BriefingPanel meta={meta} />
 
-        {(filters.q || filters.sourceId || filters.category) && (
+        {(filters.q || filters.sourceId || filters.category || filters.topicCategory) && (
           <div className="mb-6 flex flex-wrap gap-1.5 animate-fade-up -mt-4">
             {filters.q && (
               <span className="px-2.5 py-0.5 rounded-md bg-neon-soft text-accent font-mono text-[11px]">
@@ -111,6 +114,11 @@ export default async function HomePage(
             {filters.category && (
               <span className="px-2.5 py-0.5 rounded-md bg-neon-soft text-accent font-mono text-[11px]">
                 CAT={filters.category.toUpperCase()}
+              </span>
+            )}
+            {filters.topicCategory && (
+              <span className="px-2.5 py-0.5 rounded-md bg-neon-soft text-accent font-mono text-[11px]">
+                TOPIC={filters.topicCategory}
               </span>
             )}
           </div>

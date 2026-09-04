@@ -150,6 +150,7 @@ export interface FeedFilters {
   q?: string;
   hours?: number;
   sort?: "time" | "importance";
+  topicCategory?: string;
 }
 
 export const CATEGORY_IDS = ["official", "media-cn", "media-en", "community"] as const;
@@ -159,6 +160,42 @@ export const CATEGORY_LABELS: Record<string, string> = {
   "media-cn": "中文媒体",
   "media-en": "英文媒体",
   community: "社区讨论",
+};
+
+// Phase 3（2026-09-04）：Topic Category 14 类
+// 键名用 canonical English（对齐 pipeline LLM 输出），值仅 zh 提供中文；其他 locale 走 key
+export const TOPIC_CATEGORIES = [
+  "Models",
+  "Agents",
+  "Robotics",
+  "AI Infra",
+  "Chips",
+  "Open Source",
+  "Research",
+  "Enterprise",
+  "Funding",
+  "Products",
+  "Policy",
+  "Safety",
+  "AI Applications",
+  "Creators",
+] as const;
+
+export const TOPIC_LABELS_ZH: Record<string, string> = {
+  Models: "模型",
+  Agents: "智能体",
+  Robotics: "机器人",
+  "AI Infra": "AI 基础设施",
+  Chips: "芯片",
+  "Open Source": "开源",
+  Research: "研究",
+  Enterprise: "企业",
+  Funding: "融资",
+  Products: "产品",
+  Policy: "政策",
+  Safety: "安全",
+  "AI Applications": "AI 应用",
+  Creators: "创作者",
 };
 
 export interface CategoryCount {

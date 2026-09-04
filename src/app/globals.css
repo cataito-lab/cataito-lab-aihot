@@ -115,6 +115,58 @@ body {
     z-index: 100;
   }
 
+  /* ===== Topic Category 横向滚动筛选条（Phase 3，2026-09-04）=====
+     紧贴 header 下方，position:absolute 让其脱离 header flex 布局，
+     避免和 Logo / Nav / Actions 挤在 64px 高度内。
+     site-main 相应增加 padding-top（桌面 +36px，移动 +36px）。 */
+  .topic-bar {
+    position: absolute;
+    top: 64px;
+    left: 0;
+    right: 0;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 32px;
+    background: var(--header-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+    overflow-x: auto;
+    overflow-y: hidden;
+    z-index: 99;
+  }
+
+  .topic-chip {
+    flex: 0 0 auto;
+    padding: 4px 12px;
+    border-radius: 14px;
+    font-size: 12px;
+    line-height: 20px;
+    white-space: nowrap;
+    color: var(--text-secondary);
+    background: var(--overlay-hover);
+    text-decoration: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+  .topic-chip:hover {
+    color: var(--text-primary);
+    background: var(--overlay-hover);
+  }
+  .topic-chip.active {
+    color: var(--accent);
+    background: var(--color-neon-soft);
+  }
+
+  /* 隐藏横向滚动条（Firefox + Chrome） */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   .logo-area {
     display: flex;
     align-items: center;
@@ -221,7 +273,8 @@ body {
   .site-main {
     max-width: 900px;
     margin: 0 auto;
-    padding: 104px 20px 60px 20px;
+    /* Phase 3（2026-09-04）：64px header + 36px topic-bar + 40px gap = 140px */
+    padding: 140px 20px 60px 20px;
     width: 100%;
   }
 
@@ -925,7 +978,8 @@ body {
       padding: 0 16px;
     }
     .site-main {
-      padding: 90px 16px 40px 16px;
+      /* Phase 3（2026-09-04）：64px header + 36px topic-bar + 20px gap = 120px */
+      padding: 120px 16px 40px 16px;
     }
     .logo-text span {
       display: none;

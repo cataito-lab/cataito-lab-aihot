@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Globe, List, X, BookmarkSimple, Check } from "@phosphor-icons/react";
 import { Link } from "@/i18n/navigation";
+import { TOPIC_CATEGORIES, TOPIC_LABELS_ZH } from "@/lib/types";
 import { SearchBox } from "./search-box";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -190,14 +191,66 @@ function MobileMenu({
 
 import { CATAITOLogo } from "@/components/cataito-logo";
 
+// Phase 3（2026-09-04）：Topic Category 横向滚动筛选条
+// 14 类 + 「全部」，紧贴 header 下方，移动端可横滑
+function TopicBar({ activeTopic }: { activeTopic?: string }) {
+  const locale = useLocale();
+  const labelFor = (key: string) =>
+    locale === "zh" ? TOPIC_LABELS_ZH[key] ?? key : key;
+
+  const buildHref = (topic?: string, keepCategory = true) => {
+    const params = new URLSearchParams();
+    // 保留当前 category / sort（不破坏其它筛选）
+    if (typeof window !== "undefined" && keepCategory) {
+      const cur = new URLSearchParams(window.location.search);
+      const c = cur.get("category");
+      const s = cur.get("sort");
+      if (c) params.set("category", c);
+      if (s) params.set("sort", s);
+      const h = cur.get("hours");
+      if (h) params.set("hours", h);
+    }
+    if (topic) params.set("topic", topic);
+    const qs = params.toString();
+    return qs ? `/?${qs}` : "/";
+  };
+
+  return (
+    <nav
+      aria-label="Topic categories"
+      className="topic-bar overflow-x-auto no-scrollbar"
+    >
+      <Link
+        href={buildHref(undefined)}
+        className={`topic-chip ${!activeTopic ? "active" : ""}`}
+        aria-current={!activeTopic ? "page" : undefined}
+      >
+        {locale === "zh" ? "全部" : "All"}
+      </Link>
+      {TOPIC_CATEGORIES.map((topic) => (
+        <Link
+          key={topic}
+          href={buildHref(topic)}
+          className={`topic-chip ${activeTopic === topic ? "active" : ""}`}
+          aria-current={activeTopic === topic ? "page" : undefined}
+        >
+          {labelFor(topic)}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
 export function Header({
   activeCategory,
   activeSort,
   q,
+  activeTopic,
 }: {
   activeCategory?: string;
   activeSort?: "time" | "importance";
   q?: string;
+  activeTopic?: string;
 }) {
   const brand = useTranslations("brand");
   const t = useTranslations("header");
@@ -245,6 +298,9 @@ export function Header({
       </div>
 
       <MobileMenu current={current} activeSort={activeSort} open={menuOpen} onClose={() => setMenuOpen(false)} />
+
+      {/* Phase 3：Topic 横向滚动筛选条，紧贴 header 下方 */}
+      <TopicBar activeTopic={activeTopic} />
     </header>
   );
 }

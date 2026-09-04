@@ -338,6 +338,13 @@ export async function listArticles(
     where.push("a.source_id = ?");
     args.push(filters.sourceId);
   }
+  // Phase 3（2026-09-04）：Topic Category 过滤
+  // 存储格式为 JSON 数组字符串（如 '["Models","AI Infra"]'），
+  // 用双引号包裹防 "Model" 误匹配 "Modeling" 等前缀词。
+  if (filters.topicCategory) {
+    where.push(`a.topic_category LIKE ?`);
+    args.push(`%"${filters.topicCategory}"%`);
+  }
   const q = filters.q?.trim();
   if (q) {
     if ([...q].length >= 3) {
