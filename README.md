@@ -23,7 +23,7 @@ GitHub Actions (schedule */10) + Cloudflare Worker (cron */10, dispatch 补刀)
                    / · /?sort=importance（热门） · /event/[key] · /entity/[name] · /daily · /api/news · /api/sources · /rss.xml · /sitemap.xml
 ```
 
-技术细节见 [docs/TECH_SPEC.md](docs/TECH_SPEC.md)，运维与交接见 [docs/OPERATIONS.md](docs/OPERATIONS.md)（旧 `HANDOFF.md` 按仓库规则为本地不入库文件）。
+架构与运维文档为内部资料，不入库；本 README 即公开侧的全部说明。
 
 ## 本地开发
 
@@ -39,7 +39,7 @@ npm run build               # 生产构建
 
 - 环境：Node 20+；抓取管线走 `pipeline/src/net.ts` 的 httpFetch（支持代理环境变量）
 - 数据库初始化：`npm run db:init`；查看数据：`npx tsx pipeline/scripts/inspect-db.ts`
-- 本地化质量（改 UI 文案 / 加语言必跑）：`npm run i18n:check`（UI key 对齐）/ `npm run lint:i18n`（Linter+审计）/ `npm run i18n:status`（翻译覆盖）/ `npm run translate:all`（三语回填）；契约见 [docs/LOCALIZATION-CONTRACT.md](docs/LOCALIZATION-CONTRACT.md)
+- 本地化质量（改 UI 文案 / 加语言必跑）：`npm run i18n:check`（UI key 对齐）/ `npm run lint:i18n`（Linter+审计）/ `npm run i18n:status`（翻译覆盖）/ `npm run translate:all`（三语回填）
 
 ## 部署
 
