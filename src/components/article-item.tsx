@@ -9,6 +9,31 @@ import { useMounted } from "@/lib/use-mounted";
 import { pickTitle } from "@/lib/i18n";
 import { pickField, pickSummary, pickImpact, pickTags } from "@/lib/localize";
 
+// Phase 3c direction 4 值 → CSS class suffix + i18n message key
+const IMPACT_DIRECTION_KEYS: Record<string, { cls: "beneficiary" | "atRisk" | "watching" | "neutral"; msg: "beneficiary" | "atRisk" | "watching" | "neutral" }> = {
+  潜在受益: { cls: "beneficiary", msg: "beneficiary" },
+  潜在承压: { cls: "atRisk", msg: "atRisk" },
+  值得关注: { cls: "watching", msg: "watching" },
+  中性: { cls: "neutral", msg: "neutral" },
+};
+
+function directionClass(dir: string): "beneficiary" | "atRisk" | "watching" | "neutral" {
+  return IMPACT_DIRECTION_KEYS[dir]?.cls ?? "neutral";
+}
+
+function directionLabel(
+  t: (key: "impactDirection.beneficiary" | "impactDirection.atRisk" | "impactDirection.watching" | "impactDirection.neutral") => string,
+  dir: string,
+): string {
+  const entry = IMPACT_DIRECTION_KEYS[dir];
+  if (!entry) return "";
+  try {
+    return t(`impactDirection.${entry.msg}` as const);
+  } catch {
+    return "";
+  }
+}
+
 function useFavorite(id: string): boolean {
   return useSyncExternalStore(
     subscribeFavorites,
@@ -280,6 +305,13 @@ export function ArticleItem({
               <ul className="ai-impact">
                 {impact.map((x, i) => (
                   <li key={i}>
+                    {x.direction && (
+                      <span
+                        className={`ai-impact-dir ai-impact-dir-${directionClass(x.direction)}`}
+                      >
+                        {directionLabel(t, x.direction)}
+                      </span>
+                    )}
                     <span className="ai-impact-aud">{x.audience}</span>
                     <span className="ai-impact-desc">{x.description}</span>
                   </li>

@@ -44,7 +44,13 @@
     "insightWhy": "Pourquoi c'est important",
     "insightImpact": "Qui est concerné",
     "insightForward": "À suivre",
-    "translating": "Résumé et analyses IA en cours de traduction…"
+    "translating": "Résumé et analyses IA en cours de traduction…",
+    "impactDirection": {
+      "beneficiary": "Bénéficiaire",
+      "atRisk": "En Risque",
+      "watching": "À Observer",
+      "neutral": "Neutre"
+    }
   },
   "briefing": {
     "signal": "// SIGNAL BRIEFING SYSTEM",

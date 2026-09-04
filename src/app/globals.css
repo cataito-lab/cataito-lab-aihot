@@ -813,6 +813,28 @@ body {
     min-width: 0;
   }
 
+  /* Phase 3c — direction 4 色标签（潜在受益=蓝 / 潜在承压=红 / 值得关注=橙 / 中性=灰）
+     aud badge 已用 --accent（绿），direction 避免撞色。 */
+  .ai-impact-dir {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    height: 18px;
+    padding: 0 7px;
+    margin-top: 1px;
+    border-radius: 9px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    white-space: nowrap;
+    font-family: var(--font-code);
+  }
+  .ai-impact-dir-beneficiary { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+  .ai-impact-dir-atRisk { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+  .ai-impact-dir-watching { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+  .ai-impact-dir-neutral { background: var(--overlay-subtle); color: var(--text-secondary); }
+
   .ai-impact-aud {
     flex: 0 0 auto;
     display: inline-flex;
@@ -846,6 +868,7 @@ body {
       gap: 3px;
     }
 
+    .ai-impact-dir,
     .ai-impact-aud {
       max-width: 100%;
     }

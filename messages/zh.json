@@ -44,7 +44,13 @@
     "insightWhy": "为什么重要",
     "insightImpact": "影响谁",
     "insightForward": "后续看点",
-    "translating": "AI 摘要与洞察翻译中…"
+    "translating": "AI 摘要与洞察翻译中…",
+    "impactDirection": {
+      "beneficiary": "潜在受益",
+      "atRisk": "潜在承压",
+      "watching": "值得关注",
+      "neutral": "中性"
+    }
   },
   "briefing": {
     "signal": "// SIGNAL BRIEFING SYSTEM",

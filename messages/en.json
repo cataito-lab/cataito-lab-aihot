@@ -44,7 +44,13 @@
     "insightWhy": "Why It Matters",
     "insightImpact": "Who's Affected",
     "insightForward": "What's Next",
-    "translating": "AI summary & insights translating…"
+    "translating": "AI summary & insights translating…",
+    "impactDirection": {
+      "beneficiary": "Beneficiary",
+      "atRisk": "At Risk",
+      "watching": "Watching",
+      "neutral": "Neutral"
+    }
   },
   "briefing": {
     "signal": "// SIGNAL BRIEFING SYSTEM",

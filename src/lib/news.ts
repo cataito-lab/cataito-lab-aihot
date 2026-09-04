@@ -104,8 +104,27 @@ function ensureEndPunct(s: string | null, punct: string): string | null {
 
 /** impact 为 JSON 数组。
  * Phase 3c（2026-09-04）：新格式 {object, direction, reason}，兼容读旧 {audience, description}。
- * 前端消费仍走 {audience, description} 旧字段——把 direction 拼进 description 前缀，避免大规模前端改造。
- * zh 列走词表映射，其它列补标点。 */
+ * 输出 {audience, direction, description}——direction 统一存中文 canonical key（4 值之一），
+ * 前端 `article-item.tsx` 用 direction 作色标 class + `messages` 里的 5 语文案做本地化。
+ * zh 列的 audience 走 localizeAudience（词表兜底），其它列（ja/es/fr）已是翻译后文本，只补标点。 */
+const IMPACT_DIRECTION_CANONICAL: Record<string, string> = {
+  // zh canonical keys
+  潜在受益: "潜在受益",
+  潜在承压: "潜在承压",
+  值得关注: "值得关注",
+  中性: "中性",
+  // en aliases -> zh canonical
+  "Potential Beneficiary": "潜在受益",
+  "At Risk": "潜在承压",
+  "Worth Watching": "值得关注",
+  Neutral: "中性",
+};
+
+function normalizeImpactDirection(dirRaw: string): string {
+  if (!dirRaw) return "";
+  return IMPACT_DIRECTION_CANONICAL[dirRaw] ?? dirRaw;
+}
+
 function normalizeImpact(json: string | null, punct: string, locale: "zh" | "en" | "ja" | "es" | "fr" = "zh"): string | null {
   if (!json) return json;
   try {
@@ -116,7 +135,7 @@ function normalizeImpact(json: string | null, punct: string, locale: "zh" | "en"
         const o = x as Record<string, unknown>;
         // 新字段优先，fallback 到旧字段
         const objectRaw = typeof o.object === "string" ? o.object : typeof o.audience === "string" ? o.audience : "";
-        const direction = typeof o.direction === "string" ? o.direction : "";
+        const directionRaw = typeof o.direction === "string" ? o.direction : "";
         const reasonRaw = typeof o.reason === "string" ? o.reason : typeof o.description === "string" ? o.description : "";
 
         const audience = cleanInsightText(objectRaw) ?? "";
@@ -132,11 +151,12 @@ function normalizeImpact(json: string | null, punct: string, locale: "zh" | "en"
           next.audience = audience;
         }
 
-        // direction + reason 合并到 description：direction 作为前缀，reason 补标点
-        const dirText = direction ? `${direction}。` : "";
+        // direction 统一存 canonical zh key；前端 messages 做 5 语映射
+        next.direction = normalizeImpactDirection(directionRaw);
+
+        // reason 补标点
         const reason = cleanInsightText(reasonRaw) ?? "";
-        const reasonNorm = reason ? ensureEndPunct(zhQuoteNormalize(reason, locale), punct) ?? "" : "";
-        next.description = reasonNorm ? dirText + reasonNorm : dirText;
+        next.description = reason ? ensureEndPunct(zhQuoteNormalize(reason, locale), punct) ?? "" : "";
 
         return next;
       }

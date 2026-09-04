@@ -44,7 +44,13 @@
     "insightWhy": "Por qué importa",
     "insightImpact": "A quién afecta",
     "insightForward": "Qué sigue",
-    "translating": "Resumen e ideas de IA en traducción…"
+    "translating": "Resumen e ideas de IA en traducción…",
+    "impactDirection": {
+      "beneficiary": "Beneficiario",
+      "atRisk": "En Riesgo",
+      "watching": "Vigilar",
+      "neutral": "Neutral"
+    }
   },
   "briefing": {
     "signal": "// SIGNAL BRIEFING SYSTEM",

@@ -44,7 +44,13 @@
     "insightWhy": "なぜ重要か",
     "insightImpact": "影響を受ける層",
     "insightForward": "今後の注目点",
-    "translating": "AI 要約と洞察を翻訳中…"
+    "translating": "AI 要約と洞察を翻訳中…",
+    "impactDirection": {
+      "beneficiary": "潜在受益",
+      "atRisk": "リスク要因",
+      "watching": "要注目",
+      "neutral": "中立"
+    }
   },
   "briefing": {
     "signal": "// SIGNAL BRIEFING SYSTEM",

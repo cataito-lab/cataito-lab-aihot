@@ -42,7 +42,7 @@ export function pickSummary(a: Summarizable, locale: string): string | null {
   return a.summaryEn;
 }
 
-export function pickImpact(v: LocalizedField, locale: string): { audience: string; description: string }[] | null {
+export function pickImpact(v: LocalizedField, locale: string): { audience: string; direction?: string; description: string }[] | null {
   const raw =
     locale === "zh"
       ? v.zh
@@ -59,13 +59,17 @@ export function pickImpact(v: LocalizedField, locale: string): { audience: strin
     if (!Array.isArray(arr)) return null;
     const out = arr
       .filter(
-        (x): x is { audience: string; description: string } =>
+        (x): x is { audience: string; description: string; direction?: string } =>
           !!x &&
           typeof (x as Record<string, unknown>).audience === "string" &&
           typeof (x as Record<string, unknown>).description === "string",
       )
       .slice(0, 4)
-      .map((x) => ({ audience: localizeAudience(x.audience, locale), description: x.description }));
+      .map((x) => ({
+        audience: localizeAudience(x.audience, locale),
+        direction: typeof x.direction === "string" && x.direction ? x.direction : undefined,
+        description: x.description,
+      }));
     return out.length ? out : null;
   } catch {
     return null;
