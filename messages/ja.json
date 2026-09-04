@@ -45,6 +45,8 @@
     "insightImpact": "影響を受ける層",
     "insightForward": "今後の注目点",
     "translating": "AI 要約と洞察を翻訳中…",
+    "insightExpand": "AI インサイトを展開",
+    "insightCollapse": "AI インサイトを折りたたむ",
     "impactDirection": {
       "beneficiary": "潜在受益",
       "atRisk": "リスク要因",

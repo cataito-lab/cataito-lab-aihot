@@ -45,6 +45,8 @@
     "insightImpact": "A quién afecta",
     "insightForward": "Qué sigue",
     "translating": "Resumen e ideas de IA en traducción…",
+    "insightExpand": "Ampliar análisis de IA",
+    "insightCollapse": "Contraer análisis de IA",
     "impactDirection": {
       "beneficiary": "Beneficiario",
       "atRisk": "En Riesgo",

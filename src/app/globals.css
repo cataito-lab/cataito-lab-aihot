@@ -738,6 +738,54 @@ body {
     line-height: 1.5;
   }
 
+  /* ===== 洞察折叠开关（默认折叠，偏好存 localStorage）===== */
+  .ai-details-toggle {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-code);
+    font-size: 11px;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 6px;
+    transition: color 0.15s ease;
+  }
+  .ai-details-toggle:hover {
+    color: var(--accent);
+  }
+  .ai-details-toggle .chev {
+    transition: transform 0.18s ease;
+  }
+  .ai-details-toggle .chev.open {
+    transform: rotate(180deg);
+  }
+  .ai-insight-details[hidden] {
+    display: none;
+  }
+  .ai-insight-details:not([hidden]) {
+    animation: ai-details-in 0.18s ease;
+  }
+  @keyframes ai-details-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ai-insight-details:not([hidden]) {
+      animation: none;
+    }
+    .ai-details-toggle .chev {
+      transition: none;
+    }
+  }
+
   .ai-key-points {
     margin-top: 10px;
     padding-top: 8px;

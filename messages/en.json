@@ -45,6 +45,8 @@
     "insightImpact": "Who's Affected",
     "insightForward": "What's Next",
     "translating": "AI summary & insights translating…",
+    "insightExpand": "Expand AI insight",
+    "insightCollapse": "Collapse AI insight",
     "impactDirection": {
       "beneficiary": "Beneficiary",
       "atRisk": "At Risk",

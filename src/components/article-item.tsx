@@ -5,6 +5,11 @@ import { useTranslations, useLocale } from "next-intl";
 import { Fire, BookmarkSimple } from "@phosphor-icons/react";
 import type { FeedArticle } from "@/lib/types";
 import { isFavorite, subscribeFavorites, toggleFavorite } from "@/lib/favorites";
+import {
+  isInsightExpanded,
+  setInsightExpanded,
+  subscribeInsightPref,
+} from "@/lib/insight-pref";
 import { useMounted } from "@/lib/use-mounted";
 import { pickTitle } from "@/lib/i18n";
 import { pickField, pickSummary, pickImpact, pickTags } from "@/lib/localize";
@@ -124,6 +129,11 @@ export function ArticleItem({
   const locale = useLocale();
   const starred = useFavorite(article.id);
   const mounted = useMounted();
+  const insightExpanded = useSyncExternalStore(
+    subscribeInsightPref,
+    isInsightExpanded,
+    () => false,
+  );
 
   const { primary, secondary } = pickTitle(article, locale);
 
@@ -154,6 +164,16 @@ export function ArticleItem({
   const tags = pickTags(article.aiCategory, article.aiCategoryEn, locale);
   const hasAny = Boolean(
     summary || keyChange || whyItMatters || impact || forwardSignal,
+  );
+  // 摘要之外的可折叠洞察板块；无任何板块时不渲染展开开关
+  const hasDetails = Boolean(
+    keyChange ||
+      whyItMatters ||
+      impact ||
+      forwardSignal ||
+      tags ||
+      article.importanceScore != null ||
+      (article.entities && article.entities.length > 0),
   );
 
   // Title-only 源（Hacker News / Reddit / Twitter / Google News 等）没正文，
@@ -264,8 +284,31 @@ export function ArticleItem({
               <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" />
             </svg>
             {t("aiSummary")}
+            {hasDetails && (
+              <button
+                type="button"
+                className="ai-details-toggle"
+                aria-expanded={insightExpanded}
+                onClick={() => setInsightExpanded(!insightExpanded)}
+              >
+                {insightExpanded ? t("insightCollapse") : t("insightExpand")}
+                <svg
+                  className={`chev ${insightExpanded ? "open" : ""}`}
+                  width="11"
+                  height="11"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+            )}
           </div>
           {summary && <div className="ai-summary-content">{summary}</div>}
+          <div className="ai-insight-details" hidden={!insightExpanded}>
           {keyChange && (
             <div className="ai-insight-block">
               <div className="ai-insight-head">
@@ -357,6 +400,7 @@ export function ArticleItem({
               ))}
             </div>
           )}
+          </div>
         </div>
       ) : fallbackSummary ? (
         <div className="ai-summary-box">

@@ -45,6 +45,8 @@
     "insightImpact": "Qui est concerné",
     "insightForward": "À suivre",
     "translating": "Résumé et analyses IA en cours de traduction…",
+    "insightExpand": "Déplier l'analyse IA",
+    "insightCollapse": "Replier l'analyse IA",
     "impactDirection": {
       "beneficiary": "Bénéficiaire",
       "atRisk": "En Risque",

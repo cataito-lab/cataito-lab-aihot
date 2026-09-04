@@ -45,6 +45,8 @@
     "insightImpact": "影响谁",
     "insightForward": "后续看点",
     "translating": "AI 摘要与洞察翻译中…",
+    "insightExpand": "展开 AI 洞察",
+    "insightCollapse": "收起 AI 洞察",
     "impactDirection": {
       "beneficiary": "潜在受益",
       "atRisk": "潜在承压",
