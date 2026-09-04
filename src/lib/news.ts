@@ -102,8 +102,10 @@ function ensureEndPunct(s: string | null, punct: string): string | null {
   return t + punct;
 }
 
-/** impact 为 JSON 数组（[{audience,description}]），逐条规范化受众大小写与 description 末尾标点；
- * zh 列的 audience 走 localizeAudience（词表兜底），其它列（ja/es/fr）已是翻译后文本，只补标点。 */
+/** impact 为 JSON 数组。
+ * Phase 3c（2026-09-04）：新格式 {object, direction, reason}，兼容读旧 {audience, description}。
+ * 前端消费仍走 {audience, description} 旧字段——把 direction 拼进 description 前缀，避免大规模前端改造。
+ * zh 列走词表映射，其它列补标点。 */
 function normalizeImpact(json: string | null, punct: string, locale: "zh" | "en" | "ja" | "es" | "fr" = "zh"): string | null {
   if (!json) return json;
   try {
@@ -112,8 +114,14 @@ function normalizeImpact(json: string | null, punct: string, locale: "zh" | "en"
     const out = arr.map((x) => {
       if (x && typeof x === "object") {
         const o = x as Record<string, unknown>;
-        const next: Record<string, unknown> = { ...x };
-        const audience = typeof o.audience === "string" ? cleanInsightText(o.audience) ?? "" : "";
+        // 新字段优先，fallback 到旧字段
+        const objectRaw = typeof o.object === "string" ? o.object : typeof o.audience === "string" ? o.audience : "";
+        const direction = typeof o.direction === "string" ? o.direction : "";
+        const reasonRaw = typeof o.reason === "string" ? o.reason : typeof o.description === "string" ? o.description : "";
+
+        const audience = cleanInsightText(objectRaw) ?? "";
+        const next: Record<string, unknown> = {};
+
         if (locale === "zh") {
           // zh 列走词表映射（词表外兜底为 titleCase），避免中文 locale 下残留英文品牌/组织名
           const mapped = localizeAudience(audience, "zh") || normalizeCategoryToken(audience);
@@ -123,10 +131,13 @@ function normalizeImpact(json: string | null, punct: string, locale: "zh" | "en"
         } else {
           next.audience = audience;
         }
-        const desc = typeof o.description === "string" ? cleanInsightText(o.description) : null;
-        if (typeof o.description === "string") {
-          next.description = ensureEndPunct(zhQuoteNormalize(desc, locale), punct) ?? "";
-        }
+
+        // direction + reason 合并到 description：direction 作为前缀，reason 补标点
+        const dirText = direction ? `${direction}。` : "";
+        const reason = cleanInsightText(reasonRaw) ?? "";
+        const reasonNorm = reason ? ensureEndPunct(zhQuoteNormalize(reason, locale), punct) ?? "" : "";
+        next.description = reasonNorm ? dirText + reasonNorm : dirText;
+
         return next;
       }
       return x;

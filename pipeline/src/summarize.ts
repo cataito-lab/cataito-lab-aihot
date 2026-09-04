@@ -1,4 +1,4 @@
-import { countSummariesToday, markSummarized, getRelatedByContent } from "./db";
+import { countSummariesToday, markSummarized, getRelatedByContent, getSameEventContext } from "./db";
 import type { SummarizeResultV3 } from "./db";
 import { llmChat, runWorkersAi } from "./llm";
 
@@ -46,10 +46,13 @@ const SYSTEM_PROMPT = `你是 AIHOT 平台的首席 AI 行业分析师与主编�
    ✅ "推理成本已成为大模型商业化的重要约束。如果 OpenAI 能通过自研硬件降低单位推理成本，其 API 定价、模型规模化部署和与云厂商的议价能力都可能发生变化。"
 
 ④ 影响谁（impact）—— 回答"谁会受到影响、如何影响？"
-   格式：对象 + 影响方向（潜在受益/潜在承压/值得关注/中性）+ 原因。只列 1–4 个真正相关的利益相关方。
+   格式：对象（具体实体）+ 影响方向（潜在受益/潜在承压/值得关注/中性）+ 原因。只列 1–4 个真正相关的利益相关方。
+   ✅ {"object":"NVIDIA","direction":"潜在承压","reason":"若 OpenAI 自研芯片规模化，长期 GPU 采购需求可能出现部分替代。"}
+   ✅ {"object":"开发者","direction":"潜在受益","reason":"更低的推理成本可能降低模型调用价格，扩大可部署的 AI 应用范围。"}
    ❌ "NVIDIA、AMD、Microsoft、开发者都会受到影响。"（只列公司，无价值）
-   ✅ "NVIDIA：潜在承压。若 OpenAI 自研芯片规模化，长期 GPU 采购需求可能出现部分替代。"
-   ✅ "开发者：潜在受益。更低的推理成本可能降低模型调用价格，扩大可部署的 AI 应用范围。"
+   - object：具体实体（人名/公司/产品/职业群体），不要写"相关厂商"、"AI 行业"这类泛词；
+   - direction：仅 4 个枚举值（潜在受益/潜在承压/值得关注/中性）；
+   - reason：解释"为什么这个方向"，1 句话。
    禁止用语言或地区充当受众（不要写「中文受众」「English audience」）。
    如果证据不足，不得把推测写成事实。影响不确定时必须用：可能 / 潜在 / 或许 / 值得关注。
    若事件没有明显行业级影响，不要硬列对象——返回空数组即可。
@@ -89,8 +92,8 @@ Models / Agents / Robotics / AI Infra / Chips / Open Source / Research / Enterpr
 === 五、输出 JSON 格式（严格 JSON，中英双语）===
 
 禁止在任意字段值前添加「中文：」「English：」「描述：」等语言或字段标签前缀——字段值直接是内容本身。
-中文标点铁律：中文文本字段（insight / key_change / why_it_matters / forward_signal / impact[].description 的中文版本）内部引用或强调时，**必须使用全角「」和『』**，**禁止使用 ASCII 双引号 " 或单引号 '**；句末使用「。！？…」等全角标点；英文字段使用 ASCII 标点。
-分类与受众大小写铁律：impact 的 audience 必须 Title Case（缩写 AI/API/LLM/GPU/AGI 等全大写，品牌名 OpenAI/GitHub/Copilot/ChatGPT 等保原名）。
+中文标点铁律：中文文本字段（insight / key_change / why_it_matters / forward_signal / impact[].reason 的中文版本）内部引用或强调时，**必须使用全角「」和『』**，**禁止使用 ASCII 双引号 " 或单引号 '**；句末使用「。！？…」等全角标点；英文字段使用 ASCII 标点。
+分类与对象大小写铁律：impact 的 object 必须 Title Case（缩写 AI/API/LLM/GPU/AGI 等全大写，品牌名 OpenAI/GitHub/Copilot/ChatGPT 等保原名）。direction 仅 4 个枚举值：潜在受益/潜在承压/值得关注/中性（英文：Potential Beneficiary/At Risk/Worth Watching/Neutral）。
 
 【重要】必须把下面 6 个结构化字段放在 JSON 最前面、最先输出（评分与聚类是唯一硬约束，文本字段可后置）；若输出被截断，优先保证它们完整：
 {
@@ -110,8 +113,8 @@ Models / Agents / Robotics / AI Infra / Chips / Open Source / Research / Enterpr
   "key_change_en": "English",
   "why_it_matters": "中文为什么重要(≤80字)，解释原因非'重要'",
   "why_it_matters_en": "English",
-  "impact": [{"audience":"Developers","direction":"潜在受益","description":"中文影响(≤40字)"}],
-  "impact_en": [{"audience":"Developers","direction":"Potential Beneficiary","description":"English"}],
+  "impact": [{"object":"NVIDIA","direction":"潜在承压","reason":"中文影响原因(≤40字)"}],
+  "impact_en": [{"object":"NVIDIA","direction":"At Risk","reason":"English"}],
   "forward_signal": "中文后续看点(≤80字)，可验证的观察点非预测",
   "forward_signal_en": "English",
   "topic_category": ["Models","AI Infra"],
@@ -197,8 +200,8 @@ const REWRITE_SYSTEM_PROMPT = `你是 AIHOT 平台的首席 AI 行业分析师�
   "key_change_en": "English",
   "why_it_matters": "中文为什么重要（≤80 字）",
   "why_it_matters_en": "English",
-  "impact": [{"audience":"X","direction":"潜在受益/潜在承压/值得关注/中性","description":"中文影响（≤40 字）"}],
-  "impact_en": [{"audience":"X","direction":"Potential Beneficiary/At Risk/Worth Watching/Neutral","description":"English"}],
+  "impact": [{"object":"X","direction":"潜在受益/潜在承压/值得关注/中性","reason":"中文影响原因（≤40 字）"}],
+  "impact_en": [{"object":"X","direction":"Potential Beneficiary/At Risk/Worth Watching/Neutral","reason":"English"}],
   "forward_signal": "中文后续看点（≤80 字）",
   "forward_signal_en": "English"
 }`;
@@ -304,21 +307,32 @@ function asStrArray(v: unknown): string[] | null {
     .slice(0, 5);
   return arr.length ? arr : null;
 }
+// Phase 3c（2026-09-04）：impact 结构化升级为 {object, direction, reason}
+// 兼容读旧数据 {audience, description}：audience→object、description→reason、direction=null
 function asImpactArray(
   v: unknown,
   clean?: (s: string | null) => string | null,
-): { audience: string; description: string }[] | null {
+): { object: string; direction: string | null; reason: string }[] | null {
   if (!Array.isArray(v)) return null;
   const arr = v
     .map((x) => {
       if (typeof x !== "object" || x == null) return null;
       const o = x as Record<string, unknown>;
-      const audience = clean ? clean(asStr(o.audience)) : asStr(o.audience);
-      const description = clean ? clean(asStr(o.description)) : asStr(o.description);
-      if (!audience || !description) return null;
-      return { audience, description };
+      // 新字段优先，fallback 到旧字段
+      const objectRaw = asStr(o.object) ?? asStr(o.audience);
+      const directionRaw = asStr(o.direction);
+      const reasonRaw = asStr(o.reason) ?? asStr(o.description);
+      const obj = clean ? clean(objectRaw) : objectRaw;
+      const dir = clean ? clean(directionRaw) : directionRaw;
+      const reason = clean ? clean(reasonRaw) : reasonRaw;
+      if (!obj || !reason) return null;
+      return {
+        object: obj,
+        direction: dir ? dir : null,
+        reason,
+      };
     })
-    .filter((x): x is { audience: string; description: string } => x !== null)
+    .filter((x): x is { object: string; direction: string | null; reason: string } => x !== null)
     .slice(0, 4);
   return arr.length ? arr : null;
 }
@@ -502,23 +516,35 @@ export async function buildInsightUserContent(row: SummarizableRow): Promise<str
   parts.push(`来源：${row.sourceName}`);
   parts.push(`正文摘录：${row.content}`);
 
+  // Phase 3b（2026-09-04）：注入"同事件多源报道" + 实体字典摘要
+  // 逻辑：从 getRelatedByContent 结果中识别共享同一 event_key 的文章作为"同事件"，
+  // 聚合实体字典让模型知道"围绕哪些实体深挖"。
   try {
-    const related = await getRelatedByContent(row.content || row.title || "", row.id, 3);
-    if (related.length > 0) {
-      const lines = related
+    const ctx = await getSameEventContext(row.content || row.title || "", row.id);
+    if (ctx.sameEventArticles.length > 0) {
+      const isTrueMultiSource = ctx.sameEventArticles.length >= 2;
+      const lines = ctx.sameEventArticles
         .map((r) => {
           const when = r.publishedAt ? r.publishedAt.slice(0, 10) : "";
-          const kc = r.keyChange ? `（进展：${r.keyChange}）` : "";
+          const src = r.sourceName ? ` [${r.sourceName}]` : "";
+          const kc = r.keyChange ? `（判断：${r.keyChange}）` : "";
           const t = r.titleZh || r.title;
-          return `- ${when} 《${t}》${kc}`;
+          return `- ${when}${src} 《${t}》${kc}`;
         })
         .join("\n");
-      parts.push(
-        `【检索到的过往相关报道】以下是与本报道内容相关的历史文章，仅供你对比"增量"与"新意"时参考；不要照抄其表述，也不要重复生成相同结论：\n${lines}`,
-      );
+      const heading = isTrueMultiSource
+        ? "【同一事件的不同信源报道】以下报道与当前文章共享同一 event_key，是同一事件的多信源覆盖。请**交叉分析**：不同信源的措辞、视角、细节有何差异？哪些是新增信息？避免照抄任何一篇的表述，也不要把不同信源拼成看似客观的复述。"
+        : "【相关内容背景】以下是与当前文章共享实体的相关文章（非严格同事件），仅供你对比\"增量\"与\"新意\"时参考；不要照抄其表述。";
+      parts.push(`${heading}\n${lines}`);
+
+      if (ctx.entityAggregation.length > 0) {
+        parts.push(
+          `【本事件的实体字典】围绕这些实体做深挖：${ctx.entityAggregation.join("、")}。判断时请围绕这些具体实体，避免只说\"相关厂商\"、\"AI 行业\"等泛泛词汇。`,
+        );
+      }
     }
   } catch (err) {
-    console.error("[rag] getRelatedByContent failed:", err);
+    console.error("[rag] getSameEventContext failed:", err);
   }
 
   return parts.join("\n");

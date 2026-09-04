@@ -938,6 +938,9 @@ export interface RelatedArticle {
   titleZh: string | null;
   keyChange: string | null;
   publishedAt: string;
+  // Phase 3b（2026-09-04）：同事件多信源注入时返回的附加字段
+  sourceName?: string | null;
+  entities?: string[] | null;
 }
 
 /**
@@ -985,6 +988,105 @@ export async function getRelatedByContent(
     keyChange: r.key_change == null ? null : String(r.key_change),
     publishedAt: String(r.published_at),
   }));
+}
+
+function parseEntitiesField(v: unknown): string[] | null {
+  if (v == null) return null;
+  if (Array.isArray(v)) return v.map(String);
+  const s = String(v);
+  if (!s.startsWith("[") || !s.endsWith("]")) return null;
+  try {
+    const arr = JSON.parse(s);
+    return Array.isArray(arr) ? arr.map(String) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Phase 3b（2026-09-04）：从候选相关文章中识别"同事件多源"分组，聚合实体字典。
+ * 逻辑：getRelatedByContent 基于标题/内容的实体匹配 → 从结果中筛选共享同一 event_key 的文章
+ * （这才是"同一事件的不同信源"），无匹配时回退到全部相关报道 + 空实体。
+ *
+ * 供 buildInsightUserContent 调用，注入到 LLM 上下文让模型交叉分析。
+ */
+export async function getSameEventContext(
+  content: string,
+  excludeId: string,
+): Promise<{
+  sameEventArticles: Array<{
+    title: string;
+    titleZh: string | null;
+    sourceName: string | null;
+    keyChange: string | null;
+    publishedAt: string;
+  }>;
+  entityAggregation: string[];
+  totalCount: number;
+}> {
+  const related = await getRelatedByContent(content || "", excludeId, 6);
+  if (related.length === 0) return { sameEventArticles: [], entityAggregation: [], totalCount: 0 };
+
+  // 查这些相关文章的 event_key + source_name + entities
+  const ids = related.map((r) => r.id);
+  const placeholders = ids.map(() => "?").join(",");
+  const rs = await getDb().execute({
+    sql: `SELECT a.id, a.event_key, s.name AS source_name, a.entities,
+                 a.title, a.title_zh, a.key_change, a.published_at
+          FROM articles a
+          LEFT JOIN sources s ON s.id = a.source_id
+          WHERE a.id IN (${placeholders})`,
+    args: ids,
+  });
+
+  const enriched = rs.rows.map((r) => ({
+    id: String(r.id),
+    eventKey: r.event_key == null ? null : String(r.event_key),
+    sourceName: r.source_name == null ? null : String(r.source_name),
+    title: String(r.title),
+    titleZh: r.title_zh == null ? null : String(r.title_zh),
+    keyChange: r.key_change == null ? null : String(r.key_change),
+    publishedAt: String(r.published_at),
+    entities: parseEntitiesField(r.entities),
+  }));
+
+  // 找最常见的非空 event_key（同事件多源）
+  const keyCounts = new Map<string, number>();
+  for (const e of enriched) {
+    if (!e.eventKey) continue;
+    keyCounts.set(e.eventKey, (keyCounts.get(e.eventKey) ?? 0) + 1);
+  }
+  let topKey: string | null = null;
+  let topCount = 0;
+  for (const [k, c] of keyCounts.entries()) {
+    if (c > topCount) {
+      topCount = c;
+      topKey = k;
+    }
+  }
+
+  const sameEvent = topKey ? enriched.filter((e) => e.eventKey === topKey) : enriched.slice(0, 3);
+  const picked = topCount >= 2 ? sameEvent : enriched.slice(0, 3);
+
+  // 聚合实体（去重保序，最多 15 个）
+  const entitySet = new Set<string>();
+  for (const p of picked) {
+    for (const e of p.entities ?? []) {
+      if (entitySet.size < 15) entitySet.add(e);
+    }
+  }
+
+  return {
+    sameEventArticles: picked.map((p) => ({
+      title: p.title,
+      titleZh: p.titleZh,
+      sourceName: p.sourceName,
+      keyChange: p.keyChange,
+      publishedAt: p.publishedAt,
+    })),
+    entityAggregation: Array.from(entitySet),
+    totalCount: related.length,
+  };
 }
 
 // ─── 源级熔断（circuit breaker）──────────────────────────────────────────────
