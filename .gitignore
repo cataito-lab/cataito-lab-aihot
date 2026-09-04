@@ -47,3 +47,7 @@ docs/HANDOFF.md
 .tmp_backup
 pipeline/data/
 pipeline/scripts/tmp-*
+
+# multi-agent 交接协议（内部产物，永不入库）
+/HANDOFF.md
+/DECISIONS.md
