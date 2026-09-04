@@ -733,10 +733,11 @@
     "siteUrl": "https://arxiv.org/",
     "feedUrl": "https://rss.arxiv.org/rss/cs.AI",
     "fetcher": "rss",
-    "dedicated": true,
+    "dedicated": false,
     "enabled": true,
     "authority": 95,
-    "note": "arXiv arXiv Artificial Intelligence 论文"
+    "note": "arXiv 论文源（2026-09-05 优化）：取消 dedicated 直通，走论文负向过滤；每源限 10 条，防每日整批涌入",
+    "maxPerSource": 10
   },
   {
     "id": "arxiv-cs-cl",
@@ -746,10 +747,11 @@
     "siteUrl": "https://arxiv.org/",
     "feedUrl": "https://rss.arxiv.org/rss/cs.CL",
     "fetcher": "rss",
-    "dedicated": true,
+    "dedicated": false,
     "enabled": true,
     "authority": 95,
-    "note": "arXiv arXiv Computation & Language / NLP / LLM 论文"
+    "note": "arXiv 论文源（2026-09-05 优化）：取消 dedicated 直通，走论文负向过滤；每源限 10 条，防每日整批涌入",
+    "maxPerSource": 10
   },
   {
     "id": "arxiv-cs-lg",
@@ -759,10 +761,11 @@
     "siteUrl": "https://arxiv.org/",
     "feedUrl": "https://rss.arxiv.org/rss/cs.LG",
     "fetcher": "rss",
-    "dedicated": true,
+    "dedicated": false,
     "enabled": true,
     "authority": 95,
-    "note": "arXiv arXiv Machine Learning 论文"
+    "note": "arXiv 论文源（2026-09-05 优化）：取消 dedicated 直通，走论文负向过滤；每源限 10 条，防每日整批涌入",
+    "maxPerSource": 10
   },
   {
     "id": "arxiv-cs-cv",
@@ -773,9 +776,9 @@
     "feedUrl": "https://rss.arxiv.org/rss/cs.CV",
     "fetcher": "rss",
     "dedicated": true,
-    "enabled": true,
+    "enabled": false,
     "authority": 85,
-    "note": "arXiv arXiv Computer Vision 论文"
+    "note": "2026-09-05 停用：arXiv 分类论文量大且非 AI 新闻主体，保留 cs-ai/cs-cl/cs-lg 三个核心分类即可"
   },
   {
     "id": "arxiv-stat-ml",
@@ -786,9 +789,9 @@
     "feedUrl": "https://rss.arxiv.org/rss/stat.ML",
     "fetcher": "rss",
     "dedicated": true,
-    "enabled": true,
+    "enabled": false,
     "authority": 85,
-    "note": "arXiv arXiv Statistics / Machine Learning 论文"
+    "note": "2026-09-05 停用：arXiv 分类论文量大且非 AI 新闻主体，保留 cs-ai/cs-cl/cs-lg 三个核心分类即可"
   },
   {
     "id": "arxiv-cs-ro",
@@ -799,9 +802,9 @@
     "feedUrl": "https://rss.arxiv.org/rss/cs.RO",
     "fetcher": "rss",
     "dedicated": true,
-    "enabled": true,
+    "enabled": false,
     "authority": 80,
-    "note": "arXiv arXiv Robotics 论文"
+    "note": "2026-09-05 停用：arXiv 分类论文量大且非 AI 新闻主体，保留 cs-ai/cs-cl/cs-lg 三个核心分类即可"
   },
   {
     "id": "arxiv-cs-se",
@@ -812,9 +815,9 @@
     "feedUrl": "https://rss.arxiv.org/rss/cs.SE",
     "fetcher": "rss",
     "dedicated": true,
-    "enabled": true,
+    "enabled": false,
     "authority": 75,
-    "note": "arXiv arXiv Software Engineering 论文"
+    "note": "2026-09-05 停用：arXiv 分类论文量大且非 AI 新闻主体，保留 cs-ai/cs-cl/cs-lg 三个核心分类即可"
   },
   {
     "id": "google-blog-general",

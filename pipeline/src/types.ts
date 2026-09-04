@@ -25,6 +25,8 @@ export interface SourceDef {
   twitterQuery?: string;
   /** 信源权威度 0-100（评分系统独立维度，见 docs/SCORING-ROADMAP.md） */
   authority?: number;
+  /** 单轮抓取每源条数上限，覆盖 fetcher 默认值（如 arXiv 限 10 防整批涌入）。 */
+  maxPerSource?: number;
 }
 
 export interface RawItem {

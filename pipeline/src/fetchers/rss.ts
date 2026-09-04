@@ -96,7 +96,7 @@ export async function fetchRss(source: SourceDef, windowHours: number): Promise<
         extractText(entry.description, 800) ||
         undefined,
     });
-    if (items.length >= MAX_PER_SOURCE) break;
+    if (items.length >= (source.maxPerSource ?? MAX_PER_SOURCE)) break;
   }
   return items;
 }
