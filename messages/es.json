@@ -138,5 +138,22 @@
     "back": "← Volver a la línea de tiempo",
     "count": "{n} artículos relacionados",
     "empty": "Aún no hay noticias sobre {name}"
+  },
+  "about": {
+    "tag": "// ACERCA DE AIHOT",
+    "title": "Acerca de AIHOT",
+    "subtitle": "Un índice en tiempo real de las noticias mundiales sobre IA.",
+    "what": "Qué es AIHOT",
+    "whatText": "AIHOT (AI Noticias) es una cronología continua de noticias mundiales sobre inteligencia artificial, agregadas automáticamente desde blogs oficiales de productos, medios en inglés y chino y discusiones comunitarias. Cada elemento de la cronología enlaza a su fuente original: AIHOT es un índice y agregador, no el editor de las noticias.",
+    "data": "Cómo se recopilan los datos",
+    "dataText": "Unas veinte fuentes se rastrean cada treinta minutos. Cada elemento se deduplica, se clasifica en uno de tres grupos — Oficial (blogs de producto y notas de versión), Medios (prensa en inglés y chino) o Comunidad (foros y redes sociales) — y recibe un titular y un resumen adaptados al idioma. Los elementos de varias fuentes que apuntan al mismo evento se agrupan en una página de evento, que añade una síntesis generada por máquina, una progresión cronológica de fuentes y una señal prospectiva sobre qué observar a continuación.",
+    "scoring": "La puntuación AIHOT",
+    "scoringText": "Cada elemento lleva una puntuación de importancia AIHOT mostrada como insignia de nivel con color. La puntuación combina actualidad, peso de la fuente y cuántas fuentes independientes reportan el mismo evento en una ventana móvil. Los tres niveles visibles son: Destacado (puntuación ≥ 80, en rojo), Importante (65–79, en naranja) y Normal (menos de 65, en gris). La puntuación es una ayuda para el orden, no una afirmación sobre la exactitud factual ni el valor informativo.",
+    "privacy": "Privacidad y datos",
+    "privacyText": "AIHOT no requiere cuenta, no almacena datos personales y solo guarda una pequeña cookie de tema en tu navegador. El sitio público se sirve desde Cloudflare Pages; los datos se almacenan en Turso (libSQL). Los derechos de las noticias pertenecen a las fuentes originales: el enlace de verificación de cada tarjeta te lleva al artículo original.",
+    "lang": "Idiomas",
+    "langText": "La cronología, los resúmenes diarios, las páginas de eventos y las vistas de entidades están disponibles en cinco idiomas: English (inglés), 中文 (chino), 日本語 (japonés), Español y Français (francés). Los titulares y resúmenes se localizan por idioma; las marcas de tiempo originales se conservan y se muestran en la zona horaria de tu navegador.",
+    "team": "Equipo",
+    "teamText": "AIHOT lo mantiene el equipo de Cataito, que también publica cataito.com, un directorio y ranking internacional de herramientas de IA. Si detectas una clasificación incorrecta, un enlace roto o quieres sugerir una fuente, escríbenos a hello@cataito.com o abre un issue en el repositorio público de GitHub."
   }
 }

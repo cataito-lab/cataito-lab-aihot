@@ -163,7 +163,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
 };
 
 // Phase 3（2026-09-04）：Topic Category 14 类
-// 键名用 canonical English（对齐 pipeline LLM 输出），值仅 zh 提供中文；其他 locale 走 key
+// 键名用 canonical English（对齐 pipeline LLM 输出与 URL ?topic= 参数）
 export const TOPIC_CATEGORIES = [
   "Models",
   "Agents",
@@ -181,22 +181,77 @@ export const TOPIC_CATEGORIES = [
   "Creators",
 ] as const;
 
-export const TOPIC_LABELS_ZH: Record<string, string> = {
-  Models: "模型",
-  Agents: "智能体",
-  Robotics: "机器人",
-  "AI Infra": "AI 基础设施",
-  Chips: "芯片",
-  "Open Source": "开源",
-  Research: "研究",
-  Enterprise: "企业",
-  Funding: "融资",
-  Products: "产品",
-  Policy: "政策",
-  Safety: "安全",
-  "AI Applications": "AI 应用",
-  Creators: "创作者",
+// Topic 标签五语映射（2026-09-05 从 zh/en 双语扩展）；en 直接用 key，未命中的 locale 回退 key
+export const TOPIC_LABELS: Partial<Record<string, Record<string, string>>> = {
+  zh: {
+    Models: "模型",
+    Agents: "智能体",
+    Robotics: "机器人",
+    "AI Infra": "AI 基础设施",
+    Chips: "芯片",
+    "Open Source": "开源",
+    Research: "研究",
+    Enterprise: "企业",
+    Funding: "融资",
+    Products: "产品",
+    Policy: "政策",
+    Safety: "安全",
+    "AI Applications": "AI 应用",
+    Creators: "创作者",
+  },
+  ja: {
+    Models: "モデル",
+    Agents: "エージェント",
+    Robotics: "ロボティクス",
+    "AI Infra": "AI インフラ",
+    Chips: "チップ",
+    "Open Source": "オープンソース",
+    Research: "研究",
+    Enterprise: "エンタープライズ",
+    Funding: "資金調達",
+    Products: "製品",
+    Policy: "政策",
+    Safety: "安全性",
+    "AI Applications": "AI アプリケーション",
+    Creators: "クリエイター",
+  },
+  es: {
+    Models: "Modelos",
+    Agents: "Agentes",
+    Robotics: "Robótica",
+    "AI Infra": "Infraestructura de IA",
+    Chips: "Chips",
+    "Open Source": "Código abierto",
+    Research: "Investigación",
+    Enterprise: "Empresa",
+    Funding: "Financiación",
+    Products: "Productos",
+    Policy: "Política",
+    Safety: "Seguridad",
+    "AI Applications": "Aplicaciones de IA",
+    Creators: "Creadores",
+  },
+  fr: {
+    Models: "Modèles",
+    Agents: "Agents",
+    Robotics: "Robotique",
+    "AI Infra": "Infrastructures IA",
+    Chips: "Puces",
+    "Open Source": "Open source",
+    Research: "Recherche",
+    Enterprise: "Entreprise",
+    Funding: "Financement",
+    Products: "Produits",
+    Policy: "Politique",
+    Safety: "Sécurité",
+    "AI Applications": "Applications IA",
+    Creators: "Créateurs",
+  },
 };
+
+export function topicLabel(key: string, locale: string): string {
+  return TOPIC_LABELS[locale]?.[key] ?? key;
+}
 
 export interface CategoryCount {
   id: string;

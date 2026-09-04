@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Globe, List, X, BookmarkSimple, Check } from "@phosphor-icons/react";
 import { Link } from "@/i18n/navigation";
-import { TOPIC_CATEGORIES, TOPIC_LABELS_ZH } from "@/lib/types";
+import { TOPIC_CATEGORIES, topicLabel } from "@/lib/types";
 import { SearchBox } from "./search-box";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -195,8 +195,7 @@ import { CATAITOLogo } from "@/components/cataito-logo";
 // 14 类 + 「全部」，紧贴 header 下方，移动端可横滑
 function TopicBar({ activeTopic }: { activeTopic?: string }) {
   const locale = useLocale();
-  const labelFor = (key: string) =>
-    locale === "zh" ? TOPIC_LABELS_ZH[key] ?? key : key;
+  const labelFor = (key: string) => topicLabel(key, locale);
 
   const buildHref = (topic?: string, keepCategory = true) => {
     const params = new URLSearchParams();
