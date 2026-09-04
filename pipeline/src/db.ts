@@ -194,6 +194,9 @@ export async function ensureSchema(): Promise<void> {
   await ensureColumn("articles", "topic_category", "topic_category TEXT");
   await getDb().execute("CREATE INDEX IF NOT EXISTS idx_articles_insight_level ON articles (insight_level)");
   await getDb().execute("CREATE INDEX IF NOT EXISTS idx_articles_topic_category ON articles (topic_category)");
+  // Phase 2（2026-09-04）：审核评分索引，供后续按 pass 状态筛选高质量洞察
+  await getDb().execute("CREATE INDEX IF NOT EXISTS idx_articles_insight_pass ON articles (insight_pass)");
+  await getDb().execute("CREATE INDEX IF NOT EXISTS idx_articles_insight_reviewed ON articles (insight_reviewed)");
   await getDb().execute("CREATE INDEX IF NOT EXISTS idx_articles_event ON articles (event_id)");
   await ensureColumn("sources", "authority", "authority INTEGER");
   await ensureColumn("sources", "fail_streak", "fail_streak INTEGER NOT NULL DEFAULT 0");

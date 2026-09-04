@@ -5,7 +5,7 @@ import { llmChat, runWorkersAi } from "./llm";
 // 默认主力：Gemini 2.5 Flash（免费层 10 RPM / 250 RPD / 1M 上下文，质量顶尖）；
 // 自动兜底：智谱 GLM-4-Flash（永久免费、无 Token 上限）。详见 llm.ts。
 // 回退 Cloudflare Workers AI：设 LLM_PROVIDER=workersai 并保留 CF_* 凭据，CF_AI_MODEL 指定模型（默认 8B）。
-const DAILY_QUOTA = 800; // 2026-09-02 上调：原 240 对日均 800+ 文章不够，导致当天后半段无摘要。Actions 免费 180 分钟/天约支持 12 次 run。
+const DAILY_QUOTA = 1200; // 2026-09-04 Phase 2：审核层 + 重写引入，高分文章多 1 次审核 LLM 调用，配额上调 800→1200
 const MAX_PER_RUN = 30;
 const INSIGHT_MAX_TOKENS = 2800;
 
@@ -124,6 +124,84 @@ impact_score 对 AI 行业的影响面：有具体新事实/数据/能力跃迁�
 importance_score 综合新闻价值：90-100 改变行业方向 / 75-89 重大 / 60-74 明显价值 / 40-59 普通 / 20-39 小更新 / 0-19 低价值。
 event_key 同一事件不同媒体/语言必须完全相同（跨源聚类唯一依据）。
 fact_sources：从原文中挑 1–3 条支撑 fact 的具体语句/数据（如"原文：'OpenAI 正在开发自研推理芯片'"）。没有可摘引的写空数组。`
+
+// === Phase 2（2026-09-04）：审核评分层 + FAIL 重写 ===
+// 目标：把"AI 自我感觉良好"的洞察拦下来，只让真正有信息增量的通过。
+// 触发条件：importance_score ≥ 60 的高分文章；每条最多 1 次审核 + 1 次改写。
+// 成本控制：不覆盖低分文章，DAILY_QUOTA 从 800 提到 1200 足够。
+
+/** 审核触发阈值：importance_score ≥ 此值才审核（覆盖约 20-30% 高分，控成本） */
+const REVIEW_MIN_IMPORTANCE = 60;
+
+/**
+ * 审核 4 维硬阈值（对齐 INSIGHT-ENGINE-PLAN.md 8 项质量标准）
+ * 任一低于阈值即 FAIL
+ */
+const REVIEW_THRESHOLDS = {
+  infoGain: 7,
+  evidence: 8,
+  specificity: 7,
+  interpretation: 7,
+} as const;
+
+const REVIEW_SYSTEM_PROMPT = `你是 AIHOT 平台的**严格编辑审稿人**。你的任务是**评估一份已生成的 AI 洞察**，而不是重写它。请保持批判视角，敢于打低分。
+
+评估 8 项质量标准，每项 0-10 分：
+
+【硬阈值（低于即 FAIL）】
+- Information Gain（相对标题的独立信息增量）：阈值 ≥ 7
+- Evidence（事实与来源充分性）：阈值 ≥ 8
+- Specificity（具体不空泛）：阈值 ≥ 7
+- Interpretation（有解释性判断而非复述）：阈值 ≥ 7
+
+【软阈值（参考，不用于 FAIL 判定）】
+- Non-Summary（非摘要）：删掉标题后是否仍有独立价值
+- Non-Redundant（非重复）：五板块是否各自回答不同问题
+- Not-Exaggerated（不夸大）：推测是否明确标注为"可能/潜在/或许"
+- Verifiable（可验证）：后续看点是否是可观察的验证点
+
+PASS 条件：4 项硬阈值全部达标 且 五板块职责不重复 且 Fact/Inference/Speculation 分层正确。
+
+输出严格 JSON：
+{
+  "pass": 0或1,
+  "info_gain": 0-10整数,
+  "evidence": 0-10整数,
+  "specificity": 0-10整数,
+  "interpretation": 0-10整数,
+  "non_summary": 0-10整数,
+  "non_redundant": 0-10整数,
+  "not_exaggerated": 0-10整数,
+  "verifiable": 0-10整数,
+  "issues": ["主要问题1（若 FAIL）","主要问题2"],
+  "suggestion": "针对 issues 的具体改写建议（若 FAIL）；PASS 时留空"
+}
+
+**判定纪律**：宁可严、不可松。宁可放过一次 FAIL 让重写机制去改，也不要让"AI 自我感觉良好"的内容通过。`;
+
+const REWRITE_SYSTEM_PROMPT = `你是 AIHOT 平台的首席 AI 行业分析师。你收到一份**已被审稿人打低分**的洞察草稿和审稿意见。你的任务是**根据意见改写**，让洞察真正有信息增量、有证据、不夸大。
+
+规则：
+- 保留原文的 Fact（事实来自原文，不得编造）
+- 依据"审稿意见"的具体方向修改各板块
+- 保持 Fact/Inference/Speculation 分层
+- 保持洞察等级（若原为 L2/L3/L4，改写后仍应维持该等级）
+- 保持中英双语
+- 不引入原文没有的事实
+
+输出严格 JSON（与生成时的字段完全一致）：
+{
+  "insight": "中文：改写后的 AI 洞察（2-4 句，60-120 字）",
+  "insight_en": "English equivalent",
+  "key_change": "中文一句话判断（≤40 字）",
+  "key_change_en": "English",
+  "why_it_matters": "中文为什么重要（≤80 字）",
+  "why_it_matters_en": "English",
+  "impact": [{"audience":"X","direction":"潜在受益/潜在承压/值得关注/中性","description":"中文影响（≤40 字）"}],
+  "impact_en": [{"audience":"X","direction":"Potential Beneficiary/At Risk/Worth Watching/Neutral","description":"English"}],
+  "forward_signal": "中文后续看点（≤80 字）",
+  "forward_signal_en": "English"
+}`;
 
 const PROMO_TITLE_RE = /(直播|预告|优惠|报名|招聘|抽奖|优惠券|免费领)/;
 
@@ -446,6 +524,152 @@ export async function buildInsightUserContent(row: SummarizableRow): Promise<str
   return parts.join("\n");
 }
 
+// === Phase 2（2026-09-04）：审核评分 + FAIL 重写 ===
+// 触发条件：importance_score ≥ REVIEW_MIN_IMPORTANCE 的高分文章。
+// 每条最多 1 次审核 + 1 次改写，避免无限循环。
+// 审核层 LLM 失败时降级 PASS（不因审核失败挡住洞察落库）。
+
+export interface InsightReviewResult {
+  pass: boolean;
+  infoGain: number;
+  evidence: number;
+  specificity: number;
+  interpretation: number;
+  nonSummary: number;
+  nonRedundant: number;
+  notExaggerated: number;
+  verifiable: number;
+  issues: string[];
+  suggestion: string | null;
+}
+
+function clampReviewScore(v: unknown): number {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(10, Math.round(n)));
+}
+
+/**
+ * 审核一份已生成的洞察：返回结构化评审结果。
+ * 硬阈值兜底：即使 LLM 判 PASS，只要任一硬阈值不达标即 FAIL。
+ * LLM 调用失败时降级 PASS（reviewed=0，表示"未审核"而非"审核通过"）。
+ */
+export async function reviewInsight(args: {
+  title: string;
+  content: string;
+  parsed: Record<string, unknown>;
+}): Promise<InsightReviewResult> {
+  const userContent = [
+    "【原标题】",
+    args.title,
+    "",
+    "【正文（节选）】",
+    args.content.slice(0, 3000),
+    "",
+    "【待审洞察】",
+    JSON.stringify(args.parsed, null, 2),
+    "",
+    "请按 8 项质量标准打分，输出严格 JSON。",
+  ].join("\n");
+
+  try {
+    const text = await llmChat(REVIEW_SYSTEM_PROMPT, userContent, {
+      maxTokens: 700,
+    });
+    const j = parseModelJson(text ?? "");
+    if (!j) {
+      throw new Error("审核结果非 JSON 对象");
+    }
+    const infoGain = clampReviewScore(j.info_gain);
+    const evidence = clampReviewScore(j.evidence);
+    const specificity = clampReviewScore(j.specificity);
+    const interpretation = clampReviewScore(j.interpretation);
+    // 硬阈值兜底：LLM 说 PASS 但任一硬阈值不达标 → FAIL
+    const hardFail =
+      infoGain < REVIEW_THRESHOLDS.infoGain ||
+      evidence < REVIEW_THRESHOLDS.evidence ||
+      specificity < REVIEW_THRESHOLDS.specificity ||
+      interpretation < REVIEW_THRESHOLDS.interpretation;
+    const pass = Number(j.pass) === 1 && !hardFail;
+    return {
+      pass,
+      infoGain,
+      evidence,
+      specificity,
+      interpretation,
+      nonSummary: clampReviewScore(j.non_summary),
+      nonRedundant: clampReviewScore(j.non_redundant),
+      notExaggerated: clampReviewScore(j.not_exaggerated),
+      verifiable: clampReviewScore(j.verifiable),
+      issues: Array.isArray(j.issues)
+        ? j.issues.map((x: unknown) => String(x)).filter(Boolean).slice(0, 5)
+        : [],
+      suggestion: typeof j.suggestion === "string" && j.suggestion.trim() ? j.suggestion.trim() : null,
+    };
+  } catch (e) {
+    console.warn(`  [review] 审核 LLM 失败，降级 PASS: ${e instanceof Error ? e.message : String(e)}`);
+    return {
+      pass: true,
+      infoGain: 0, evidence: 0, specificity: 0, interpretation: 0,
+      nonSummary: 0, nonRedundant: 0, notExaggerated: 0, verifiable: 0,
+      issues: [],
+      suggestion: null,
+    };
+  }
+}
+
+/**
+ * FAIL 重写：根据审核意见改写洞察。
+ * 返回改写后的 ParsedInsight；失败或空改写返回 null（保留原洞察）。
+ */
+export async function rewriteInsight(args: {
+  title: string;
+  content: string;
+  originalParsed: Record<string, unknown>;
+  review: InsightReviewResult;
+}): Promise<Record<string, unknown> | null> {
+  const userContent = [
+    "【原标题】",
+    args.title,
+    "",
+    "【正文（节选）】",
+    args.content.slice(0, 3000),
+    "",
+    "【原洞察（FAIL）】",
+    JSON.stringify(args.originalParsed, null, 2),
+    "",
+    "【审稿意见】",
+    `Issues: ${args.review.issues.join("; ") || "(无)"}`,
+    `Suggestion: ${args.review.suggestion || "(无)"}`,
+    `得分：info_gain=${args.review.infoGain} / evidence=${args.review.evidence} / specificity=${args.review.specificity} / interpretation=${args.review.interpretation}`,
+    "",
+    "请根据审稿意见改写洞察。保持事实准确，不引入原文没有的内容。输出严格 JSON。",
+  ].join("\n");
+
+  try {
+    const text = await llmChat(REWRITE_SYSTEM_PROMPT, userContent, {
+      maxTokens: 2000,
+    });
+    const j = parseModelJson(text ?? "");
+    if (!j) {
+      throw new Error("改写结果非 JSON 对象");
+    }
+    // 至少要有 1 个核心字段被改写，否则视为无效
+    const hasChange =
+      typeof j.insight === "string" ||
+      typeof j.key_change === "string" ||
+      typeof j.why_it_matters === "string" ||
+      typeof j.forward_signal === "string";
+    if (!hasChange) {
+      throw new Error("改写结果为空");
+    }
+    return j;
+  } catch (e) {
+    console.warn(`  [rewrite] 改写失败，保留原洞察: ${e instanceof Error ? e.message : String(e)}`);
+    return null;
+  }
+}
+
 export async function summarizePending(rows: SummarizableRow[]): Promise<number> {
   const provider = (process.env.LLM_PROVIDER ?? "sensenova").toLowerCase();
   const hasLlm =
@@ -475,6 +699,10 @@ export async function summarizePending(rows: SummarizableRow[]): Promise<number>
   let scored = 0;
   let failures = 0;
   let noContent = 0;
+  let reviewedCount = 0;   // Phase 2：审核触发条数
+  let passCount = 0;       // Phase 2：审核通过条数
+  let rewriteCount = 0;    // Phase 2：FAIL 后重写条数
+  let failCount = 0;       // Phase 2：最终未通过条数
 
   for (const row of rows) {
     if (done >= MAX_PER_RUN || remainingQuota <= 0) break;
@@ -533,6 +761,70 @@ export async function summarizePending(rows: SummarizableRow[]): Promise<number>
         await sleep(100);
         continue;
       }
+
+      // === Phase 2（2026-09-04）：审核评分层 + FAIL 重写 ===
+      // 触发条件：importance_score ≥ REVIEW_MIN_IMPORTANCE 且有可用摘要 + 有原始 parsed JSON。
+      // 每条最多 1 次审核 + 1 次改写；改写后不再审核（避免循环），落库 insightPass=0 标记最终未通过。
+      if (parsed && result.importanceScore != null && result.importanceScore >= REVIEW_MIN_IMPORTANCE) {
+        const review = await reviewInsight({
+          title: row.titleZh ?? row.title,
+          content: row.content ?? "",
+          parsed,
+        });
+        reviewedCount++;
+
+        // 降级判定：审核 LLM 全 provider 失败时 reviewInsight 返回全 0 分 + pass=true，
+        // 这不是"审核通过"，而是"未审核"。此分支不落库 reviewed/pass，避免误导。
+        const reviewDegraded = review.pass && review.infoGain === 0 && review.evidence === 0 && review.specificity === 0 && review.interpretation === 0;
+        if (!reviewDegraded) {
+          result.insightReviewed = 1;
+          result.insightPass = review.pass ? 1 : 0;
+          result.insightReviewScoreInfoGain = review.infoGain;
+          result.insightReviewScoreEvidence = review.evidence;
+          result.insightReviewScoreSpecificity = review.specificity;
+          result.insightReviewScoreInterpretation = review.interpretation;
+        }
+
+        if (!review.pass) {
+          // FAIL：尝试改写 1 次
+          rewriteCount++;
+          const rewritten = await rewriteInsight({
+            title: row.titleZh ?? row.title,
+            content: row.content ?? "",
+            originalParsed: parsed,
+            review,
+          });
+          if (rewritten) {
+            // 合并改写结果回 parsed，重新 computeResult 以刷新 5 板块字段
+            const merged = { ...parsed, ...rewritten };
+            const rewrittenResult = computeResult(row, merged, fallback);
+            // 用改写结果替换 5 板块文本字段；保留原评分（改写不涉及评分变化）
+            Object.assign(result, {
+              summary: rewrittenResult.summary,
+              summaryEn: rewrittenResult.summaryEn,
+              keyChange: rewrittenResult.keyChange,
+              keyChangeEn: rewrittenResult.keyChangeEn,
+              whyItMatters: rewrittenResult.whyItMatters,
+              whyItMattersEn: rewrittenResult.whyItMattersEn,
+              forwardSignal: rewrittenResult.forwardSignal,
+              forwardSignalEn: rewrittenResult.forwardSignalEn,
+              impact: rewrittenResult.impact,
+              impactEn: rewrittenResult.impactEn,
+            });
+            // 改写后不再审核 → insightPass=0（"已改写但未通过审核"）
+            result.insightPass = 0;
+            failCount++;
+            console.log(`  [review] ${row.id}: FAIL→rewritten (info_gain=${review.infoGain} evidence=${review.evidence} specificity=${review.specificity} interpretation=${review.interpretation})`);
+          } else {
+            // 改写失败：保留原洞察，insightPass=0
+            failCount++;
+            console.log(`  [review] ${row.id}: FAIL→rewrite failed, kept original (info_gain=${review.infoGain} evidence=${review.evidence} specificity=${review.specificity} interpretation=${review.interpretation})`);
+          }
+        } else if (!reviewDegraded) {
+          passCount++;
+        }
+      }
+
       await markSummarized(row.id, result);
       done++;
       remainingQuota--;
@@ -550,5 +842,10 @@ export async function summarizePending(rows: SummarizableRow[]): Promise<number>
   console.log(
     `  [summarize] provider=${process.env.LLM_PROVIDER ?? "gemini"} summarized=${done} scored=${scored} failed=${failures} noContent=${noContent} quotaLeft=${remainingQuota}`,
   );
+  if (reviewedCount > 0) {
+    console.log(
+      `  [review] 审核触发=${reviewedCount} 通过=${passCount} 改写=${rewriteCount} 未通过=${failCount}`,
+    );
+  }
   return done;
 }
