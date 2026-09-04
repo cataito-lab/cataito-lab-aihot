@@ -27,7 +27,7 @@
   --overlay-hover: rgba(255, 255, 255, 0.05);
   --overlay-active: rgba(255, 255, 255, 0.08);
   --overlay-subtle: rgba(255, 255, 255, 0.02);
-  --header-bg: rgba(9, 9, 11, 0.8);
+  --header-bg: rgba(9, 9, 11, 0.94);
   --scrim: rgba(0, 0, 0, 0.5);
 
   /* next/font variables resolved at runtime (see [locale]/layout.tsx) */
@@ -59,7 +59,7 @@
   --overlay-hover: rgba(0, 0, 0, 0.04);
   --overlay-active: rgba(0, 0, 0, 0.06);
   --overlay-subtle: rgba(0, 0, 0, 0.02);
-  --header-bg: rgba(255, 255, 255, 0.8);
+  --header-bg: rgba(255, 255, 255, 0.94);
   --scrim: rgba(0, 0, 0, 0.4);
 }
 
