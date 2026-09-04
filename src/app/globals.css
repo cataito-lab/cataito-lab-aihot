@@ -757,6 +757,7 @@ body {
     gap: 8px;
     font-size: 13px;
     line-height: 1.5;
+    min-width: 0;
   }
 
   .ai-impact-aud {
@@ -777,8 +778,32 @@ body {
   }
 
   .ai-impact-desc {
+    flex: 1 1 auto;
+    min-width: 0;
     color: var(--text-secondary);
     text-wrap: pretty;
+  }
+
+  /* 移动端（≤640px）：徽章与描述竖排 —— 修复窄屏「每行 1-2 词 / 内容溢出卡片」。
+     徽章独占一行（自动宽度、不挤爆），描述全宽自然换行；超长描述限 3 行省略。 */
+  @media (max-width: 640px) {
+    .ai-impact li {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 3px;
+    }
+
+    .ai-impact-aud {
+      max-width: 100%;
+    }
+
+    .ai-impact-desc {
+      width: 100%;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
   }
 
   /* 事件卡 / 成员卡的紧凑洞察行 */
