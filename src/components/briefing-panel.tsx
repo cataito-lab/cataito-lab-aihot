@@ -3,15 +3,27 @@
 import { useTranslations, useLocale } from "next-intl";
 import { CalendarBlank } from "@phosphor-icons/react";
 import type { BriefMeta } from "@/lib/types";
+import { useMounted } from "@/lib/use-mounted";
 import { formatNumber, formatCompactNumber } from "@/lib/format";
 
 interface Props {
   meta: BriefMeta;
 }
 
+/** 「数据更新于」时钟（2026-09-05 复显：调度空窗期用户需要新鲜度可见性） */
+function fmtClock(iso: string, locale: string): string {
+  const d = new Date(iso);
+  return d.toLocaleTimeString(locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
 export function BriefingPanel({ meta }: Props) {
   const t = useTranslations("briefing");
   const locale = useLocale();
+  const mounted = useMounted();
 
   return (
     <section className="hero-section animate-fade-up">
@@ -47,6 +59,17 @@ export function BriefingPanel({ meta }: Props) {
           <span className="stat-item">
             <b>{formatNumber(meta.sourcesEnabled, locale)}</b> {t("sources")}
           </span>
+          {mounted && meta.updatedAt && (
+            <>
+              <span className="stat-sep" aria-hidden>
+                ·
+              </span>
+              <span className="stat-item" title={t("updatedTip")}>
+                {t("updated")}{" "}
+                <b>{fmtClock(meta.updatedAt, locale)}</b>
+              </span>
+            </>
+          )}
         </p>
         <a
           href={`/${locale}/daily${meta.updatedAt ? `/${meta.updatedAt.slice(0, 10)}` : ""}`}
