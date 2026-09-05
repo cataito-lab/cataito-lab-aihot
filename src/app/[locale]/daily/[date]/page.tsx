@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/header";
+import { DailyDateNav } from "@/components/daily-date-nav";
 import { TzNote } from "@/components/tz-note";
 import { ArticleItem } from "@/components/article-item";
-import { getDailyArticles } from "@/lib/news";
+import { getDailyArticles, getDailyDates } from "@/lib/news";
 import { pickTitle } from "@/lib/i18n";
 import type { FeedArticle } from "@/lib/types";
 
@@ -16,12 +17,6 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 interface Props {
   params: Promise<{ locale: string; date: string }>;
-}
-
-function shiftDate(date: string, days: number): string {
-  const d = new Date(`${date}T00:00:00.000Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -54,6 +49,7 @@ export default async function DailyPage({ params }: Props) {
   const t = await getTranslations("daily");
   const ta = await getTranslations("article");
   const items: FeedArticle[] = await getDailyArticles(date);
+  const dates = await getDailyDates(30);
 
   const catLabel = (cat: string): string =>
     cat === "official"
@@ -94,8 +90,7 @@ export default async function DailyPage({ params }: Props) {
       <Header />
       <main className="site-main">
         <section className="animate-fade-up">
-          <span className="signal-tag">{t("tag")}</span>
-          <h1 className="text-2xl font-bold mt-2">
+          <h1 className="text-2xl font-bold">
             {t("title")} <span className="font-mono">{date}</span>
           </h1>
           <div className="mt-3 flex flex-wrap items-center gap-2 font-mono text-[11px]">
@@ -108,16 +103,8 @@ export default async function DailyPage({ params }: Props) {
               </span>
             ))}
           </div>
-          <div className="mt-4 flex gap-4 font-mono text-[11px]">
-            <a className="text-accent hover:underline" href={`/${locale}/daily/${shiftDate(date, -1)}`}>
-              {t("prevDay")}
-            </a>
-            <a className="text-accent hover:underline" href={`/${locale}/daily/${shiftDate(date, 1)}`}>
-              {t("nextDay")}
-            </a>
-            <a className="text-fg-muted hover:text-accent hover:underline" href={`/${locale}/daily`}>
-              {t("archive")}
-            </a>
+          <div className="mt-4">
+            <DailyDateNav dates={dates} current={date} />
           </div>
         </section>
 
