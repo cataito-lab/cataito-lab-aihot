@@ -101,11 +101,11 @@ console.log("\n=== impact JSON language breakdown (article impact_zh / _en / _ja
 const r6 = await db.execute({
   sql: `SELECT impact FROM articles WHERE impact IS NOT NULL ORDER BY published_at DESC LIMIT 50`,
 });
-let counts = { zh: 0, en: 0, ja: 0, es: 0, fr: 0 };
+const counts = { zh: 0, en: 0, ja: 0, es: 0, fr: 0 };
 for (const row of r6.rows) {
   try {
-    const p = JSON.parse(String(row.impact));
-    if (p.audience) { const a = p.audience as any;
+    const p = JSON.parse(String(row.impact)) as { audience?: Partial<Record<"zh" | "en" | "ja" | "es" | "fr", unknown>> };
+    if (p.audience) { const a = p.audience;
       if (a.zh) counts.zh++; if (a.en) counts.en++;
       if (a.ja) counts.ja++; if (a.es) counts.es++; if (a.fr) counts.fr++;
     }

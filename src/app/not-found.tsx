@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-html-link-for-pages -- 根级 404 刻意脱离 locale 布局：用 <a> 保证真实 404 状态且无 next-intl 上下文（AGENT-READINESS Gap 01）*/
 import type { Metadata } from "next";
 
 export const runtime = "edge";

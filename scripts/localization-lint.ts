@@ -28,6 +28,10 @@ const CJK_RE = /[一-鿿぀-ヿ]/;
 
 interface Finding { file: string; line: number; text: string; kind: "en" | "cjk"; }
 
+// 豁免文件：根级 not-found 刻意脱离 locale 上下文（面向 AI agent 输出英文、真实 404 状态），
+// 见 docs/AGENT-READINESS-20260901.md Gap 01。其 "Home"/"About" 为设计内文案而非泄漏。
+const EXEMPT_FILES = new Set([join(HERE, "..", "src", "app", "not-found.tsx")]);
+
 function walk(dir: string): string[] {
   if (!existsSync(dir)) return [];
   const out: string[] = [];
@@ -64,6 +68,7 @@ const files = ROOTS.flatMap(walk);
 let errors = 0;
 let warnings = 0;
 for (const f of files) {
+  if (EXEMPT_FILES.has(f)) continue;
   for (const fnd of lintFile(f)) {
     const rel = f.replace(join(HERE, "..") + "\\", "");
     if (fnd.kind === "en") {

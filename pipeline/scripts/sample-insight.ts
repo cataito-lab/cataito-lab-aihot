@@ -33,6 +33,8 @@ const forceDry = process.env.BACKFILL_INSIGHT_FORCE_READ === "true";
 
 async function pickArticles(limit: number, dry = false): Promise<Article[]> {
   const db = await getDb();
+  // 诊断脚本：libsql 行结构动态，直接取 any（eslint 豁免）
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let rs: { rows: any[] };
   if (dry) {
     rs = await db.execute({
@@ -141,6 +143,7 @@ async function sample(): Promise<void> {
       if (result.impact) {
         try {
           const parsedImpact = JSON.parse(result.impact);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           parsedImpact.forEach((it: any, k: number) => {
             console.log(
               `  ④ 影响谁 [${k + 1}]：${it.audience} → ${it.direction ?? "(?)"} ｜ ${it.description || ""}`,
