@@ -258,8 +258,9 @@
     "feedUrl": "https://venturebeat.com/category/ai/feed/",
     "fetcher": "rss",
     "dedicated": true,
-    "enabled": true,
-    "authority": 80
+    "enabled": false,
+    "authority": 80,
+    "note": "2026-09-05 停用：持续 HTTP 429（GHA runner IP 被 VentureBeat 封禁），占 fetch_logs 失败列表；如需恢复需换 UA 或代理"
   },
   {
     "id": "theverge",
@@ -428,9 +429,9 @@
     "feedUrl": "https://rsshub.app/weibo/keyword/AI大模型",
     "fetcher": "rss",
     "dedicated": false,
-    "enabled": true,
+    "enabled": false,
     "authority": 55,
-    "note": "D10 实验性中文社媒源：经 RSSHub 公共实例（rsshub.app）桥接微博关键词搜索。公共实例不稳定、可能限流/失效，建议自建 RSSHub 或换源后启用。中文内容需保证摘要管线支持中文处理。"
+    "note": "2026-09-05 停用：持续 HTTP 403（微博反爬）。原为 D10 实验性源，走 rsshub.app 公共实例；需自建 RSSHub 或换源后启用"
   },
   {
     "id": "zhihu-ai",

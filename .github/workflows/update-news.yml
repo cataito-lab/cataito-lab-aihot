@@ -7,8 +7,10 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # 单一队列：schedule 与 workflow_dispatch 共享同一组，避免互相掐
-  group: news-pipeline
+  # 拆分组：schedule 与 workflow_dispatch 互不 cancel
+  # 单一组会把两类触发排队掐掉，导致 schedule 静默丢触发（2026-09-05 实测：
+  # 一周仅 82 次跑，是应有 1008 次的 8%，根因即此）
+  group: news-pipeline-${{ github.event_name }}
   # 正在跑就排队等，不 cancel——pipeline 要 20-40 分钟，cancel 会导致 finished_at 永远 null
   cancel-in-progress: false
 
