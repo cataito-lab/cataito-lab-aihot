@@ -136,6 +136,22 @@ body {
     overflow-x: auto;
     overflow-y: hidden;
     z-index: 99;
+    /* 右缘渐隐，提示可横向滚动 */
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+  }
+
+  .topic-label {
+    flex: 0 0 auto;
+    font-family: var(--font-code);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    line-height: 20px;
+    padding-right: 10px;
+    border-right: 1px solid var(--border-color);
+    margin-right: 4px;
   }
 
   .topic-chip {
@@ -200,30 +216,48 @@ body {
     margin-left: 8px;
   }
 
-  nav.nav-tabs {
-    display: flex;
-    gap: 6px;
-    background: var(--overlay-hover);
-    padding: 4px;
+  /* ===== 信源筛选按钮（2026-09-05：信源分类收进按钮浮层，替代原 nav-tabs）===== */
+  .source-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 32px;
+    padding: 0 10px;
     border-radius: 8px;
     border: 1px solid var(--border-color);
-  }
-
-  nav.nav-tabs a {
+    background: var(--bg-card);
+    font-family: var(--font-code);
+    font-size: 12px;
     color: var(--text-secondary);
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 6px 14px;
-    border-radius: 6px;
-    transition: all 0.2s ease;
+    cursor: pointer;
     white-space: nowrap;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .source-btn:hover,
+  .source-btn.open {
+    color: var(--text-primary);
+    border-color: var(--text-muted);
+  }
+  .source-btn.filtering {
+    color: var(--accent);
+    border-color: var(--accent);
   }
 
-  nav.nav-tabs a.active,
-  nav.nav-tabs a:hover {
-    color: var(--text-primary);
-    background: var(--overlay-active);
+  /* 移动端：信源按钮压缩为「图标+数量」，隐藏 ⌘K 前缀，间距收紧
+     （语言菜单 sm 以下隐藏、改在抽屉内）——保证 375px 下不溢出 */
+  @media (max-width: 767px) {
+    .header-actions {
+      gap: 8px;
+    }
+    .source-btn {
+      padding: 0 8px;
+    }
+    .source-btn-label {
+      display: none;
+    }
+    .search-shortcut > span[aria-hidden] {
+      display: none;
+    }
   }
 
   .header-actions {

@@ -95,7 +95,7 @@ export default async function HomePage(
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
       />
-      <Header activeCategory={urlCategory} activeSort={urlSort} q={filters.q} activeTopic={urlTopic} />
+      <Header activeCategory={urlCategory} q={filters.q} activeTopic={urlTopic} sourcesCount={meta.sourcesEnabled} />
       <main className="site-main">
         <BriefingPanel meta={meta} />
 

@@ -2,18 +2,27 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { Globe, List, X, BookmarkSimple, Check } from "@phosphor-icons/react";
+import {
+  Globe,
+  List,
+  X,
+  BookmarkSimple,
+  Check,
+  Funnel,
+  CaretDown,
+} from "@phosphor-icons/react";
 import { Link } from "@/i18n/navigation";
 import { TOPIC_CATEGORIES, topicLabel } from "@/lib/types";
 import { SearchBox } from "./search-box";
 import { ThemeToggle } from "./theme-toggle";
 
-const CATEGORY_TABS = [
-  { id: "all", key: "all" },
-  { id: "official", key: "official" },
-  { id: "media-cn", key: "mediaCn" },
-  { id: "media-en", key: "mediaEn" },
-  { id: "community", key: "community" },
+// 信源分类（渠道维度）：2026-09-05 起收进「信源」按钮浮层，不再占头部导航
+const SOURCE_CATEGORIES = [
+  { id: "all", key: "all", dot: "" },
+  { id: "official", key: "official", dot: "cat-dot-official" },
+  { id: "media-cn", key: "mediaCn", dot: "cat-dot-media" },
+  { id: "media-en", key: "mediaEn", dot: "cat-dot-media" },
+  { id: "community", key: "community", dot: "cat-dot-community" },
 ] as const;
 
 const LOCALES = [
@@ -45,28 +54,81 @@ function useDismiss(onClose: () => void) {
   return ref;
 }
 
-function TabLink({
-  tab,
+/** 保留 topic / sort / hours，只切换 category（与 TopicBar 的 buildHref 对称） */
+function buildCategoryHref(category: string): string {
+  const params = new URLSearchParams();
+  if (typeof window !== "undefined") {
+    const cur = new URLSearchParams(window.location.search);
+    const topic = cur.get("topic");
+    const sort = cur.get("sort");
+    const hours = cur.get("hours");
+    if (topic) params.set("topic", topic);
+    if (sort) params.set("sort", sort);
+    if (hours) params.set("hours", hours);
+  }
+  if (category !== "all") params.set("category", category);
+  const qs = params.toString();
+  return qs ? `/?${qs}` : "/";
+}
+
+function SourceMenu({
   current,
-  className,
-  onNavigate,
+  sourcesCount,
 }: {
-  tab: (typeof CATEGORY_TABS)[number];
   current: string;
-  className?: string;
-  onNavigate?: () => void;
+  sourcesCount?: number;
 }) {
   const t = useTranslations("header");
-  const active = current === tab.id;
+  const [open, setOpen] = useState(false);
+  const close = () => setOpen(false);
+  const ref = useDismiss(close);
+  const filtering = current !== "all";
+
   return (
-    <Link
-      href={tab.id === "all" ? "/" : `/?category=${tab.id}`}
-      onClick={onNavigate}
-      className={className}
-      aria-current={active ? "page" : undefined}
-    >
-      {t(tab.key)}
-    </Link>
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label={t("sources")}
+        aria-expanded={open}
+        className={`source-btn ${filtering ? "filtering" : ""} ${open ? "open" : ""}`}
+      >
+        <Funnel size={12} weight="fill" aria-hidden />
+        <span>
+          {sourcesCount != null ? `${sourcesCount} ` : ""}
+          <span className="source-btn-label">{t("sources")}</span>
+        </span>
+        <CaretDown size={10} weight="bold" aria-hidden />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-9 z-[101] w-44 rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] p-1.5 animate-fade-up">
+          {SOURCE_CATEGORIES.map((cat) => {
+            const active = current === cat.id;
+            return (
+              <Link
+                key={cat.id}
+                href={buildCategoryHref(cat.id)}
+                onClick={close}
+                className={`flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[13px] transition-colors ${
+                  active
+                    ? "text-[var(--accent)]"
+                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--overlay-hover)]"
+                }`}
+                aria-current={active ? "true" : undefined}
+              >
+                {cat.dot ? (
+                  <span className={`cat-dot ${cat.dot}`} aria-hidden />
+                ) : (
+                  <span className="cat-dot" aria-hidden />
+                )}
+                <span className="flex-1">{t(cat.key)}</span>
+                {active && <Check size={12} weight="bold" />}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -76,7 +138,7 @@ function LocaleMenu() {
   const close = () => setOpen(false);
   const ref = useDismiss(close);
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative hidden sm:block" ref={ref}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -89,7 +151,7 @@ function LocaleMenu() {
         <Globe size={17} />
       </button>
       {open && (
-        <div className="absolute right-0 top-9 z-50 w-40 rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] p-1.5 animate-fade-up">
+        <div className="absolute right-0 top-9 z-[101] w-40 rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] p-1.5 animate-fade-up">
           {LOCALES.map((l) => {
             const active = l.code === locale;
             return (
@@ -116,18 +178,9 @@ function LocaleMenu() {
   );
 }
 
-function MobileMenu({
-  current,
-  activeSort,
-  open,
-  onClose,
-}: {
-  current: string;
-  activeSort?: "time" | "importance";
-  open: boolean;
-  onClose: () => void;
-}) {
+function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useTranslations("header");
+  const locale = useLocale();
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -145,35 +198,30 @@ function MobileMenu({
         aria-hidden
       />
       <nav
-        className="absolute top-full left-0 right-0 z-[95] border-b border-[var(--border-color)] bg-[var(--bg-base)] px-4 py-3 flex flex-col gap-1"
-        aria-label={t("categories")}
+        className="absolute top-full left-0 right-0 z-[101] border-b border-[var(--border-color)] bg-[var(--bg-base)] px-4 py-3 flex flex-col gap-1"
+        aria-label={t("favorites")}
       >
-        <Link
-          href="/?sort=importance&hours=168"
-          onClick={onClose}
-          className={`px-3 py-2.5 rounded-md text-[14px] font-medium transition-colors ${
-            activeSort === "importance"
-              ? "text-[var(--text-primary)] bg-[var(--overlay-active)]"
-              : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--overlay-hover)]"
-          }`}
-          aria-current={activeSort === "importance" ? "page" : undefined}
-        >
-          {t("hot")}
-        </Link>
-        {CATEGORY_TABS.map((tab) => {
-          const active = current === tab.id;
+        <span className="px-3 pt-1 pb-1 font-mono text-[11px] uppercase tracking-wider text-[var(--text-muted)]">
+          {t("language")}
+        </span>
+        {LOCALES.map((l) => {
+          const active = l.code === locale;
           return (
-            <TabLink
-              key={tab.id}
-              tab={tab}
-              current={current}
-              onNavigate={onClose}
-              className={`px-3 py-2.5 rounded-md text-[14px] font-medium transition-colors ${
+            <Link
+              key={l.code}
+              href="/"
+              locale={l.code}
+              onClick={onClose}
+              className={`flex items-center justify-between px-3 py-2 rounded-md text-[14px] transition-colors ${
                 active
-                  ? "text-[var(--text-primary)] bg-[var(--overlay-active)]"
+                  ? "text-[var(--accent)]"
                   : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--overlay-hover)]"
               }`}
-            />
+              aria-current={active ? "true" : undefined}
+            >
+              {l.label}
+              {active && <Check size={12} weight="bold" />}
+            </Link>
           );
         })}
         <Link
@@ -191,10 +239,10 @@ function MobileMenu({
 
 import { CATAITOLogo } from "@/components/cataito-logo";
 
-// Phase 3（2026-09-04）：Topic Category 横向滚动筛选条
-// 14 类 + 「全部」，紧贴 header 下方，移动端可横滑
+// 主题横向滚动筛选条（2026-09-05 起为唯一筛选行；信源分类已收进「信源」按钮）
 function TopicBar({ activeTopic }: { activeTopic?: string }) {
   const locale = useLocale();
+  const t = useTranslations("header");
   const labelFor = (key: string) => topicLabel(key, locale);
 
   const buildHref = (topic?: string, keepCategory = true) => {
@@ -216,15 +264,18 @@ function TopicBar({ activeTopic }: { activeTopic?: string }) {
 
   return (
     <nav
-      aria-label="Topic categories"
+      aria-label={t("topics")}
       className="topic-bar overflow-x-auto no-scrollbar"
     >
+      <span className="topic-label" aria-hidden>
+        {t("topics")}
+      </span>
       <Link
         href={buildHref(undefined)}
         className={`topic-chip ${!activeTopic ? "active" : ""}`}
         aria-current={!activeTopic ? "page" : undefined}
       >
-        {locale === "zh" ? "全部" : "All"}
+        {t("all")}
       </Link>
       {TOPIC_CATEGORIES.map((topic) => (
         <Link
@@ -242,17 +293,15 @@ function TopicBar({ activeTopic }: { activeTopic?: string }) {
 
 export function Header({
   activeCategory,
-  activeSort,
   q,
   activeTopic,
+  sourcesCount,
 }: {
   activeCategory?: string;
-  activeSort?: "time" | "importance";
   q?: string;
   activeTopic?: string;
+  sourcesCount?: number;
 }) {
-  const brand = useTranslations("brand");
-  const t = useTranslations("header");
   const [menuOpen, setMenuOpen] = useState(false);
   const current = activeCategory ?? "all";
   return (
@@ -261,21 +310,9 @@ export function Header({
         <CATAITOLogo width={108} />
       </Link>
 
-      <nav className="nav-tabs hidden md:flex" aria-label="Categories">
-        <Link
-          href="/?sort=importance&hours=168"
-          className={activeSort === "importance" ? "active" : ""}
-          aria-current={activeSort === "importance" ? "page" : undefined}
-        >
-          {t("hot")}
-        </Link>
-        {CATEGORY_TABS.map((tab) => (
-          <TabLink key={tab.id} tab={tab} current={current} />
-        ))}
-      </nav>
-
       <div className="header-actions">
         <SearchBox key={q ?? ""} initialQuery={q} />
+        <SourceMenu current={current} sourcesCount={sourcesCount} />
         <Link
           href="/favorites"
           className="hidden sm:flex items-center justify-center h-8 w-8 rounded-md           text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
@@ -296,9 +333,9 @@ export function Header({
         </button>
       </div>
 
-      <MobileMenu current={current} activeSort={activeSort} open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
 
-      {/* Phase 3：Topic 横向滚动筛选条，紧贴 header 下方 */}
+      {/* 主题横向滚动筛选条，紧贴 header 下方 */}
       <TopicBar activeTopic={activeTopic} />
     </header>
   );
