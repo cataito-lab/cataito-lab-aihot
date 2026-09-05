@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
-import { X } from "@phosphor-icons/react";
+import { MagnifyingGlass, X } from "@phosphor-icons/react";
 
 export function SearchBox({ initialQuery = "" }: { initialQuery?: string }) {
   const t = useTranslations("header");
@@ -42,7 +42,7 @@ export function SearchBox({ initialQuery = "" }: { initialQuery?: string }) {
 
   return (
     <div className="search-shortcut">
-      <span aria-hidden>⌘K</span>
+      <MagnifyingGlass size={13} aria-hidden />
       <input
         ref={inputRef}
         type="search"

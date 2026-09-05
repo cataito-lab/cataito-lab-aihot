@@ -239,8 +239,8 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
 
 import { CATAITOLogo } from "@/components/cataito-logo";
 
-// 主题横向滚动筛选条（2026-09-05 起为唯一筛选行；信源分类已收进「信源」按钮）
-function TopicBar({ activeTopic }: { activeTopic?: string }) {
+// 主题筛选 chips（2026-09-05：桌面进头部中央、移动端保留头下方条）
+function TopicChips({ activeTopic }: { activeTopic?: string }) {
   const locale = useLocale();
   const t = useTranslations("header");
   const labelFor = (key: string) => topicLabel(key, locale);
@@ -263,13 +263,7 @@ function TopicBar({ activeTopic }: { activeTopic?: string }) {
   };
 
   return (
-    <nav
-      aria-label={t("topics")}
-      className="topic-bar overflow-x-auto no-scrollbar"
-    >
-      <span className="topic-label" aria-hidden>
-        {t("topics")}
-      </span>
+    <>
       <Link
         href={buildHref(undefined)}
         className={`topic-chip ${!activeTopic ? "active" : ""}`}
@@ -287,7 +281,7 @@ function TopicBar({ activeTopic }: { activeTopic?: string }) {
           {labelFor(topic)}
         </Link>
       ))}
-    </nav>
+    </>
   );
 }
 
@@ -304,11 +298,25 @@ export function Header({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const current = activeCategory ?? "all";
+  const t = useTranslations("header");
   return (
     <header className="site-header">
       <Link href="/" className="logo-area" onClick={() => setMenuOpen(false)}>
         <CATAITOLogo width={108} />
       </Link>
+
+      {/* 桌面端：主题分类进头部中央（填充原导航空间）；移动端用头下方条 */}
+      <nav
+        className="header-topics hidden md:flex"
+        aria-label={t("topics")}
+      >
+        <span className="topic-label" aria-hidden>
+          {t("topics")}
+        </span>
+        <div className="header-topics-scroll no-scrollbar">
+          <TopicChips activeTopic={activeTopic} />
+        </div>
+      </nav>
 
       <div className="header-actions">
         <SearchBox key={q ?? ""} initialQuery={q} />
@@ -335,8 +343,16 @@ export function Header({
 
       <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
 
-      {/* 主题横向滚动筛选条，紧贴 header 下方 */}
-      <TopicBar activeTopic={activeTopic} />
+      {/* 移动端：主题横向滚动筛选条（桌面端已进头部中央） */}
+      <nav
+        aria-label={t("topics")}
+        className="topic-bar overflow-x-auto no-scrollbar md:hidden"
+      >
+        <span className="topic-label" aria-hidden>
+          {t("topics")}
+        </span>
+        <TopicChips activeTopic={activeTopic} />
+      </nav>
     </header>
   );
 }

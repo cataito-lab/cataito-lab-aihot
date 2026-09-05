@@ -79,7 +79,9 @@
     "itemsCount": "{n} 条",
     "prevDay": "← 前一天",
     "nextDay": "后一天 →",
-    "noData": "当天暂无简报。"
+    "noData": "当天暂无简报。",
+    "today": "今天",
+    "pickDate": "选择日期"
   },
   "feed": {
     "today": "今天",

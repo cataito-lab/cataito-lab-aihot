@@ -79,7 +79,9 @@
     "itemsCount": "{n} articles",
     "prevDay": "← Jour précédent",
     "nextDay": "Jour suivant →",
-    "noData": "Aucun briefing pour cette date."
+    "noData": "Aucun briefing pour cette date.",
+    "today": "Aujourd'hui",
+    "pickDate": "Choisir une date"
   },
   "feed": {
     "today": "Aujourd'hui",

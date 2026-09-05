@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Header } from "@/components/header";
+import { DailyDateNav } from "@/components/daily-date-nav";
 import { TzNote } from "@/components/tz-note";
 import { getDailyDates } from "@/lib/news";
 
@@ -42,6 +43,9 @@ export default async function DailyIndexPage({ params }: Props) {
           <span className="signal-tag">{t("tag")}</span>
           <h1 className="text-2xl font-bold mt-2">{t("archive")}</h1>
           <p className="mt-2 text-fg-muted text-sm">{t("description")}</p>
+          <div className="mt-4">
+            <DailyDateNav latest={dates[0]?.date} />
+          </div>
         </section>
 
         <section className="mt-8">

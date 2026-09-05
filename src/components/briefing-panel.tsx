@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations, useLocale } from "next-intl";
+import { CalendarBlank } from "@phosphor-icons/react";
 import type { BriefMeta } from "@/lib/types";
 import { formatNumber, formatCompactNumber } from "@/lib/format";
 
@@ -14,7 +15,6 @@ export function BriefingPanel({ meta }: Props) {
 
   return (
     <section className="hero-section animate-fade-up">
-      <span className="signal-tag">{t("signal")}</span>
       <div className="hero-row">
         <h1>
           {t("title")} <span>{t("titleAccent")}</span>
@@ -52,7 +52,7 @@ export function BriefingPanel({ meta }: Props) {
           href={`/${locale}/daily${meta.updatedAt ? `/${meta.updatedAt.slice(0, 10)}` : ""}`}
           className="hero-daily"
         >
-          {"// "}
+          <CalendarBlank size={14} aria-hidden />
           {t("dailyLink")}
         </a>
       </div>

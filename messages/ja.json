@@ -79,7 +79,9 @@
     "itemsCount": "{n} 件",
     "prevDay": "← 前日",
     "nextDay": "翌日 →",
-    "noData": "この日の速報はありません。"
+    "noData": "この日の速報はありません。",
+    "today": "今日",
+    "pickDate": "日付を選択"
   },
   "feed": {
     "today": "今日",

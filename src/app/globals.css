@@ -154,6 +154,81 @@ body {
     margin-right: 4px;
   }
 
+  /* ===== 桌面端：主题分类进头部中央（2026-09-05）===== */
+  .header-topics {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 16px;
+  }
+
+  .header-topics-scroll {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    min-width: 0;
+    padding: 4px 0;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 20px, #000 calc(100% - 20px), transparent);
+    mask-image: linear-gradient(to right, transparent, #000 20px, #000 calc(100% - 20px), transparent);
+  }
+
+  /* ===== 每日简报日期查询（2026-09-05）===== */
+  .daily-date-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .daily-date-input {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    font-family: var(--font-code);
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .daily-date-input input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: inherit;
+    width: 118px;
+    cursor: pointer;
+  }
+
+  .daily-today-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    font-family: var(--font-code);
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .daily-today-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
   .topic-chip {
     flex: 0 0 auto;
     padding: 4px 12px;
@@ -243,7 +318,7 @@ body {
     border-color: var(--accent);
   }
 
-  /* 移动端：信源按钮压缩为「图标+数量」，隐藏 ⌘K 前缀，间距收紧
+  /* 移动端：信源按钮压缩为「图标+数量」，间距收紧
      （语言菜单 sm 以下隐藏、改在抽屉内）——保证 375px 下不溢出 */
   @media (max-width: 767px) {
     .header-actions {
@@ -253,9 +328,6 @@ body {
       padding: 0 8px;
     }
     .source-btn-label {
-      display: none;
-    }
-    .search-shortcut > span[aria-hidden] {
       display: none;
     }
   }
@@ -270,22 +342,24 @@ body {
     font-family: var(--font-code);
     font-size: 12px;
     color: var(--text-muted);
-    background: var(--overlay-hover);
+    background: transparent;
     padding: 6px 10px;
     border-radius: 6px;
-    border: 1px solid var(--border-color);
+    border: 1px solid transparent;
     display: flex;
     align-items: center;
     gap: 6px;
     outline: none;
     transition:
       border-color 0.2s ease,
-      color 0.2s ease;
+      color 0.2s ease,
+      background-color 0.2s ease;
   }
 
   .search-shortcut:focus-within,
   .search-shortcut:hover {
     border-color: var(--border-hover);
+    background: var(--overlay-hover);
     color: var(--text-secondary);
   }
 
@@ -307,8 +381,8 @@ body {
   .site-main {
     max-width: 900px;
     margin: 0 auto;
-    /* Phase 3（2026-09-04）：64px header + 36px topic-bar + 40px gap = 140px */
-    padding: 140px 20px 60px 20px;
+    /* 2026-09-05：主题分类进头部中央，头下无独立条 —— 64px header + 36px gap = 100px */
+    padding: 100px 20px 60px 20px;
     width: 100%;
   }
 
@@ -347,7 +421,7 @@ body {
     margin-bottom: 24px;
   }
 
-  /* ===== 压缩版 hero：标题 + 统计 + 简报链接同行（2026-09-05）===== */
+  /* ===== 压缩版 hero：标题 + 统计 + 简报按钮同行（2026-09-05）===== */
   .hero-row {
     display: flex;
     align-items: baseline;
@@ -376,15 +450,22 @@ body {
 
   .hero-daily {
     margin-left: auto;
-    font-family: var(--font-code);
-    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    background: var(--color-neon-soft);
+    font-size: 12.5px;
+    font-weight: 500;
     color: var(--accent);
     text-decoration: none;
     white-space: nowrap;
+    transition: filter 0.15s ease;
   }
 
   .hero-daily:hover {
-    text-decoration: underline;
+    filter: brightness(1.1);
   }
 
   .stats-grid {

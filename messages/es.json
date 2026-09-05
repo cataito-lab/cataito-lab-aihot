@@ -79,7 +79,9 @@
     "itemsCount": "{n} artículos",
     "prevDay": "← Día anterior",
     "nextDay": "Día siguiente →",
-    "noData": "No hay resumen para esta fecha."
+    "noData": "No hay resumen para esta fecha.",
+    "today": "Hoy",
+    "pickDate": "Elegir fecha"
   },
   "feed": {
     "today": "Hoy",
