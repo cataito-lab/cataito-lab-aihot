@@ -208,6 +208,30 @@ body {
     cursor: pointer;
   }
 
+  .daily-date-select {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    font-family: var(--font-code);
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .daily-date-select select {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+  }
+
   .daily-today-btn {
     display: inline-flex;
     align-items: center;

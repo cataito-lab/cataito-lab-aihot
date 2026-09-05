@@ -40,11 +40,10 @@ export default async function DailyIndexPage({ params }: Props) {
       <Header />
       <main className="site-main">
         <section className="animate-fade-up">
-          <span className="signal-tag">{t("tag")}</span>
-          <h1 className="text-2xl font-bold mt-2">{t("archive")}</h1>
+          <h1 className="text-2xl font-bold">{t("archive")}</h1>
           <p className="mt-2 text-fg-muted text-sm">{t("description")}</p>
           <div className="mt-4">
-            <DailyDateNav latest={dates[0]?.date} />
+            <DailyDateNav dates={dates} />
           </div>
         </section>
 
