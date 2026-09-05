@@ -54,3 +54,8 @@ pipeline/scripts/tmp-*
 
 # 内部工作文档（架构/运维/设计/规划）不入库，仅存本地
 /docs/
+
+# Agent 规约文件（内部产物，hook 黑名单同级）
+/AGENTS.md
+/CLAUDE.md
+.cursorrules
