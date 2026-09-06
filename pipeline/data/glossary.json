@@ -1,0 +1,356 @@
+{
+  "_comment": "术语表 / Terminology Glossary。AI 翻译时必须优先使用本表约定的译法，避免机械翻译把品牌名/产品名/技术术语译错。键为规范原文（canonical），值为各 locale 的固定译法。新增术语请保持 5 语言齐全。",
+  "OpenAI": {
+    "en": "OpenAI",
+    "zh": "OpenAI",
+    "ja": "OpenAI",
+    "es": "OpenAI",
+    "fr": "OpenAI"
+  },
+  "ChatGPT": {
+    "en": "ChatGPT",
+    "zh": "ChatGPT",
+    "ja": "ChatGPT",
+    "es": "ChatGPT",
+    "fr": "ChatGPT"
+  },
+  "GPT-5": {
+    "en": "GPT-5",
+    "zh": "GPT-5",
+    "ja": "GPT-5",
+    "es": "GPT-5",
+    "fr": "GPT-5"
+  },
+  "GPT-6": {
+    "en": "GPT-6",
+    "zh": "GPT-6",
+    "ja": "GPT-6",
+    "es": "GPT-6",
+    "fr": "GPT-6"
+  },
+  "Large Language Model": {
+    "en": "Large Language Model",
+    "zh": "大语言模型",
+    "ja": "大規模言語モデル",
+    "es": "modelo de lenguaje de gran tamaño",
+    "fr": "modèle de langage de grande taille"
+  },
+  "LLM": {
+    "en": "LLM",
+    "zh": "大语言模型",
+    "ja": "LLM",
+    "es": "LLM",
+    "fr": "LLM"
+  },
+  "AI Agent": {
+    "en": "AI Agent",
+    "zh": "AI Agent",
+    "ja": "AIエージェント",
+    "es": "agente de IA",
+    "fr": "agent IA"
+  },
+  "Generative AI": {
+    "en": "Generative AI",
+    "zh": "生成式 AI",
+    "ja": "生成AI",
+    "es": "IA generativa",
+    "fr": "IA générative"
+  },
+  "Multimodal": {
+    "en": "Multimodal",
+    "zh": "多模态",
+    "ja": "マルチモーダル",
+    "es": "multimodal",
+    "fr": "multimodal"
+  },
+  "Fine-tuning": {
+    "en": "Fine-tuning",
+    "zh": "微调",
+    "ja": "ファインチューニング",
+    "es": "ajuste fino",
+    "fr": "réglage fin"
+  },
+  "Reinforcement Learning": {
+    "en": "Reinforcement Learning",
+    "zh": "强化学习",
+    "ja": "強化学習",
+    "es": "aprendizaje por refuerzo",
+    "fr": "apprentissage par renforcement"
+  },
+  "Transformer": {
+    "en": "Transformer",
+    "zh": "Transformer",
+    "ja": "Transformer",
+    "es": "Transformer",
+    "fr": "Transformer"
+  },
+  "Diffusion Model": {
+    "en": "Diffusion Model",
+    "zh": "扩散模型",
+    "ja": "拡散モデル",
+    "es": "modelo de difusión",
+    "fr": "modèle de diffusion"
+  },
+  "RAG": {
+    "en": "RAG",
+    "zh": "检索增强生成",
+    "ja": "RAG",
+    "es": "RAG",
+    "fr": "RAG"
+  },
+  "Hallucination": {
+    "en": "Hallucination",
+    "zh": "幻觉",
+    "ja": "ハルシネーション",
+    "es": "alucinación",
+    "fr": "hallucination"
+  },
+  "Benchmark": {
+    "en": "Benchmark",
+    "zh": "基准测试",
+    "ja": "ベンチマーク",
+    "es": "benchmark",
+    "fr": "référence"
+  },
+  "Token": {
+    "en": "Token",
+    "zh": "Token",
+    "ja": "トークン",
+    "es": "token",
+    "fr": "token"
+  },
+  "Open Source": {
+    "en": "Open Source",
+    "zh": "开源",
+    "ja": "オープンソース",
+    "es": "código abierto",
+    "fr": "open source"
+  },
+  "Anthropic": {
+    "en": "Anthropic",
+    "zh": "Anthropic",
+    "ja": "Anthropic",
+    "es": "Anthropic",
+    "fr": "Anthropic"
+  },
+  "Claude": {
+    "en": "Claude",
+    "zh": "Claude",
+    "ja": "Claude",
+    "es": "Claude",
+    "fr": "Claude"
+  },
+  "Gemini": {
+    "en": "Gemini",
+    "zh": "Gemini",
+    "ja": "Gemini",
+    "es": "Gemini",
+    "fr": "Gemini"
+  },
+  "Google DeepMind": {
+    "en": "Google DeepMind",
+    "zh": "Google DeepMind",
+    "ja": "Google DeepMind",
+    "es": "Google DeepMind",
+    "fr": "Google DeepMind"
+  },
+  "Meta AI": {
+    "en": "Meta AI",
+    "zh": "Meta AI",
+    "ja": "Meta AI",
+    "es": "Meta AI",
+    "fr": "Meta AI"
+  },
+  "Mistral": {
+    "en": "Mistral",
+    "zh": "Mistral",
+    "ja": "Mistral",
+    "es": "Mistral",
+    "fr": "Mistral"
+  },
+  "NVIDIA": {
+    "en": "NVIDIA",
+    "zh": "NVIDIA",
+    "ja": "NVIDIA",
+    "es": "NVIDIA",
+    "fr": "NVIDIA"
+  },
+  "PyTorch": {
+    "en": "PyTorch",
+    "zh": "PyTorch",
+    "ja": "PyTorch",
+    "es": "PyTorch",
+    "fr": "PyTorch"
+  },
+  "Hugging Face": {
+    "en": "Hugging Face",
+    "zh": "Hugging Face",
+    "ja": "Hugging Face",
+    "es": "Hugging Face",
+    "fr": "Hugging Face"
+  },
+  "Neural Network": {
+    "en": "Neural Network",
+    "zh": "神经网络",
+    "ja": "ニューラルネットワーク",
+    "es": "red neuronal",
+    "fr": "réseau de neurones"
+  },
+  "Inference": {
+    "en": "Inference",
+    "zh": "推理",
+    "ja": "推論",
+    "es": "inferencia",
+    "fr": "inférence"
+  },
+  "Training": {
+    "en": "Training",
+    "zh": "训练",
+    "ja": "学習",
+    "es": "entrenamiento",
+    "fr": "entraînement"
+  },
+  "Agent": {
+    "en": "Agent",
+    "zh": "Agent",
+    "ja": "Agent",
+    "es": "Agent",
+    "fr": "Agent"
+  },
+  "Chatbot": {
+    "en": "Chatbot",
+    "zh": "Chatbot",
+    "ja": "Chatbot",
+    "es": "Chatbot",
+    "fr": "Chatbot"
+  },
+  "Grok": {
+    "en": "Grok",
+    "zh": "Grok",
+    "ja": "Grok",
+    "es": "Grok",
+    "fr": "Grok"
+  },
+  "Copilot": {
+    "en": "Copilot",
+    "zh": "Copilot",
+    "ja": "Copilot",
+    "es": "Copilot",
+    "fr": "Copilot"
+  },
+  "Perplexity": {
+    "en": "Perplexity",
+    "zh": "Perplexity",
+    "ja": "Perplexity",
+    "es": "Perplexity",
+    "fr": "Perplexity"
+  },
+  "DeepSeek": {
+    "en": "DeepSeek",
+    "zh": "DeepSeek",
+    "ja": "DeepSeek",
+    "es": "DeepSeek",
+    "fr": "DeepSeek"
+  },
+  "xAI": {
+    "en": "xAI",
+    "zh": "xAI",
+    "ja": "xAI",
+    "es": "xAI",
+    "fr": "xAI"
+  },
+  "Sora": {
+    "en": "Sora",
+    "zh": "Sora",
+    "ja": "Sora",
+    "es": "Sora",
+    "fr": "Sora"
+  },
+  "AGI": {
+    "en": "AGI",
+    "zh": "AGI",
+    "ja": "AGI",
+    "es": "AGI",
+    "fr": "AGI"
+  },
+  "Llama": {
+    "en": "Llama",
+    "zh": "Llama",
+    "ja": "Llama",
+    "es": "Llama",
+    "fr": "Llama"
+  },
+  "Gemma": {
+    "en": "Gemma",
+    "zh": "Gemma",
+    "ja": "Gemma",
+    "es": "Gemma",
+    "fr": "Gemma"
+  },
+  "Qwen": {
+    "en": "Qwen",
+    "zh": "Qwen",
+    "ja": "Qwen",
+    "es": "Qwen",
+    "fr": "Qwen"
+  },
+  "Kimi": {
+    "en": "Kimi",
+    "zh": "Kimi",
+    "ja": "Kimi",
+    "es": "Kimi",
+    "fr": "Kimi"
+  },
+  "Midjourney": {
+    "en": "Midjourney",
+    "zh": "Midjourney",
+    "ja": "Midjourney",
+    "es": "Midjourney",
+    "fr": "Midjourney"
+  },
+  "Runway": {
+    "en": "Runway",
+    "zh": "Runway",
+    "ja": "Runway",
+    "es": "Runway",
+    "fr": "Runway"
+  },
+  "Stability AI": {
+    "en": "Stability AI",
+    "zh": "Stability AI",
+    "ja": "Stability AI",
+    "es": "Stability AI",
+    "fr": "Stability AI"
+  },
+  "OpenRouter": {
+    "en": "OpenRouter",
+    "zh": "OpenRouter",
+    "ja": "OpenRouter",
+    "es": "OpenRouter",
+    "fr": "OpenRouter"
+  },
+  "MCP": {
+    "en": "MCP",
+    "zh": "MCP",
+    "ja": "MCP",
+    "es": "MCP",
+    "fr": "MCP"
+  },
+  "RAG Pipeline": {
+    "en": "RAG Pipeline",
+    "zh": "RAG Pipeline",
+    "ja": "RAG Pipeline",
+    "es": "RAG Pipeline",
+    "fr": "RAG Pipeline"
+  },
+  "_mistakes": {
+    "zh": {
+      "克劳德": "Claude",
+      "AI 代理": "AI Agent",
+      "智能代理": "Agent",
+      "开放人工智能": "OpenAI",
+      "流氓特工": "失控 Agent",
+      "AI 代理开发者": "AI Agent 开发者"
+    }
+  }
+}

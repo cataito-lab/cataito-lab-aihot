@@ -160,5 +160,22 @@
     "langText": "タイムライン・デイリー速報・イベントページ・エンティティビューは、English（英語）・中文（中国語）・日本語・Español（スペイン語）・Français（フランス語）の 5 言語で提供されます。見出しと要約はロケールごとにローカライズされ、元の公開タイムスタンプは保持したままブラウザの現地時刻で表示されます。",
     "team": "運営",
     "teamText": "AIHOT は Cataito チームが運営しています。Cataito は国際的な AI ツールディレクトリ＆ランキング「cataito.com」も公開しています。分類の誤りやリンク切れを見つけた場合、また情報源の追加をご希望の場合は、hello@cataito.com までご連絡いただくか、公開 GitHub リポジトリで issue を開いてください。"
+  },
+  "v2": {
+    "badge": "V2 プレビュー",
+    "heroTitle": "AI ニュース · ハイライトと速報",
+    "picksTitle": "今日のハイライト",
+    "picksSubtitle": "直近48時間 · AI重要度順",
+    "streamTitle": "速報フィード",
+    "streamSubtitle": "全ソース · 新着順",
+    "backToClassic": "旧バージョン",
+    "language": "言語",
+    "noInsight": "この項目のAIインサイトはまだありません",
+    "loadMore": "もっと読む",
+    "loading": "読み込み中…",
+    "empty": "まだ何もありません",
+    "endOfStream": "最後まで読みました",
+    "picksEmpty": "直近48時間の高価値インサイトはありません。下の速報フィードをご覧ください",
+    "eventReports": "{n}社が報道"
   }
 }

@@ -14,17 +14,28 @@ const REQUEST_GAP_MS = 150;
  * 翻译时优先采用本表约定，避免机械翻译把专有名词译错。
  */
 type Glossary = Record<string, Record<string, string>>;
-const GLOSSARY: Glossary = (() => {
+/** 误译映射：{ locale: { 错误译法: 正确形式 } }，来自 glossary.json 的 "_mistakes" 键。
+ *  gtx 机械翻译会把 Claude 译成「克劳德」、agent 译成「代理」——译文里已没有
+ *  英文原词可匹配 applyGlossary 的正向替换，必须用反向表修正。 */
+type Mistakes = Record<string, Record<string, string>>;
+
+const GLOSSARY_RAW = (() => {
   try {
     const here = dirname(fileURLToPath(import.meta.url));
     const raw = readFileSync(join(here, "..", "data", "glossary.json"), "utf8");
-    const parsed = JSON.parse(raw) as Glossary;
-    delete (parsed as Record<string, unknown>)._comment;
-    return parsed;
+    return JSON.parse(raw) as Glossary & { _mistakes?: Mistakes };
   } catch {
-    return {};
+    return {} as Glossary & { _mistakes?: Mistakes };
   }
 })();
+
+const GLOSSARY: Glossary = (() => {
+  const { _mistakes, ...rest } = GLOSSARY_RAW;
+  void _mistakes;
+  return rest as Glossary;
+})();
+
+const MISTAKES: Mistakes = GLOSSARY_RAW._mistakes ?? {};
 
 const GLOSSARY_LOCALES = new Set(["zh", "ja", "es", "fr"]);
 
@@ -48,18 +59,47 @@ function applyGlossary(text: string, target: string): string {
   return out;
 }
 
-/** 取术语表提示词片段（仅含目标语言相关条目），注入 LLM 翻译指令。 */
+/** 误译安全网：把 gtx 等机械通道产出的固定错误译法替换回正确形式。
+ *  按错误形式长度降序替换，避免「智能代理」被「代理」类短词条抢先截断。 */
+function applyMistakes(text: string, target: string): string {
+  const table = MISTAKES[target];
+  if (!table) return text;
+  let out = text;
+  for (const wrong of Object.keys(table).sort((a, b) => b.length - a.length)) {
+    out = out.split(wrong).join(table[wrong]);
+  }
+  return out;
+}
+
+/** 取术语表提示词片段（仅含目标语言相关条目），注入 LLM 翻译指令。
+ *  分两组：固定译法（canonical → 译法）与保留原文（品牌/习惯术语不翻译，
+ *  如 Claude 不得译成「克劳德」、Agent 习惯保留英文）。 */
 function glossaryPrompt(target: string): string {
   if (!GLOSSARY_LOCALES.has(target)) return "";
-  const lines = Object.entries(GLOSSARY)
-    .map(([canonical, forms]) => {
-      const wanted = forms[target];
-      if (!wanted || wanted === canonical) return null;
-      return `  - ${canonical} → ${wanted}`;
-    })
-    .filter((x): x is string => x !== null);
-  if (lines.length === 0) return "";
-  return `\n\nUse these fixed terminology renderings (do NOT translate the left side differently):\n${lines.join("\n")}`;
+  const fixed: string[] = [];
+  const keep: string[] = [];
+  for (const [canonical, forms] of Object.entries(GLOSSARY)) {
+    if (canonical.startsWith("_")) continue;
+    const wanted = forms[target];
+    if (!wanted) continue;
+    if (wanted === canonical) {
+      if (/[A-Za-z]/.test(canonical)) keep.push(`  - ${canonical}`);
+    } else {
+      fixed.push(`  - ${canonical} → ${wanted}`);
+    }
+  }
+  const parts: string[] = [];
+  if (fixed.length > 0) {
+    parts.push(
+      `Use these fixed terminology renderings (do NOT translate the left side differently):\n${fixed.join("\n")}`,
+    );
+  }
+  if (keep.length > 0) {
+    parts.push(
+      `Keep these terms in their ORIGINAL form, never translate or transliterate them:\n${keep.join("\n")}`,
+    );
+  }
+  return parts.length > 0 ? `\n\n${parts.join("\n\n")}` : "";
 }
 
 const LANG_NAMES: Record<string, string> = {
@@ -160,7 +200,7 @@ async function smartWithMeta(
   let lastErr: unknown = new Error("all channels failed");
   for (const [name, fn] of CHANNELS) {
     try {
-      const out = applyGlossary(await fn(text, target), target);
+      const out = applyMistakes(applyGlossary(await fn(text, target), target), target);
       if (!out) {
         lastErr = new Error(`${name} empty result`);
         continue;

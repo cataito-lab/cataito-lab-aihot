@@ -160,5 +160,22 @@
     "langText": "时间线、每日简报、事件页和实体视图均提供五种语言：英文（English）、中文、日本語、Español（西语）和 Français（法语）。标题与摘要按语言本地化；原始发布时间戳会保留，并以你浏览器的本地时区呈现。",
     "team": "关于团队",
     "teamText": "AIHOT 由 Cataito 团队维护。Cataito 同时运营 cataito.com——一个国际 AI 工具目录与排行榜。如果你发现分类有误、链接失效，或希望新增信源，欢迎通过 hello@cataito.com 联系我们，或在公共 GitHub 仓库提 issue。"
+  },
+  "v2": {
+    "badge": "V2 预览",
+    "heroTitle": "AI 热点 · 精选与动态",
+    "picksTitle": "今日精选",
+    "picksSubtitle": "近 48 小时 · 按 AI 重要度排序",
+    "streamTitle": "实时动态",
+    "streamSubtitle": "全部信源 · 按时间",
+    "backToClassic": "返回旧版",
+    "language": "语言",
+    "noInsight": "该条暂无 AI 洞察",
+    "loadMore": "加载更多",
+    "loading": "加载中…",
+    "empty": "暂无内容",
+    "endOfStream": "已经到底了",
+    "picksEmpty": "近 48 小时暂无高价值洞察，先看看下面的动态流",
+    "eventReports": "{n} 家信源报道"
   }
 }

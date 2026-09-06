@@ -160,5 +160,22 @@
     "langText": "The timeline, daily briefings, event pages, and entity views are available in five languages: English, 中文 (Chinese), 日本語 (Japanese), Español (Spanish), and Français (French). Headlines and summaries are localized per locale; original-source timestamps are preserved and rendered in your browser's local timezone.",
     "team": "Built by",
     "teamText": "AIHOT is maintained by the Cataito team. Cataito also publishes cataito.com, an international AI-tool directory and ranking. If you spot incorrect categorization, broken links, or want to request a source, reach us at hello@cataito.com or open an issue on the public GitHub repository."
+  },
+  "v2": {
+    "badge": "V2 Preview",
+    "heroTitle": "AI news · picks & wire",
+    "picksTitle": "Today's Picks",
+    "picksSubtitle": "Last 48h · ranked by AI importance",
+    "streamTitle": "Live Wire",
+    "streamSubtitle": "All sources · newest first",
+    "backToClassic": "Classic view",
+    "language": "Language",
+    "noInsight": "No AI insight yet for this item",
+    "loadMore": "Load more",
+    "loading": "Loading…",
+    "empty": "Nothing here yet",
+    "endOfStream": "You've reached the end",
+    "picksEmpty": "No high-value insights in the last 48h — check the live wire below",
+    "eventReports": "{n} sources reporting"
   }
 }

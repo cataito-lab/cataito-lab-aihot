@@ -160,5 +160,22 @@
     "langText": "La cronología, los resúmenes diarios, las páginas de eventos y las vistas de entidades están disponibles en cinco idiomas: English (inglés), 中文 (chino), 日本語 (japonés), Español y Français (francés). Los titulares y resúmenes se localizan por idioma; las marcas de tiempo originales se conservan y se muestran en la zona horaria de tu navegador.",
     "team": "Equipo",
     "teamText": "AIHOT lo mantiene el equipo de Cataito, que también publica cataito.com, un directorio y ranking internacional de herramientas de IA. Si detectas una clasificación incorrecta, un enlace roto o quieres sugerir una fuente, escríbenos a hello@cataito.com o abre un issue en el repositorio público de GitHub."
+  },
+  "v2": {
+    "badge": "V2 Vista previa",
+    "heroTitle": "Noticias de IA · destacados y directo",
+    "picksTitle": "Destacados de hoy",
+    "picksSubtitle": "Últimas 48 h · por importancia de IA",
+    "streamTitle": "En directo",
+    "streamSubtitle": "Todas las fuentes · más recientes",
+    "backToClassic": "Vista clásica",
+    "language": "Idioma",
+    "noInsight": "Aún sin análisis de IA",
+    "loadMore": "Cargar más",
+    "loading": "Cargando…",
+    "empty": "Aún no hay nada",
+    "endOfStream": "Has llegado al final",
+    "picksEmpty": "Sin análisis de alto valor en las últimas 48 h — mira el directo",
+    "eventReports": "{n} fuentes reportan"
   }
 }

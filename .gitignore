@@ -45,7 +45,9 @@ docs/INSIGHT-PLAN.md
 docs/HANDOFF.md
 # 临时备份
 .tmp_backup
-pipeline/data/
+# pipeline 本地数据（db 等产物）不入库；glossary.json 是翻译管线依赖的配置，必须入库
+pipeline/data/*
+!pipeline/data/glossary.json
 pipeline/scripts/tmp-*
 
 # multi-agent 交接协议（内部产物，永不入库）
