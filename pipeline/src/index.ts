@@ -161,7 +161,8 @@ async function main(): Promise<void> {
   const totalSeen = allItems.length;
   allItems = allItems.filter((it) => {
     const src = sources.find((s) => s.id === it.sourceId);
-    return src ? isAiRelated(it.title, src.dedicated) : false;
+    // 正文联合过滤：dedicated 源的可疑标题会用已有正文复核（RSS 源正文现成）
+    return src ? isAiRelated(it.title, src.dedicated, it.articleContent) : false;
   });
 
   const withIds = assignIds(allItems);

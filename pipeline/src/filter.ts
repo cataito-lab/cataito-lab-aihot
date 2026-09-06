@@ -52,14 +52,30 @@ const JUNK_PATTERNS = [
   /^(r\/|reddit|stack|overflow|quora|medium\.com)/i,
 ];
 
-export function isAiRelated(title: string, dedicatedSource: boolean): boolean {
-  if (dedicatedSource) return true;
+// 正文级 AI 词表（2026-09-07 正文联合过滤）：只对「dedicated 源但标题无 AI 词」
+// 的可疑条目做正文复核。与标题词表分开维护——年份/数字类弱信号不进正文表，
+// 否则任何带日期的招聘/活动通告都会误过。
+const BODY_AI_RE =
+  /\b(ai|a\.i\.|llms?|gpt|agents?|chatbots?|copilots?|openai|anthropic|claude|gemini|deepseek|mistral|llama|qwen|grok|machine learning|deep learning|neural network|artificial intelligence|language model|generative|transformer|diffusion|benchmark|inference|fine-tun|hugging face|embeddings?)\b/i;
+
+function matchesKeyword(text: string): boolean {
+  const padded = ` ${text.toLowerCase()} `;
+  return AI_KEYWORDS.some((kw) => padded.includes(kw));
+}
+
+export function isAiRelated(title: string, dedicatedSource: boolean, content?: string): boolean {
   const t = title || "";
   if (!t || t.trim().length < 8) return false;
-  const text = ` ${t.toLowerCase()} `;
-  // 先过正名单（含 AI 关键词）
-  if (!AI_KEYWORDS.some((kw) => text.includes(kw))) return false;
-  // 再过负向过滤：论文/问答/空标题一律挡掉
+  const titleHit = matchesKeyword(t);
+  if (dedicatedSource) {
+    if (titleHit) return true;
+    // 可疑条目（dedicated 源但标题无 AI 词）：有正文则正文必须命中 AI 词；
+    // 无正文沿用旧行为放行（HN 等标题源的正文在过滤之后才抓取）
+    const body = content?.trim();
+    if (!body) return true;
+    return BODY_AI_RE.test(body);
+  }
+  if (!titleHit) return false;
   if (JUNK_PATTERNS.some((re) => re.test(t))) return false;
   return true;
 }

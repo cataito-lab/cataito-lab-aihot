@@ -659,6 +659,52 @@ export const SUMMARY_LANG_COLUMNS = {
   fr: "summary_fr",
 } as const;
 
+/** 预聚类候选：时间窗内已摘要、已分配 event_id 的文章，但所属事件
+ *  仍是单源（source_count < 2）或无 event 行——这些是「同文异 URL」
+ *  或「LLM 漏打同一 event_key」的疑似重复，由 cluster.ts 合并阶段处理。 */
+export async function getSingletonUnits(windowHours: number): Promise<Array<{
+  id: string;
+  eventId: string;
+  hasEventRow: boolean;
+  eventKey: string | null;
+  title: string;
+  titleZh: string | null;
+  sourceId: string;
+  scoreFinal: number | null;
+  publishedAt: string;
+}>> {
+  const rs = await getDb().execute({
+    sql: `SELECT a.id, a.event_id, a.event_key, a.title, a.title_zh, a.source_id, a.score_final, a.published_at,
+                 e.id AS events_row_id
+          FROM articles a
+          LEFT JOIN events e ON e.id = a.event_id
+          WHERE a.summary IS NOT NULL
+            AND a.event_id IS NOT NULL
+            AND a.published_at >= ?
+            AND (e.id IS NULL OR e.source_count < 2)`,
+    args: [new Date(Date.now() - windowHours * 3_600_000).toISOString()],
+  });
+  return rs.rows.map((r) => ({
+    id: String(r.id),
+    eventId: String(r.event_id),
+    hasEventRow: r.events_row_id != null,
+    eventKey: r.event_key == null ? null : String(r.event_key),
+    title: String(r.title),
+    titleZh: r.title_zh == null ? null : String(r.title_zh),
+    sourceId: String(r.source_id),
+    scoreFinal: r.score_final == null ? null : Number(r.score_final),
+    publishedAt: String(r.published_at),
+  }));
+}
+
+/** 删除被合并吸收的单源事件行（仅允许 source_count <= 1，防御性） */
+export async function deleteSingletonEvent(eventId: string): Promise<void> {
+  await getDb().execute({
+    sql: `DELETE FROM events WHERE id = ? AND source_count <= 1`,
+    args: [eventId],
+  });
+}
+
 export type SummaryLang = keyof typeof SUMMARY_LANG_COLUMNS;
 
 export interface SummaryTranslateRow {
