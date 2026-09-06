@@ -2,8 +2,12 @@ name: update-news
 
 on:
   schedule:
-    # 每 10 分钟一次；公开仓库 Actions 分钟免费，不占配额
-    - cron: "*/10 * * * *"
+    # 每 10 分钟一次，但刻意避开整/圆分钟（:00 :10 :20 是 GitHub 调度高峰，
+    # 文档明确说明此时段 schedule 会被大幅延迟甚至丢弃）。
+    # 注意：pipeline 运行期间，同并发组的 schedule 触发会被 GitHub 静默丢弃——
+    # 因此本工作流只做「抓取入库」（--no-enrich，几分钟内跑完），
+    # LLM 摘要/翻译拆到 enrich-news 工作流低频补齐。
+    - cron: "6,16,26,36,46,56 * * * *"
   workflow_dispatch:
 
 concurrency:
@@ -11,13 +15,14 @@ concurrency:
   # 单一组会把两类触发排队掐掉，导致 schedule 静默丢触发（2026-09-05 实测：
   # 一周仅 82 次跑，是应有 1008 次的 8%，根因即此）
   group: news-pipeline-${{ github.event_name }}
-  # 正在跑就排队等，不 cancel——pipeline 要 20-40 分钟，cancel 会导致 finished_at 永远 null
+  # 正在跑就等下一次 schedule，不排队不 cancel——抓取运行只需几分钟，
+  # 丢掉几次触发无影响，排队反而会让 schedule 触发被连续丢弃
   cancel-in-progress: false
 
 jobs:
   fetch:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
@@ -28,12 +33,11 @@ jobs:
 
       - run: npm ci
 
-      - name: Run news pipeline
+      - name: Fetch & insert (no LLM enrichment)
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
-          # LLM provider：商汤网关（token.sensenova.cn）— 默认 deepseek-v4-flash 主力，sensenova 挂时自动 fallback
-          # 详见 pipeline/src/llm.ts
+          # LLM provider：仅新入库标题即时翻译用（少量调用）
           SENSENOVA_API_KEY: ${{ secrets.SENSENOVA_API_KEY }}
           SENSENOVA_BASE_URL: ${{ secrets.SENSENOVA_BASE_URL || 'https://token.sensenova.cn/v1' }}
           SENSENOVA_MODEL: ${{ secrets.SENSENOVA_MODEL || 'deepseek-v4-flash' }}
@@ -41,4 +45,4 @@ jobs:
           # 以下为 legacy Cloudflare Workers AI（仅 LLM_PROVIDER=workersai 时使用）
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CF_AI_API_TOKEN: ${{ secrets.CF_AI_API_TOKEN }}
-        run: npx tsx pipeline/src/index.ts --window-hours 24
+        run: npx tsx pipeline/src/index.ts --window-hours 24 --no-enrich

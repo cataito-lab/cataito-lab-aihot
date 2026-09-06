@@ -59,3 +59,6 @@ pipeline/scripts/tmp-*
 /AGENTS.md
 /CLAUDE.md
 .cursorrules
+
+# ZCode 本地工具配置（内部产物，永不入库）
+/.zcode/

@@ -6,9 +6,12 @@
  *
  * 用法：npm run i18n:status   （可选 DB 路径：DB_PATH=path npm run i18n:status）
  */
+import "../pipeline/src/env";
 import { createClient } from "@libsql/client";
 
-const DB_PATH = process.env.DB_PATH ?? "pipeline/data/local.db";
+// 与 pipeline/src/db.ts 同口径：优先显式 DB_PATH，其次 TURSO_DATABASE_URL，最后本地文件。
+const DB_PATH =
+  process.env.DB_PATH ?? process.env.TURSO_DATABASE_URL ?? "pipeline/data/local.db";
 const dbUrl = /^https?:\/\//.test(DB_PATH) ? DB_PATH : `file:${DB_PATH}`;
 const client = createClient({ url: dbUrl, authToken: process.env.TURSO_AUTH_TOKEN });
 

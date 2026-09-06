@@ -33,9 +33,16 @@ import { clusterEvents } from "./cluster";
 import { decodeEntities } from "./text";
 import type { FetchResult, RawItem, SourceDef } from "./types";
 
-function parseArgs(): { windowHours: number; dryRun: boolean } {
+function parseArgs(): {
+  windowHours: number;
+  dryRun: boolean;
+  noEnrich: boolean;
+  enrichOnly: boolean;
+} {
   let windowHours = 24;
   let dryRun = false;
+  let noEnrich = false;
+  let enrichOnly = false;
   const argv = process.argv.slice(2);
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -50,8 +57,13 @@ function parseArgs(): { windowHours: number; dryRun: boolean } {
       continue;
     }
     if (arg === "--dry-run") dryRun = true;
+    if (arg === "--no-enrich") noEnrich = true;
+    if (arg === "--enrich-only") enrichOnly = true;
   }
-  return { windowHours, dryRun };
+  if (noEnrich && enrichOnly) {
+    throw new Error("--no-enrich 与 --enrich-only 互斥，只能选一个运行阶段");
+  }
+  return { windowHours, dryRun, noEnrich, enrichOnly };
 }
 
 async function fetchSource(source: SourceDef, windowHours: number): Promise<FetchResult> {
@@ -77,7 +89,37 @@ async function fetchSource(source: SourceDef, windowHours: number): Promise<Fetc
 }
 
 async function main(): Promise<void> {
-  const { windowHours, dryRun } = parseArgs();
+  const { windowHours, dryRun, noEnrich, enrichOnly } = parseArgs();
+
+  // --enrich-only：只跑 LLM 增强队列（标题回填翻译、摘要、摘要/洞察/标题补译），
+  // 不抓取、不入库、不写 fetch_logs。由 enrich-news 工作流低频调用，
+  // 让高频的抓取运行不必背着 LLM 耗时（这是每日调度断流的根因，见 update-news.yml）。
+  if (enrichOnly) {
+    await ensureSchema();
+    const backfill = await getUntranslated(150);
+    if (backfill.length > 0) {
+      const t = await translatePending(
+        backfill,
+        getTitleTranslations,
+        saveTitleTranslations,
+        applyTranslationUpdates,
+      );
+      console.log(
+        `  [translate] updated=${t.updates.length} failed=${t.failed} fallback=${t.viaFallback}`,
+      );
+    }
+    const summarizable = await getRecentWithoutSummary(24, 40);
+    await summarizePending(summarizable);
+    const summaryTranslated = await translateSummariesPending();
+    const insightsTranslated = await translateInsightsPending();
+    const titlesTranslated = await translateTitlesPending();
+    console.log(
+      `\n[enrich-only] backfill=${backfill.length} summarize=${summarizable.length} ` +
+        `summaryTranslate=${summaryTranslated} insightTranslate=${insightsTranslated} titleTranslate=${titlesTranslated}`,
+    );
+    return;
+  }
+
   const sources = loadSources().filter((s) => s.enabled && s.fetcher !== "html" && s.fetcher !== "bridge");
 
   // 源级熔断：冷却中的源本轮跳过（连续失败 ≥3 次后指数退避，最长 12h，成功即复位）
@@ -169,7 +211,9 @@ async function main(): Promise<void> {
   const newEnRows = newRows
     .filter(({ item }) => sourceById.get(item.sourceId)?.lang === "en")
     .map(({ id, item }) => ({ id, title: item.title }));
-  const backfill = await getUntranslated(Math.max(0, 150 - newEnRows.length));
+  // --no-enrich 时不做存量回填（150 篇的 LLM 大头由 enrich-news 低频工作流负责），
+  // 只翻译本轮新入库的标题，保证高频抓取运行几分钟内结束。
+  const backfill = noEnrich ? [] : await getUntranslated(Math.max(0, 150 - newEnRows.length));
   const seenIds = new Set<string>();
   const toTranslate = [...newEnRows, ...backfill].filter((r) =>
     seenIds.has(r.id) ? false : (seenIds.add(r.id), true),
@@ -188,11 +232,13 @@ async function main(): Promise<void> {
     translateStats = { ok: t.updates.length, failed: t.failed };
   }
 
-  const summarizable = await getRecentWithoutSummary(windowHours, 40);
-  await summarizePending(summarizable);
-  await translateSummariesPending();
-  await translateInsightsPending();
-  await translateTitlesPending();
+  if (!noEnrich) {
+    const summarizable = await getRecentWithoutSummary(windowHours, 40);
+    await summarizePending(summarizable);
+    await translateSummariesPending();
+    await translateInsightsPending();
+    await translateTitlesPending();
+  }
   await clusterEvents(windowHours);
 
   // 判定本轮是否算成功：
