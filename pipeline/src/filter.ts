@@ -19,6 +19,7 @@ const AI_KEYWORDS = [
   "genai",
   "hugging face",
   "langchain",
+  "agent",
   "rag ",
   " 2 ",
   " art ",

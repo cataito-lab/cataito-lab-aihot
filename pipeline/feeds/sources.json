@@ -295,7 +295,7 @@
     "siteUrl": "https://simonwillison.net/",
     "feedUrl": "https://simonwillison.net/atom/everything/",
     "fetcher": "rss",
-    "dedicated": true,
+    "dedicated": false,
     "enabled": true,
     "authority": 80
   },
