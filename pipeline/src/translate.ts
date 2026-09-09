@@ -218,14 +218,20 @@ const PAIRED_MARKS: ReadonlyArray<readonly [string, string]> = [
   ['(', ')'],
 ];
 
-export function looksTruncated(out: string, target: string): boolean {
+export function looksTruncated(out: string, target: string, source?: string): boolean {
   if (target !== 'zh' && target !== 'zh-CN' && target !== 'ja') return false;
   for (const [open, close] of PAIRED_MARKS) {
     if ((out.split(open).length - 1) !== (out.split(close).length - 1)) return true;
   }
   const straight = (out.match(/\u0022/g) ?? []).length;
   if (straight % 2 === 1) return true;
-  return TRAILING_DANGLING_RE.test(out.trim());
+  if (TRAILING_DANGLING_RE.test(out.trim())) return true;
+  // 长度比检查：gtx 偶发返回半句（2026-09-09 实测两条无引号截断，
+  // 如 66 字符英文 → 10 字符中文「AI法律审查表明数百」）。合规译文须
+  // 保留品牌名且信息不删（Prompt 规则 6），中文再紧凑也不会短过源文
+  // 的 1/5；命中宁可多花一次 LLM 调用重试，也不存半句。
+  if (source && source.length > 40 && out.length < source.length * 0.2) return true;
+  return false;
 }
 
 export interface TranslatableRow {
@@ -311,7 +317,7 @@ async function smartWithMeta(
         lastErr = new Error(`${name} language mismatch`);
         continue;
       }
-      if (looksTruncated(out, target)) {
+      if (looksTruncated(out, target, name === "gtx" ? text : undefined)) {
         console.warn(
           `  [translate] ${name} 译文疑似截断（成对符号失衡或悬空结尾），重试其他通道`,
         );

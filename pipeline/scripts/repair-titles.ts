@@ -79,6 +79,9 @@ async function retranslateTruncatedZh(): Promise<{ candidates: number; retransla
     const id = String(row.id);
     const title = String(row.title);
     const zh = String(row.title_zh);
+    // 检测只用成对符号（高精度）：长度比误杀学术标题的紧凑合法译文
+    // （如「非平稳函数双层优化」）。无引号类截断由线上 gtx 闸阻止新增，
+    // 存量个案走定向重译。
     if (looksTruncated(zh, "zh")) {
       candidates.push({ id, title, oldZh: zh });
     }
