@@ -49,3 +49,26 @@ export function decodeEntities(input: string): string {
   }
   return out;
 }
+
+// 悬空结尾字符：完整标题不会以弯引号开符或开括号收尾。
+// 直引号 " 不在此列——它可能是闭符（"…cost efficiency"），靠奇偶计数判断。
+const TRAILING_OPEN_RE = /[\u201C\u300C\u300E\u300A\uFF08(]$/;
+
+/** 入站标题清洗（幂等）：上游截断会产生未闭合引号（2026-09-07 线上案例：
+ *  HN 标题 'Kevin Bass on X: "Women gained …' 以半个引号收尾），
+ *  直接入库会让所有语言版本继承残句观感。这里做保守修复——
+ *  只删掉悬空的那个引号，不猜测截断掉的正文内容。 */
+export function sanitizeTitle(raw: string): string {
+  let out = raw.replace(/\s+/g, " ").trim();
+  if (!out) return out;
+  if (TRAILING_OPEN_RE.test(out)) {
+    out = out.slice(0, -1).trim();
+  }
+  // 直引号总数为奇数 = 有一个没配对：移除最后一个孤立引号
+  const straight = (out.match(/"/g) ?? []).length;
+  if (straight % 2 === 1) {
+    const last = out.lastIndexOf('"');
+    if (last >= 0) out = (out.slice(0, last) + out.slice(last + 1)).trim();
+  }
+  return out;
+}

@@ -30,7 +30,7 @@ import { translateSummariesPending } from "./summary-translate";
 import { translateInsightsPending } from "./insight-translate";
 import { translateTitlesPending } from "./title-translate";
 import { clusterEvents } from "./cluster";
-import { decodeEntities } from "./text";
+import { decodeEntities, sanitizeTitle } from "./text";
 import type { FetchResult, RawItem, SourceDef } from "./types";
 
 function parseArgs(): {
@@ -152,10 +152,11 @@ async function main(): Promise<void> {
   for (const f of failedFeeds) console.warn(`  [fail] ${f}`);
 
   let allItems: RawItem[] = results.flatMap((r) => r.items);
-  // 双重编码的 HTML 实体（&amp;#8216; 等）入库前统一解码，覆盖全部 fetcher
+  // 双重编码的 HTML 实体（&amp;#8216; 等）入库前统一解码，覆盖全部 fetcher；
+  // 标题同时做悬空引号清洗（上游截题会产生未闭合引号，见 text.ts）
   allItems = allItems.map((it) => ({
     ...it,
-    title: decodeEntities(it.title),
+    title: sanitizeTitle(decodeEntities(it.title)),
     articleContent: it.articleContent ? decodeEntities(it.articleContent) : undefined,
   }));
   const totalSeen = allItems.length;

@@ -204,6 +204,30 @@ function looksLikeTargetLang(text: string, target: string): boolean {
   }
 }
 
+/** Truncation QA: gtx occasionally returns half-sentences. Complete-sentence
+ *  invariant = paired marks self-consistent. Reject channel -> LLM fallback.
+ *  CJK targets only; Latin quote styles are too varied. */
+const TRAILING_DANGLING_RE = /[\u201C\u300C\u300E\u300A\uFF08(]$/;
+
+const PAIRED_MARKS: ReadonlyArray<readonly [string, string]> = [
+  ['\u201C', '\u201D'],
+  ['\u300C', '\u300D'],
+  ['\u300E', '\u300F'],
+  ['\u300A', '\u300B'],
+  ['\uFF08', '\uFF09'],
+  ['(', ')'],
+];
+
+export function looksTruncated(out: string, target: string): boolean {
+  if (target !== 'zh' && target !== 'zh-CN' && target !== 'ja') return false;
+  for (const [open, close] of PAIRED_MARKS) {
+    if ((out.split(open).length - 1) !== (out.split(close).length - 1)) return true;
+  }
+  const straight = (out.match(/\u0022/g) ?? []).length;
+  if (straight % 2 === 1) return true;
+  return TRAILING_DANGLING_RE.test(out.trim());
+}
+
 export interface TranslatableRow {
   id: string;
   title: string;
@@ -285,6 +309,13 @@ async function smartWithMeta(
           `  [translate] ${name} 输出语言不符目标 ${target}，重试其他通道`,
         );
         lastErr = new Error(`${name} language mismatch`);
+        continue;
+      }
+      if (looksTruncated(out, target)) {
+        console.warn(
+          `  [translate] ${name} 译文疑似截断（成对符号失衡或悬空结尾），重试其他通道`,
+        );
+        lastErr = new Error(`${name} truncated output`);
         continue;
       }
       const lost = lostProtectedBrands(text, out, target);

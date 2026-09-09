@@ -288,18 +288,6 @@
     "authority": 75
   },
   {
-    "id": "simonwillison",
-    "name": "Simon Willison",
-    "category": "media-en",
-    "lang": "en",
-    "siteUrl": "https://simonwillison.net/",
-    "feedUrl": "https://simonwillison.net/atom/everything/",
-    "fetcher": "rss",
-    "dedicated": false,
-    "enabled": true,
-    "authority": 80
-  },
-  {
     "id": "hackernews",
     "name": "Hacker News",
     "category": "community",
