@@ -15,7 +15,7 @@ import {
 import { runModel, parseModelJson } from "./summarize";
 
 const MAX_SYNTH_PER_RUN = 8;
-/** 综合摘要也消耗 Workers AI 配额；给摘要调用留余量，避免突破每日上限 */
+/** 综合摘要也消耗 LLM 每日配额（与 summarize 共用 countSummariesToday 口径）；给摘要调用留余量，避免突破每日上限 */
 const DAILY_QUOTA_HEADROOM = 180;
 
 /** 预聚类回看窗口（小时）：纳入更早的单源事件，供后续到达的同类报道认亲 */

@@ -5,7 +5,7 @@
  * - 只处理 `importance_score IS NULL` 的文章（即 P0 之前的文章尚未用新提示词生成过
  *   含重要度评分/实体的完整洞察；已用新提示词的文章 importance_score 非空，会跳过）。
  * - 正文缺失时回退用旧 summary 作为上下文（与 backfill-history 同样的兜底思路）。
- * - 每次运行受 BACKFILL_INSIGHT_MAX（默认 180）上限保护，避免击穿 Cloudflare 每日神经元额度。
+ * - 每次运行受 BACKFILL_INSIGHT_MAX（默认 180）上限保护，避免单轮密集调用撞 LLM 网关速率墙。
  * - 处理完成后（pending 归零）自动重聚类（wipe events + reset event_id + clusterEvents），
  *   保证新提示词产出的 event_key 与既有聚类一致；可用 --no-recluster 跳过。
  * - --dry-run 只统计待处理数量，不调用模型、不写库。
@@ -123,7 +123,7 @@ async function main(): Promise<void> {
         consecutive429++;
         console.warn(`  [insight] ${r.id}: ${msg}`);
         if (consecutive429 >= 3) {
-          console.log("[insight] 连续 3 次 429：判定 Workers AI 每日额度耗尽，提前退出（UTC 00:00 重置后再跑）");
+          console.log("[insight] 连续 3 次 429：判定 LLM 网关速率/额度受限，提前退出（稍后或换 provider 再跑）");
           break;
         }
       } else {

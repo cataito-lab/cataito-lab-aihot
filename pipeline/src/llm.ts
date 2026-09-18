@@ -18,7 +18,7 @@ import { httpFetch } from "./net";
  *   CF_ACCOUNT_ID / CF_AI_API_TOKEN  仅 LLM_PROVIDER=workersai 时使用
  */
 
-type ProviderName = "sensenova" | "deepseek" | "glm" | "zhipu" | "gemini";
+type ProviderName = "sensenova" | "deepseek" | "glm";
 
 interface Provider {
   name: ProviderName;

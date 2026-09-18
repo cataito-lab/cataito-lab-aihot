@@ -268,7 +268,7 @@ async function translateGtx(text: string, target: string): Promise<string> {
   return restore(segments.trim());
 }
 
-/** 通道 2（兜底）：用统一 LLM 层（Gemini 主力 + 智谱兜底）做指令式翻译。
+/** 通道 2（兜底）：用统一 LLM 层（商汤网关，见 llm.ts）做指令式翻译。
  *  仅在 gtx 免费端点被限流（数据中心 IP 常触发）时启用，质量接近 gtx。
  *  Prompt V2：AI 领域上下文约束（缩写按 AI 语境解读、品牌保留原文、
  *  语义忠实优先于直译、不得增删信息）。 */
@@ -344,7 +344,7 @@ async function smartWithMeta(
 }
 
 /**
- * 智能通道：gtx → 统一 LLM 层（Gemini 主力 + 智谱兜底）双通道降级，
+ * 智能通道：gtx → 统一 LLM 层（商汤网关）双通道降级，
  * 并做目标语言校验（Localization Contract）。若全部通道失败或输出语言不符，
  * 返回 null（调用方应跳过写入，避免污染数据库）。
  */

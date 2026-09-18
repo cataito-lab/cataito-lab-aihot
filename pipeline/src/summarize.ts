@@ -2,8 +2,9 @@ import { countSummariesToday, markSummarized, getRelatedByContent, getSameEventC
 import type { SummarizeResultV3 } from "./db";
 import { llmChat, runWorkersAi } from "./llm";
 
-// 默认主力：Gemini 2.5 Flash（免费层 10 RPM / 250 RPD / 1M 上下文，质量顶尖）；
-// 自动兜底：智谱 GLM-4-Flash（永久免费、无 Token 上限）。详见 llm.ts。
+// 默认主力：商汤网关（token.sensenova.cn）OpenAI 兼容层，见 llm.ts：
+// sensenova-6.8-flash-lite / deepseek-v4-flash / glm-5.2 三模型按 LLM_PROVIDER 优先级自动容灾（429 逐个切换）。
+// 历史沿革：2026-08-29 曾为 Gemini 2.5 Flash 主力 + 智谱 GLM-4-Flash 兜底，2026-09 起迁移至商汤网关（凭据只剩 SENSENOVA_API_KEY）。
 // 回退 Cloudflare Workers AI：设 LLM_PROVIDER=workersai 并保留 CF_* 凭据，CF_AI_MODEL 指定模型（默认 8B）。
 const DAILY_QUOTA = 1200; // 2026-09-04 Phase 2：审核层 + 重写引入，高分文章多 1 次审核 LLM 调用，配额上调 800→1200
 const MAX_PER_RUN = 30;
@@ -260,10 +261,10 @@ export function parseModelJson(raw: string): Record<string, unknown> | null {
 
 export async function runModel(userContent: string): Promise<string | null> {
   try {
-    if ((process.env.LLM_PROVIDER ?? "gemini").toLowerCase() === "workersai") {
+    if ((process.env.LLM_PROVIDER ?? "sensenova").toLowerCase() === "workersai") {
       return await runWorkersAi(SYSTEM_PROMPT, userContent, 1600);
     }
-    // 默认走 OpenAI 兼容层（Gemini 主力 + 智谱兜底，429 自动切换）
+    // 默认走商汤网关 OpenAI 兼容层（sensenova/deepseek/glm，429 自动切换，见 llm.ts）
     return await llmChat(SYSTEM_PROMPT, userContent, { maxTokens: INSIGHT_MAX_TOKENS, json: true });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -866,7 +867,7 @@ export async function summarizePending(rows: SummarizableRow[]): Promise<number>
   }
 
   console.log(
-    `  [summarize] provider=${process.env.LLM_PROVIDER ?? "gemini"} summarized=${done} scored=${scored} failed=${failures} noContent=${noContent} quotaLeft=${remainingQuota}`,
+    `  [summarize] provider=${process.env.LLM_PROVIDER ?? "sensenova"} summarized=${done} scored=${scored} failed=${failures} noContent=${noContent} quotaLeft=${remainingQuota}`,
   );
   if (reviewedCount > 0) {
     console.log(
