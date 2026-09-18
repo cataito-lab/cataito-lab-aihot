@@ -402,11 +402,13 @@ export async function getRecentWithoutSummary(
 ): Promise<SummarizableArticleRow[]> {
   const cutoff = new Date(Date.now() - windowHours * 3_600_000).toISOString();
   const rs = await getDb().execute({
+    // oldest-first（TECH_SPEC §27.4）：日增 > 消化量时 DESC 会让队尾文章拖到超窗永久漏评
+    // （实测曾积到 18 天前）；先进先出保证每篇在窗口内被消费，回捞退回兜底角色
     sql: `SELECT a.id, a.title, a.title_zh, s.name AS source_name,
                  a.article_content, COALESCE(s.authority, 60) AS authority
           FROM articles a JOIN sources s ON s.id = a.source_id
           WHERE a.summary IS NULL AND a.summarized_at IS NULL AND a.published_at >= ?
-          ORDER BY a.published_at DESC LIMIT ?`,
+          ORDER BY a.published_at ASC, a.id ASC LIMIT ?`,
     args: [cutoff, limit],
   });
   return rs.rows.map((row) => ({

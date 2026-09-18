@@ -45,7 +45,7 @@ function parseArgs(): {
   let dryRun = false;
   let noEnrich = false;
   let enrichOnly = false;
-  let backlog = 6;
+  let backlog = 15; // §27.4：默认 6→15 加速存量盲区消化，上限另受 MAX_PER_RUN 约束
   const argv = process.argv.slice(2);
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
