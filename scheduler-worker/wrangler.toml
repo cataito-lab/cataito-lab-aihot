@@ -1,0 +1,11 @@
+# aihot-news-scheduler — Cloudflare Worker（源码真源，部署走网页编辑器或 wrangler 均可）
+# 背景与新三处修正见 src/index.ts 头注释；历史断流复盘见 docs/OPERATIONS.md §10。
+name = "aihot-news-scheduler"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+
+# GitHub 原生 schedule 会被节流/丢弃，用 CF Cron 做高频主链路定时器。
+# 注意：wrangler v4 要求 [triggers] 为对象（旧文件写的 [[triggers]] 数组形式会直接报错）；
+# 网页编辑器部署时此 trigger 需在 Settings → Triggers 手工配置，本文件是 wrangler 部署的真源。
+[triggers]
+crons = ["*/10 * * * *"]

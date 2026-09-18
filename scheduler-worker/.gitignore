@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.wrangler/
+# 本地临时凭据文件（部署用完即删，永不入库，见 AGENTS.md 仓库卫生规则）
+.cf-token.txt
+.gh-pat.txt
+*.token
