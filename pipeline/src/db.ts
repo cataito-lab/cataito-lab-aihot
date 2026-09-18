@@ -270,8 +270,9 @@ export interface NewArticleRow {
 export async function insertArticles(rows: NewArticleRow[]): Promise<number> {
   if (rows.length === 0) return 0;
   const now = new Date().toISOString();
+  // OR IGNORE：id PRIMARY KEY / url UNIQUE，并发调度交叉或重抓同一篇时跳过而非炸掉整批
   const statements: InStatement[] = rows.map((r) => ({
-    sql: `INSERT INTO articles (id, source_id, title, url, author, published_at, fetched_at, source_timezone, estimated, article_content)
+    sql: `INSERT OR IGNORE INTO articles (id, source_id, title, url, author, published_at, fetched_at, source_timezone, estimated, article_content)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [
       r.id,
@@ -289,8 +290,25 @@ export async function insertArticles(rows: NewArticleRow[]): Promise<number> {
   }));
   let inserted = 0;
   for (let i = 0; i < statements.length; i += 50) {
-    const results = await getDb().batch(statements.slice(i, i + 50), "write");
-    for (const rs of results) inserted += Number(rs.rowsAffected);
+    const batch = statements.slice(i, i + 50);
+    // OR IGNORE 只解决行级唯一冲突；Turso 乐观并发仍可能在 commit 时以
+    // "SQLITE_BUSY: cannot commit - concurrent transaction" 拒绝整批（TECH_SPEC §27.3），
+    // 故每批外加有界重试（3 次，500ms/1s 退避），避免一次冲突丢掉整批新抓取文章。
+    let lastErr: unknown = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const results = await getDb().batch(batch, "write");
+        for (const rs of results) inserted += Number(rs.rowsAffected);
+        lastErr = null;
+        break;
+      } catch (err) {
+        lastErr = err;
+        const msg = err instanceof Error ? err.message : String(err);
+        if (!/SQLITE_BUSY|BUSY_SNAPSHOT_PENDING|database is locked|concurrent transaction/i.test(msg)) break;
+        await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
+      }
+    }
+    if (lastErr) throw lastErr;
   }
   return inserted;
 }
