@@ -401,6 +401,35 @@ export async function getRecentWithoutSummary(
   }));
 }
 
+/**
+ * 盲区回捞（2026-09-18，TECH_SPEC §27.1）：补捞错过 24h 时间窗的未摘要文章。
+ * getRecentWithoutSummary 以 published_at >= now-window 为硬条件，发布超窗才入库的
+ * （周刊类、调度停摆积压）会永久无摘要/评分，进而被 pickFeatured 拒绝进入热榜日报。
+ * 条件：仍无摘要且未标记已处理，且 published_at 早于 now-36h（与在途正常队列不重叠），
+ * 最老优先。无正文的老文章会由 summarizePending 既有逻辑标记为「已处理（无摘要）」，
+ * 因此回捞能自收敛，不会反复重扫。
+ */
+export async function getSummaryBacklog(limit: number): Promise<SummarizableArticleRow[]> {
+  if (limit <= 0) return [];
+  const cutoff = new Date(Date.now() - 36 * 3_600_000).toISOString();
+  const rs = await getDb().execute({
+    sql: `SELECT a.id, a.title, a.title_zh, s.name AS source_name,
+                 a.article_content, COALESCE(s.authority, 60) AS authority
+          FROM articles a JOIN sources s ON s.id = a.source_id
+          WHERE a.summary IS NULL AND a.summarized_at IS NULL AND a.published_at < ?
+          ORDER BY a.published_at ASC LIMIT ?`,
+    args: [cutoff, limit],
+  });
+  return rs.rows.map((row) => ({
+    id: String(row.id),
+    title: String(row.title),
+    titleZh: row.title_zh == null ? null : String(row.title_zh),
+    sourceName: String(row.source_name),
+    content: textOrNull(row.article_content),
+    authority: Number(row.authority ?? 60),
+  }));
+}
+
 export async function countSummariesToday(): Promise<number> {
   const dayStart = new Date();
   dayStart.setUTCHours(0, 0, 0, 0);

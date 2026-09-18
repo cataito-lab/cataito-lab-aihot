@@ -20,11 +20,12 @@ import {
   applyTranslationUpdates,
   getUntranslated,
   getRecentWithoutSummary,
+  getSummaryBacklog,
   getSourceHealth,
   markSourceOutcomes,
 } from "./db";
 import { translatePending } from "./translate";
-import { summarizePending } from "./summarize";
+import { summarizePending, MAX_PER_RUN } from "./summarize";
 import { enrichContent } from "./enrich-content";
 import { translateSummariesPending } from "./summary-translate";
 import { translateInsightsPending } from "./insight-translate";
@@ -38,11 +39,13 @@ function parseArgs(): {
   dryRun: boolean;
   noEnrich: boolean;
   enrichOnly: boolean;
+  backlog: number;
 } {
   let windowHours = 24;
   let dryRun = false;
   let noEnrich = false;
   let enrichOnly = false;
+  let backlog = 6;
   const argv = process.argv.slice(2);
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -59,11 +62,21 @@ function parseArgs(): {
     if (arg === "--dry-run") dryRun = true;
     if (arg === "--no-enrich") noEnrich = true;
     if (arg === "--enrich-only") enrichOnly = true;
+    const bk = arg.match(/^--backlog=(\d+)$/);
+    if (bk) {
+      backlog = Number(bk[1]);
+      continue;
+    }
+    if (arg === "--backlog" && argv[i + 1] && /^\d+$/.test(argv[i + 1])) {
+      backlog = Number(argv[i + 1]);
+      i++;
+      continue;
+    }
   }
   if (noEnrich && enrichOnly) {
     throw new Error("--no-enrich 与 --enrich-only 互斥，只能选一个运行阶段");
   }
-  return { windowHours, dryRun, noEnrich, enrichOnly };
+  return { windowHours, dryRun, noEnrich, enrichOnly, backlog };
 }
 
 async function fetchSource(source: SourceDef, windowHours: number): Promise<FetchResult> {
@@ -89,7 +102,7 @@ async function fetchSource(source: SourceDef, windowHours: number): Promise<Fetc
 }
 
 async function main(): Promise<void> {
-  const { windowHours, dryRun, noEnrich, enrichOnly } = parseArgs();
+  const { windowHours, dryRun, noEnrich, enrichOnly, backlog } = parseArgs();
 
   // --enrich-only：只跑 LLM 增强队列（标题回填翻译、摘要、摘要/洞察/标题补译），
   // 不抓取、不入库、不写 fetch_logs。由 enrich-news 工作流低频调用，
@@ -108,13 +121,17 @@ async function main(): Promise<void> {
         `  [translate] updated=${t.updates.length} failed=${t.failed} fallback=${t.viaFallback}`,
       );
     }
-    const summarizable = await getRecentWithoutSummary(24, 40);
-    await summarizePending(summarizable);
+    // 盲区回捞分池（TECH_SPEC §27.1）：summarizePending 的 MAX_PER_RUN 按传入顺序累计，
+    // 回捞行直接追加到尾部会在非空队列时永远轮不到，故显式拆分两池额度。
+    const backlogQuota = Math.max(0, Math.min(backlog, MAX_PER_RUN - 10));
+    const summarizable = await getRecentWithoutSummary(24, MAX_PER_RUN - backlogQuota);
+    const backlogRows = await getSummaryBacklog(backlogQuota);
+    await summarizePending([...summarizable, ...backlogRows]);
     const summaryTranslated = await translateSummariesPending();
     const insightsTranslated = await translateInsightsPending();
     const titlesTranslated = await translateTitlesPending();
     console.log(
-      `\n[enrich-only] backfill=${backfill.length} summarize=${summarizable.length} ` +
+      `\n[enrich-only] backfill=${backfill.length} summarize=${summarizable.length}+${backlogRows.length}(backlog) ` +
         `summaryTranslate=${summaryTranslated} insightTranslate=${insightsTranslated} titleTranslate=${titlesTranslated}`,
     );
     return;

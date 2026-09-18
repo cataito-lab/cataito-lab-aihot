@@ -7,7 +7,8 @@ import { llmChat, runWorkersAi } from "./llm";
 // 历史沿革：2026-08-29 曾为 Gemini 2.5 Flash 主力 + 智谱 GLM-4-Flash 兜底，2026-09 起迁移至商汤网关（凭据只剩 SENSENOVA_API_KEY）。
 // 回退 Cloudflare Workers AI：设 LLM_PROVIDER=workersai 并保留 CF_* 凭据，CF_AI_MODEL 指定模型（默认 8B）。
 const DAILY_QUOTA = 1200; // 2026-09-04 Phase 2：审核层 + 重写引入，高分文章多 1 次审核 LLM 调用，配额上调 800→1200
-const MAX_PER_RUN = 30;
+// 导出供 index.ts 盲区回捞分池（TECH_SPEC §27.1）：近期队列与回捞共享此上限，需显式拆分额度
+export const MAX_PER_RUN = 30;
 const INSIGHT_MAX_TOKENS = 2800;
 
 // Summarize v4 — Insight Engine（2026-09-02, Phase 1 起）
