@@ -4,19 +4,33 @@ on:
   schedule:
     # 每 10 分钟一次，但刻意避开整/圆分钟（:00 :10 :20 是 GitHub 调度高峰，
     # 文档明确说明此时段 schedule 会被大幅延迟甚至丢弃）。
+    # 仅作兜底：外部定时器（CF Worker aihot-news-scheduler cron → repository_dispatch，
+    # 源码在 scheduler-worker/）才是主链路，
+    # GitHub schedule 是唯一被官方标注「会延迟/丢弃」的事件，实测已劣化到 2.2~5.5h 一次。
     # 注意：pipeline 运行期间，同并发组的 schedule 触发会被 GitHub 静默丢弃——
     # 因此本工作流只做「抓取入库」（--no-enrich，几分钟内跑完），
     # LLM 摘要/翻译拆到 enrich-news 工作流低频补齐。
     - cron: "6,16,26,36,46,56 * * * *"
   workflow_dispatch:
+  # 外部定时器主入口（CF Worker 每 10 分钟 POST /repos/.../dispatches，源码 scheduler-worker/，
+  # event_type=run-pipeline；部署清单见 docs/OPERATIONS.md §10）。
+  # 选 repository_dispatch 而非 workflow_dispatch：无 inputs 参数面，
+  # 不存在「参数不匹配→422/404 触发静默丢弃」故障类（历史两次同根因断流）。
+  # 鉴权：PAT 需 Contents: Read and write（repository_dispatch 归 Contents 类，不是 Actions，
+  # 给错权限实测 403 Resource not accessible）；请求必须带非空 User-Agent，缺任一条即 403。
+  repository_dispatch:
+    types: [run-pipeline]
 
 concurrency:
-  # 拆分组：schedule 与 workflow_dispatch 互不 cancel
-  # 单一组会把两类触发排队掐掉，导致 schedule 静默丢触发（2026-09-05 实测：
-  # 一周仅 82 次跑，是应有 1008 次的 8%，根因即此）
-  group: news-pipeline-${{ github.event_name }}
-  # 正在跑就等下一次 schedule，不排队不 cancel——抓取运行只需几分钟，
-  # 丢掉几次触发无影响，排队反而会让 schedule 触发被连续丢弃
+  # 2026-09-18 改回固定单一组 + queue: max。历史教训（2026-09-05：拆组前一周仅 82 次跑）
+  # 的根因是旧默认语义「新触发挤掉已 pending 的触发」，而那时单次运行要 17-38 分钟；
+  # 现在抓取几分钟跑完，且 queue: max 允许最多 100 个 pending 排队不被 cancel，
+  # 失效模式已根治。固定组的收益：schedule/dispatch 串行执行，避免两路高频
+  # 触发同时写 Turso 引发 commit 级 BUSY（拆分 event_name 组反而制造了并行写）。
+  group: news-pipeline
+  # 允许 pending 排队而非被后续触发吞掉（官方 workflow-syntax 文档 concurrency.queue）
+  queue: max
+  # 正在跑就不打断不 cancel——抓取运行只需几分钟，错过几次无影响（每轮自带 24h 窗口自愈）
   cancel-in-progress: false
 
 jobs:

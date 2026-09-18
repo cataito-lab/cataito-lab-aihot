@@ -10,12 +10,19 @@ name: enrich-news
 #       实际调用量随积压收敛，不会空转打爆额度。
 on:
   schedule:
-    # 每 30 分钟一次，避开整/圆分钟（GitHub 调度高峰）
+    # 每 30 分钟一次，避开整/圆分钟（GitHub 调度高峰）；仅作兜底，
+    # 主链路是 CF Worker（scheduler-worker/）→ repository_dispatch（见 OPERATIONS §10）
     - cron: "9,39 * * * *"
   workflow_dispatch:
+  # 外部定时器入口：CF Worker 在 UTC 0/30 分那拍 POST /repos/.../dispatches，
+  # event_type=run-enrich。需 PAT（Contents: Read and write，非 Actions）+ 非空 User-Agent
+  repository_dispatch:
+    types: [run-enrich]
 
 concurrency:
-  group: news-enrich-${{ github.event_name }}
+  # 与 update-news 同理改固定组：消除 schedule/dispatch 落入不同组后
+  # 两路 enrich 并行写同一批队列行（同一条摘要被两个运行重复生成、后写覆盖先写）
+  group: news-enrich
   cancel-in-progress: false
 
 jobs:
