@@ -2,7 +2,7 @@
 
 公开的 AI 行业新闻聚合站：**https://aihot.cataito.com**
 
-GitHub Actions 定时抓取约 65 个中英文 AI 信源（启用 44 个） → 标题自动翻译、重点新闻 AI 摘要（Gemini 2.5 Flash 主力 + 智谱 GLM-4-Flash 兜底）→ 写入 Turso 云数据库 → Next.js 按事件时间倒序展示。
+GitHub Actions 定时抓取中英文 AI 信源（清单 64 个，启用 37 个） → 标题自动翻译、重点新闻 AI 摘要（商汤网关 OpenAI 兼容层，多免费模型自动容灾）→ 写入 Turso 云数据库 → Next.js 按事件时间倒序展示。
 
 ## 功能
 
@@ -45,4 +45,4 @@ npm run build               # 生产构建
 
 - 前端：Cloudflare Pages（`@cloudflare/next-on-pages` 适配），绑定域名 `aihot.cataito.com`
 - 数据：Turso（libSQL）；凭据配在 GH Actions secrets 与 CF Pages 环境变量
-- 抓取：`.github/workflows/update-news.yml`，每 10 分钟（`*/10`）；GitHub 自带 schedule 常被限流，另由 Cloudflare Worker `aihot-news-scheduler` 每 10 分钟 `workflow_dispatch` 补刀（详见 docs/OPERATIONS.md §调度）
+- 抓取：`.github/workflows/update-news.yml` 高频抓取（分钟级目标）+ `enrich-news.yml` 低频 LLM 增强；GitHub 自带 schedule 常被限流，另由 Cloudflare Worker `aihot-news-scheduler` 以 `workflow_dispatch` 补刀（实际节奏与排障见 docs/OPERATIONS.md，本地不入库）
