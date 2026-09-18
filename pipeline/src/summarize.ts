@@ -8,7 +8,10 @@ import { llmChat, runWorkersAi } from "./llm";
 // 回退 Cloudflare Workers AI：设 LLM_PROVIDER=workersai 并保留 CF_* 凭据，CF_AI_MODEL 指定模型（默认 8B）。
 const DAILY_QUOTA = 1200; // 2026-09-04 Phase 2：审核层 + 重写引入，高分文章多 1 次审核 LLM 调用，配额上调 800→1200
 // 导出供 index.ts 盲区回捞分池（TECH_SPEC §27.1）：近期队列与回捞共享此上限，需显式拆分额度
-export const MAX_PER_RUN = 30;
+// 2026-09-19 30→50：调度断流期间积压 ~528 篇缺摘要，且日增 > 旧吞吐时新文章排在
+// oldest-first 队列尾部迟迟拿不到洞察。配合 enrich 超时上调，把每轮消化量提到 50。
+// 仍受 DAILY_QUOTA(1200) 硬顶约束，不会失控烧额度。
+export const MAX_PER_RUN = 50;
 const INSIGHT_MAX_TOKENS = 2800;
 
 // Summarize v4 — Insight Engine（2026-09-02, Phase 1 起）

@@ -45,7 +45,8 @@ function parseArgs(): {
   let dryRun = false;
   let noEnrich = false;
   let enrichOnly = false;
-  let backlog = 15; // §27.4：默认 6→15 加速存量盲区消化，上限另受 MAX_PER_RUN 约束
+  let backlog = 25; // §27.4：盲区回捞额度。2026-09-19 15→25，与 MAX_PER_RUN 30→50 同步上调，
+  // 让历史积压（断流期累积）在正常 enrich 轮里更快消化；实际上限仍受 MAX_PER_RUN 拆分约束
   const argv = process.argv.slice(2);
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
