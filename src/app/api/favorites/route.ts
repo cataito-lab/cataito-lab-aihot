@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const placeholders = ids.map(() => "?").join(",");
     const sql = `
       SELECT a.id, a.source_id, s.name AS source_name, s.category, s.lang,
-             a.title, a.title_zh, a.summary, a.summary_en, a.summary_ja,
+             a.title, a.title_zh, a.title_ja, a.title_es, a.title_fr, a.summary, a.summary_en, a.summary_ja,
              a.summary_es, a.summary_fr, a.url, a.author,
              a.published_at, a.fetched_at,
              a.key_points, a.industry_impact, a.score_final
