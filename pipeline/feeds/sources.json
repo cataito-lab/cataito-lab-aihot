@@ -725,8 +725,8 @@
     "dedicated": false,
     "enabled": true,
     "authority": 95,
-    "note": "arXiv 论文源（2026-09-05 优化）：取消 dedicated 直通，走论文负向过滤；每源限 10 条，防每日整批涌入",
-    "maxPerSource": 10
+    "note": "arXiv 论文源（2026-09-05 优化，2026-09-18 限 10→5）：取消 dedicated 直通，走论文负向过滤；每源限 5 条，把免费 LLM 额度让给真新闻（TECH_SPEC §27.4）",
+    "maxPerSource": 5
   },
   {
     "id": "arxiv-cs-cl",
@@ -739,8 +739,8 @@
     "dedicated": false,
     "enabled": true,
     "authority": 95,
-    "note": "arXiv 论文源（2026-09-05 优化）：取消 dedicated 直通，走论文负向过滤；每源限 10 条，防每日整批涌入",
-    "maxPerSource": 10
+    "note": "arXiv 论文源（2026-09-05 优化，2026-09-18 限 10→5）：取消 dedicated 直通，走论文负向过滤；每源限 5 条，把免费 LLM 额度让给真新闻（TECH_SPEC §27.4）",
+    "maxPerSource": 5
   },
   {
     "id": "arxiv-cs-lg",
@@ -753,8 +753,8 @@
     "dedicated": false,
     "enabled": true,
     "authority": 95,
-    "note": "arXiv 论文源（2026-09-05 优化）：取消 dedicated 直通，走论文负向过滤；每源限 10 条，防每日整批涌入",
-    "maxPerSource": 10
+    "note": "arXiv 论文源（2026-09-05 优化，2026-09-18 限 10→5）：取消 dedicated 直通，走论文负向过滤；每源限 5 条，把免费 LLM 额度让给真新闻（TECH_SPEC §27.4）",
+    "maxPerSource": 5
   },
   {
     "id": "arxiv-cs-cv",
