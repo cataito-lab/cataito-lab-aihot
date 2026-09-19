@@ -1,5 +1,5 @@
 /**
- * 精准回填：分页扫描 articles 全表，补全缺失的本地化列（摘要 / AI Insight：
+ * 精准回填：分页扫描 articles 全表，补全缺失的本地化列（标题 / 摘要 / AI Insight：
  * key_change · forward_signal · impact）对应的 ja / es / fr 翻译。
  * 主翻译通道为免费 gtx 端点，无需 LLM key。仅写入翻译列，不抓取、不插入新文章。
  * 幂等：已翻译的列会被跳过，可重复运行。
@@ -10,7 +10,7 @@
 import "../src/env";
 import pLimit from "p-limit";
 import { translateTextSmart } from "../src/translate";
-import { getDb, applySummaryTranslationUpdates, applyInsightTranslationUpdates, applyTitleTranslationUpdates } from "../src/db";
+import { getDb, applySummaryTranslationUpdates, applyInsightTranslationUpdates, applyTitleTranslationUpdates, type TitleLang } from "../src/db";
 
 const BATCH = 40;
 const CONCURRENCY = 5;
@@ -18,6 +18,7 @@ const GAP_MS = 120;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const SUMMARY_LANGS = ["ja", "es", "fr"] as const;
 const INSIGHT_LANGS = ["ja", "es", "fr"] as const;
+const TITLE_LANGS = ["ja", "es", "fr"] as const;
 
 type Row = Record<string, unknown>;
 const str = (v: unknown): string | null => (v == null ? null : String(v));
@@ -47,6 +48,38 @@ async function translateImpact(srcJson: string | null, target: string): Promise<
   } catch {
     return null;
   }
+}
+
+async function backfillTitles(): Promise<number> {
+  const limit = pLimit(CONCURRENCY);
+  let offset = 0;
+  let total = 0;
+  for (;;) {
+    const rs = await getDb().execute({
+      sql: `SELECT id, title, title_ja, title_es, title_fr FROM articles WHERE title IS NOT NULL ORDER BY published_at DESC LIMIT ? OFFSET ?`,
+      args: [BATCH, offset],
+    });
+    const tasks: Promise<{ id: string; lang: TitleLang; text: string } | null>[] = [];
+    for (const row of rs.rows as Row[]) {
+      const src = str(row.title);
+      if (!src) continue;
+      const id = str(row.id)!;
+      for (const lang of TITLE_LANGS) {
+        if (str(row[`title_${lang}`])) continue;
+        tasks.push(limit(async () => {
+          const t = await translateTextSmart(src, lang);
+          return t ? { id, lang, text: t } : null;
+        }));
+      }
+    }
+    const resolved = (await Promise.all(tasks)).filter((x): x is { id: string; lang: TitleLang; text: string } => x !== null);
+    if (resolved.length) await applyTitleTranslationUpdates(resolved);
+    total += resolved.length;
+    console.log(`  [titles] offset=${offset} 本批翻译 ${resolved.length}/${tasks.length}`);
+    if (rs.rows.length < BATCH) break;
+    offset += BATCH;
+  }
+  return total;
 }
 
 async function backfillSummaries(): Promise<number> {
@@ -124,6 +157,8 @@ async function backfillInsights(): Promise<number> {
 
 async function main(): Promise<void> {
   console.log("[translate:all] 开始分页补全本地化（ja/es/fr）…");
+  const t = await backfillTitles();
+  console.log(`  [titles] 已补 ${t} 条`);
   const s = await backfillSummaries();
   console.log(`  [summaries] 已补 ${s} 条`);
   const i = await backfillInsights();

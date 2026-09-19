@@ -1,0 +1,32 @@
+name: translate-i18n
+
+# 手动触发：分页扫描 articles 全表，一次性补齐 ja/es/fr 三语的标题 / 摘要 / AI Insight 翻译列。
+# 通道：免费 gtx 端点（Google Translate），不消耗商汤网关额度，可与 enrich/backfill-insight 并行不冲突。
+# 幂等：已翻译的列会被跳过，可反复触发。
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: news-translate-i18n
+  cancel-in-progress: false
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    # 全表分页 + 5 路并发 + gtx 端点，3300+ 条文章 × 3 语 ≈ 15-30 分钟；给 60 分钟硬顶
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Backfill ja/es/fr translations (titles / summaries / insights)
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: npx tsx pipeline/scripts/backfill-i18n.ts
