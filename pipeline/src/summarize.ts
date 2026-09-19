@@ -8,10 +8,10 @@ import { llmChat, runWorkersAi } from "./llm";
 // 回退 Cloudflare Workers AI：设 LLM_PROVIDER=workersai 并保留 CF_* 凭据，CF_AI_MODEL 指定模型（默认 8B）。
 const DAILY_QUOTA = 1200; // 2026-09-04 Phase 2：审核层 + 重写引入，高分文章多 1 次审核 LLM 调用，配额上调 800→1200
 // 导出供 index.ts 盲区回捞分池（TECH_SPEC §27.1）：近期队列与回捞共享此上限，需显式拆分额度
-// 2026-09-19 30→50：调度断流期间积压 ~528 篇缺摘要，且日增 > 旧吞吐时新文章排在
-// oldest-first 队列尾部迟迟拿不到洞察。配合 enrich 超时上调，把每轮消化量提到 50。
-// 仍受 DAILY_QUOTA(1200) 硬顶约束，不会失控烧额度。
-export const MAX_PER_RUN = 50;
+// 2026-09-19 回调 50→30：实测单轮跑不完（150 标题回译在前、摘要在后），把每轮吞吐
+// 提到 50 反而让整轮更晚到达摘要阶段、更容易在 GitHub 超时前被 kill 成半截。
+// 恢复 30 让单轮能在时间预算内「真正跑完」，靠多轮稳定消化，仍受 DAILY_QUOTA(1200) 硬顶。
+export const MAX_PER_RUN = 30;
 const INSIGHT_MAX_TOKENS = 2800;
 
 // Summarize v4 — Insight Engine（2026-09-02, Phase 1 起）

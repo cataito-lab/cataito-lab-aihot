@@ -45,8 +45,8 @@ function parseArgs(): {
   let dryRun = false;
   let noEnrich = false;
   let enrichOnly = false;
-  let backlog = 25; // §27.4：盲区回捞额度。2026-09-19 15→25，与 MAX_PER_RUN 30→50 同步上调，
-  // 让历史积压（断流期累积）在正常 enrich 轮里更快消化；实际上限仍受 MAX_PER_RUN 拆分约束
+  let backlog = 12; // §27.4：盲区回捞额度。2026-09-19 25→12：与 MAX_PER_RUN 回调同步，
+  // 单轮真正能跑完比单轮吞更多重要（旧值下整轮超时被 kill，摘要一条未写）
   const argv = process.argv.slice(2);
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -110,30 +110,50 @@ async function main(): Promise<void> {
   // 让高频的抓取运行不必背着 LLM 耗时（这是每日调度断流的根因，见 update-news.yml）。
   if (enrichOnly) {
     await ensureSchema();
-    const backfill = await getUntranslated(150);
-    if (backfill.length > 0) {
-      const t = await translatePending(
-        backfill,
-        getTitleTranslations,
-        saveTitleTranslations,
-        applyTranslationUpdates,
-      );
-      console.log(
-        `  [translate] updated=${t.updates.length} failed=${t.failed} fallback=${t.viaFallback}`,
-      );
-    }
-    // 盲区回捞分池（TECH_SPEC §27.1）：summarizePending 的 MAX_PER_RUN 按传入顺序累计，
-    // 回捞行直接追加到尾部会在非空队列时永远轮不到，故显式拆分两池额度。
+    // F3（2026-09-19）优雅时间预算：整轮在 deadline 之前完成即正常退出（exit 0），
+    // 避免被 GitHub timeout 砍成半截（status=cancelled）。每跨一个阶段前检查预算，
+    // 超预算则不再开新阶段、保留已完成部分正常收尾。默认 70min（< workflow timeout 90 留 20min 收尾余量）。
+    const budgetMs = Number(process.env.ENRICH_BUDGET_MIN ?? 70) * 60_000;
+    const startedAt = Date.now();
+    const withinBudget = () => Date.now() - startedAt < budgetMs;
+
+    // === F2：顺序重排，摘要/洞察优先（用户可见的最新内容），存量标题回译放最后 ===
+    // 盲区回捞分池（TECH_SPEC §27.1）：回捞行追加尾部会在非空队列时永远轮不到，显式拆两池额度。
     const backlogQuota = Math.max(0, Math.min(backlog, MAX_PER_RUN - 10));
     const summarizable = await getRecentWithoutSummary(24, MAX_PER_RUN - backlogQuota);
     const backlogRows = await getSummaryBacklog(backlogQuota);
-    await summarizePending([...summarizable, ...backlogRows]);
-    const summaryTranslated = await translateSummariesPending();
-    const insightsTranslated = await translateInsightsPending();
-    const titlesTranslated = await translateTitlesPending();
+    const summarized = await summarizePending([...summarizable, ...backlogRows]);
+
+    // 多语补译（新摘要/洞察的外语译文）优先于老标题回译；预算不足则跳过，不影响洞察本身
+    let summaryTranslated = 0;
+    let insightsTranslated = 0;
+    let titlesTranslated = 0;
+    if (withinBudget()) summaryTranslated = await translateSummariesPending();
+    if (withinBudget()) insightsTranslated = await translateInsightsPending();
+    if (withinBudget()) titlesTranslated = await translateTitlesPending();
+
+    // 存量英文标题→中文回译（非紧急的旧标题译名）放最后，150→60：不再挤占摘要时间预算
+    let backfillCount = 0;
+    if (withinBudget()) {
+      const backfill = await getUntranslated(60);
+      backfillCount = backfill.length;
+      if (backfill.length > 0) {
+        const t = await translatePending(
+          backfill,
+          getTitleTranslations,
+          saveTitleTranslations,
+          applyTranslationUpdates,
+        );
+        console.log(
+          `  [translate] updated=${t.updates.length} failed=${t.failed} fallback=${t.viaFallback}`,
+        );
+      }
+    }
+    const elapsedSec = Math.round((Date.now() - startedAt) / 1000);
     console.log(
-      `\n[enrich-only] backfill=${backfill.length} summarize=${summarizable.length}+${backlogRows.length}(backlog) ` +
-        `summaryTranslate=${summaryTranslated} insightTranslate=${insightsTranslated} titleTranslate=${titlesTranslated}`,
+      `\n[enrich-only] summarize=${summarized}/${summarizable.length}+${backlogRows.length}(backlog) ` +
+        `summaryTranslate=${summaryTranslated} insightTranslate=${insightsTranslated} titleTranslate=${titlesTranslated} ` +
+        `titleBackfill=${backfillCount} elapsed=${elapsedSec}s budget_hit=${!withinBudget()}`,
     );
     return;
   }

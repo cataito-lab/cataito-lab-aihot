@@ -6,13 +6,16 @@ name: enrich-news
 #   已有运行时的 schedule 触发静默丢弃，导致「每 10 分钟一次」退化成 1.5-2.5 小时
 #   一次且每天出现数小时断流（2026-09-06 实测最后一次成功运行后 3.5h 无触发）。
 #   拆分后抓取几分钟跑完不再丢触发，站点分钟级保鲜；本工作流低频消化 LLM 队列。
-# 额度：队列函数自带每轮上限（标题回填 150 / 摘要 40 / 补译 MAX_ROWS_PER_RUN），
+# 额度：队列函数自带每轮上限（摘要 MAX_PER_RUN=30 / 多语补译 MAX_ROWS_PER_RUN / 存量标题回译 60），
+#       且整轮受 ENRICH_BUDGET_MIN（默认 70min）时间预算约束：预算内跑不完会主动正常退出而非被超时 kill。
 #       实际调用量随积压收敛，不会空转打爆额度。
 on:
   schedule:
-    # 每 30 分钟一次，避开整/圆分钟（GitHub 调度高峰）；仅作兜底，
-    # 主链路是 CF Worker（scheduler-worker/）→ repository_dispatch（见 OPERATIONS §10）
-    - cron: "9,39 * * * *"
+    # 2026-09-19 9,39→每 2h 一次稀疏兜底：旧值与 CF Worker 的 repository_dispatch(:00/:30)
+    # 叠成每小时 4 次涌进同一并发组，多出的排队 run 被系统取消（满屏 cancelled 假失败）。
+    # 现主链路是 CF Worker（scheduler-worker/）→ repository_dispatch（见 OPERATIONS §10），
+    # 这里仅保留「Worker 挂了也不至于完全不跑」的兜底，故意避开整/圆分钟（GitHub 调度高峰）。
+    - cron: "23 */2 * * *"
   workflow_dispatch:
   # 外部定时器入口：CF Worker 在 UTC 0/30 分那拍 POST /repos/.../dispatches，
   # event_type=run-enrich。需 PAT（Contents: Read and write，非 Actions）+ 非空 User-Agent
@@ -28,9 +31,10 @@ concurrency:
 jobs:
   enrich:
     runs-on: ubuntu-latest
-    # 2026-09-19 60→90：旧值下每轮 enrich 都跑满 60 分钟被 cancelled（#74–#79 全如此），
-    # 队列（标题回译 150 + 摘要 50 + 摘要/洞察/标题多语补译）在商汤网关速率下常超 60 分钟，
-    # 从未完整跑完→新文章长期拿不到洞察。上调后给单轮留足完成余量。
+    # timeout 90 = 硬顶保险丝。真正的完成性靠代码层 ENRICH_BUDGET_MIN（默认 70min）优雅退出：
+    # 单轮在预算内跑不完会主动正常收尾（exit 0=success），不再被 GitHub 砍成半截 status=cancelled。
+    # 历史：#74–#79 每轮跑满旧 60min 被 cancelled（旧顺序：150 标题回译在前、摘要在后，摘要常被饿死）。
+    # 90 仅作为 70min 预算外的极端卡死兜底，正常运行不应触及。
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
