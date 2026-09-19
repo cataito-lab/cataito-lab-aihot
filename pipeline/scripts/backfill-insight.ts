@@ -5,7 +5,8 @@
  * - 只处理 `importance_score IS NULL` 的文章（即 P0 之前的文章尚未用新提示词生成过
  *   含重要度评分/实体的完整洞察；已用新提示词的文章 importance_score 非空，会跳过）。
  * - 正文缺失时回退用旧 summary 作为上下文（与 backfill-history 同样的兜底思路）。
- * - 每次运行受 BACKFILL_INSIGHT_MAX（默认 180）上限保护，避免单轮密集调用撞 LLM 网关速率墙。
+ * - 并发池处理（默认 CONCURRENCY=5），吞吐约 5× 串行；每次运行受 BACKFILL_INSIGHT_MAX
+ *   （默认 400）上限保护，避免击穿网关速率或跑超时。
  * - 处理完成后（pending 归零）自动重聚类（wipe events + reset event_id + clusterEvents），
  *   保证新提示词产出的 event_key 与既有聚类一致；可用 --no-recluster 跳过。
  * - --dry-run 只统计待处理数量，不调用模型、不写库。
@@ -15,24 +16,23 @@
  *   tsx pipeline/scripts/backfill-insight.ts --dry-run  # 只看数量
  */
 import "../src/env";
+import pLimit from "p-limit";
 import { getDb, markSummarized, ensureSchema } from "../src/db";
 import { runModel, parseModelJson, computeResult, buildInsightUserContent } from "../src/summarize";
 import { clusterEvents } from "../src/cluster";
 
-const MAX_CALLS = Number(process.env.BACKFILL_INSIGHT_MAX ?? 180);
+const MAX_CALLS = Number(process.env.BACKFILL_INSIGHT_MAX ?? 400);
+const CONCURRENCY = Number(process.env.BACKFILL_INSIGHT_CONCURRENCY ?? 5);
 const BIG_WINDOW = 24 * 365 * 10;
 const dry = process.argv.includes("--dry-run");
 const noRecluster = process.argv.includes("--no-recluster");
 
 /**
- * 根据当前 LLM_PROVIDER 自适应请求间隔，避开速率墙：
- * - sensenova（默认）：商汤网关共享 key，实测约 10 RPM 上限 → 6100ms
- * - deepseek / glm：同网关下不同 model，速率通常更宽松 → 610ms 保守值
- *
- * 主循环有「连续 3 次 429 提前退出」保护，不会无限空转。
+ * 429 保护阈值：并发池中，自上次成功以来累积 429 次数超过此阈值则中止。
+ * 设为 CONCURRENCY 的 2 倍，容忍少量并发 429 后自动恢复；
+ * 连续超阈值说明网关已全面限流，再跑也没用。
  */
-const provider = (process.env.LLM_PROVIDER ?? "sensenova").toLowerCase();
-const sleepMs = provider === "sensenova" ? 6100 : 610;
+const ABORT_429_THRESHOLD = CONCURRENCY * 2;
 
 interface PendingRow {
   id: string;
@@ -43,10 +43,6 @@ interface PendingRow {
   summary_en: string | null;
   source_name: string | null;
   authority: number | null;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function getPending(): Promise<PendingRow[]> {
@@ -70,72 +66,92 @@ async function recluster(): Promise<void> {
   console.log(`[recluster] clustered=${r.clustered} synthesized=${r.synthesized}`);
 }
 
+async function processOne(r: PendingRow): Promise<'ok' | 'fail' | '429' | 'skip'> {
+  const content = r.article_content ?? r.summary ?? r.summary_en ?? r.title;
+  if (!content) return 'skip';
+  const row = {
+    id: r.id,
+    title: r.title,
+    titleZh: r.title_zh,
+    sourceName: r.source_name ?? r.id,
+    content,
+    authority: r.authority ?? 60,
+  };
+  try {
+    const userContent = await buildInsightUserContent(row);
+    const raw = await runModel(userContent);
+    if (!raw) {
+      console.warn(`  [insight] ${r.id}: empty model response`);
+      return 'fail';
+    }
+    const parsed = parseModelJson(raw);
+    const looksLikeJson = raw.trimStart().startsWith("{");
+    const fallback = !parsed && !looksLikeJson ? raw : null;
+    const result = computeResult(row, parsed, fallback);
+    if (result.summary == null) {
+      console.warn(`  [insight] ${r.id}: no usable summary in response`);
+      return 'fail';
+    }
+    await markSummarized(r.id, result);
+    // 旧的多语译文是基于旧 summary 翻译的，置空让其重新从新洞察翻译
+    await getDb().execute({
+      sql: "UPDATE articles SET summary_ja = NULL, summary_es = NULL, summary_fr = NULL WHERE id = ?",
+      args: [r.id],
+    });
+    return 'ok';
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("429")) {
+      console.warn(`  [insight] ${r.id}: ${msg}`);
+      return '429';
+    }
+    console.warn(`  [insight] ${r.id}: ${msg}`);
+    return 'fail';
+  }
+}
+
 async function main(): Promise<void> {
   await ensureSchema();
   const pending = await getPending();
-  console.log(`[insight] pending=${pending.length} max=${MAX_CALLS} dry=${dry}`);
+  const batch = pending.slice(0, MAX_CALLS);
+  console.log(`[insight] pending=${pending.length} batch=${batch.length} max=${MAX_CALLS} concurrency=${CONCURRENCY} dry=${dry}`);
   if (dry) return;
 
   let done = 0;
   let failures = 0;
-  let consecutive429 = 0;
-  for (const r of pending) {
-    if (done >= MAX_CALLS) break;
-    const content = r.article_content ?? r.summary ?? r.summary_en ?? r.title;
-    if (!content) continue;
-    const row = {
-      id: r.id,
-      title: r.title,
-      titleZh: r.title_zh,
-      sourceName: r.source_name ?? r.id,
-      content,
-      authority: r.authority ?? 60,
-    };
-    try {
-      const userContent = await buildInsightUserContent(row);
-      const raw = await runModel(userContent);
-      if (!raw) {
-        failures++;
-        console.warn(`  [insight] ${r.id}: empty model response`);
-        await sleep(sleepMs);
-        continue;
-      }
-      const parsed = parseModelJson(raw);
-      const looksLikeJson = raw.trimStart().startsWith("{");
-      const fallback = !parsed && !looksLikeJson ? raw : null;
-      const result = computeResult(row, parsed, fallback);
-      if (result.summary == null) {
-        failures++;
-        console.warn(`  [insight] ${r.id}: no usable summary in response`);
-        await sleep(sleepMs);
-        continue;
-      }
-      await markSummarized(r.id, result);
-      // 旧的多语译文是基于旧 summary 翻译的，置空让其重新从新洞察翻译
-      await getDb().execute({
-        sql: "UPDATE articles SET summary_ja = NULL, summary_es = NULL, summary_fr = NULL WHERE id = ?",
-        args: [r.id],
-      });
-      done++;
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes("429")) {
-        consecutive429++;
-        console.warn(`  [insight] ${r.id}: ${msg}`);
-        if (consecutive429 >= 3) {
-          console.log("[insight] 连续 3 次 429：判定 LLM 网关速率/额度受限，提前退出（稍后或换 provider 再跑）");
-          break;
-        }
-      } else {
-        consecutive429 = 0;
-        failures++;
-        console.warn(`  [insight] ${r.id}: ${msg}`);
-      }
-    }
-    await sleep(150);
-  }
+  let hit429SinceLastSuccess = 0;
+  let aborted = false;
 
-  console.log(`[insight] done=${done} failures=${failures}`);
+  const limit = pLimit(CONCURRENCY);
+  const tasks = batch.map((r) =>
+    limit(async () => {
+      if (aborted) return;
+      const outcome = await processOne(r);
+      switch (outcome) {
+        case 'ok':
+          done++;
+          hit429SinceLastSuccess = 0;
+          break;
+        case '429':
+          hit429SinceLastSuccess++;
+          if (hit429SinceLastSuccess >= ABORT_429_THRESHOLD) {
+            console.log(`[insight] 累积 ${hit429SinceLastSuccess} 次 429 无成功：判定网关限流，中止剩余任务`);
+            aborted = true;
+          }
+          break;
+        case 'fail':
+          failures++;
+          hit429SinceLastSuccess = 0; // non-429 failure resets the 429 streak
+          break;
+        case 'skip':
+          break;
+      }
+    }),
+  );
+
+  await Promise.all(tasks);
+
+  console.log(`[insight] done=${done} failures=${failures} aborted=${aborted}`);
 
   const leftRs = await getDb().execute({
     sql: `SELECT COUNT(*) AS n FROM articles WHERE importance_score IS NULL AND (article_content IS NOT NULL OR summary IS NOT NULL OR summary_en IS NOT NULL OR title IS NOT NULL)`,

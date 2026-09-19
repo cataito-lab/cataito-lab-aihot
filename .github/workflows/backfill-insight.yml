@@ -2,15 +2,15 @@ name: backfill-insight
 
 # 手动触发：用新版「AI Insight 智能洞察」提示词，回填历史文章的结构化洞察。
 # 幂等：只处理 importance_score IS NULL 的文章（2026-08-27 由 key_change IS NULL 改为按评分缺口判定）；跑完（pending 归零）自动重聚类。
-# 额度：每次运行上限 BACKFILL_INSIGHT_MAX（默认 180）次模型调用，避免击穿 Cloudflare 每日神经元额度；
-#       若文章数超出上限，分多次手动触发即可，每次自动续跑剩余部分。
+# 吞吐：并发池 5 路，400 条约 15 分钟跑完；累计上限 BACKFILL_INSIGHT_MAX（默认 400）避免击穿网关速率或跑超时。
+#       若积压超出单次上限，分多次触发即可，每次自动续跑剩余部分。
 on:
   workflow_dispatch:
     inputs:
       max_calls:
-        description: "单次运行最大模型调用次数（Cloudflare 每日神经元额度保护）"
+        description: "单次运行最大模型调用次数（并发池模式下 400 条约 15min）"
         required: false
-        default: "180"
+        default: "400"
       no_recluster:
         description: "完成时跳过重聚类（仅部分回填时设为 true）"
         required: false
@@ -27,8 +27,8 @@ concurrency:
 jobs:
   backfill:
     runs-on: ubuntu-latest
-    # 30→60：给末尾 recluster() 全表重聚类留余量（文章量大时逐篇 DB 往返耗时较长）
-    timeout-minutes: 60
+    # 60→90：并发池（默认 5 路）可在 ~15min 内跑完 400 条，但网络抖动/429 退避留余量
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
@@ -44,7 +44,7 @@ jobs:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
           # LLM provider：回填走商汤网关（token.sensenova.cn）下的 deepseek-v4-flash
-          # 实测 ~8s/次，610ms sleep 间隔；日常 10 分钟管线也走同一套（见 update-news.yml）。
+          # 并发池 5 路，吞吐 ~30-40 条/分，仍远低于网关 RPM 上限。
           SENSENOVA_API_KEY: ${{ secrets.SENSENOVA_API_KEY }}
           SENSENOVA_BASE_URL: ${{ secrets.SENSENOVA_BASE_URL || 'https://token.sensenova.cn/v1' }}
           SENSENOVA_MODEL: ${{ secrets.SENSENOVA_MODEL || 'deepseek-v4-flash' }}
@@ -53,6 +53,7 @@ jobs:
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CF_AI_API_TOKEN: ${{ secrets.CF_AI_API_TOKEN }}
           BACKFILL_INSIGHT_MAX: ${{ github.event.inputs.max_calls }}
+          BACKFILL_INSIGHT_CONCURRENCY: "5"
         run: >-
           npx tsx pipeline/scripts/backfill-insight.ts
           ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
