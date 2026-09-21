@@ -43,13 +43,15 @@ jobs:
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
-          # LLM provider：回填走商汤网关（token.sensenova.cn）下的 deepseek-v4-flash
-          # 并发池 5 路，吞吐 ~30-40 条/分，仍远低于网关 RPM 上限。
+          # LLM 容灾链（跨厂商）：Gemini 免费档主力 → 商汤网关 → Workers AI 兜底（见 pipeline/src/llm.ts）
+          # 并发池 5 路；Gemini 免费档 RPM 低，429 时链内自动切换 provider
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ secrets.GEMINI_MODEL || 'gemini-2.5-flash-lite' }}
           SENSENOVA_API_KEY: ${{ secrets.SENSENOVA_API_KEY }}
           SENSENOVA_BASE_URL: ${{ secrets.SENSENOVA_BASE_URL || 'https://token.sensenova.cn/v1' }}
           SENSENOVA_MODEL: ${{ secrets.SENSENOVA_MODEL || 'deepseek-v4-flash' }}
-          LLM_PROVIDER: ${{ secrets.LLM_PROVIDER || 'deepseek' }}
-          # 以下为 legacy Cloudflare Workers AI（仅 LLM_PROVIDER=workersai 时使用）
+          LLM_PROVIDER: ${{ secrets.LLM_PROVIDER || 'gemini' }}
+          # Cloudflare Workers AI 兜底（链尾，需 CF_* 凭据）
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CF_AI_API_TOKEN: ${{ secrets.CF_AI_API_TOKEN }}
           BACKFILL_INSIGHT_MAX: ${{ github.event.inputs.max_calls }}

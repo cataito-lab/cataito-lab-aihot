@@ -1,11 +1,12 @@
 import { countSummariesToday, markSummarized, getRelatedByContent, getSameEventContext } from "./db";
 import type { SummarizeResultV3 } from "./db";
-import { llmChat, runWorkersAi } from "./llm";
+import { llmChat } from "./llm";
 
-// 默认主力：商汤网关（token.sensenova.cn）OpenAI 兼容层，见 llm.ts：
-// sensenova-6.8-flash-lite / deepseek-v4-flash / glm-5.2 三模型按 LLM_PROVIDER 优先级自动容灾（429 逐个切换）。
-// 历史沿革：2026-08-29 曾为 Gemini 2.5 Flash 主力 + 智谱 GLM-4-Flash 兜底，2026-09 起迁移至商汤网关（凭据只剩 SENSENOVA_API_KEY）。
-// 回退 Cloudflare Workers AI：设 LLM_PROVIDER=workersai 并保留 CF_* 凭据，CF_AI_MODEL 指定模型（默认 8B）。
+// 容灾链（见 llm.ts）：Gemini Flash-Lite（Google，免费 key）为主力，
+// 商汤网关三模型（sensenova/deepseek/glm，共用 SENSENOVA_API_KEY）与 Workers AI 兜底。
+// 沿革：2026-09 曾全量迁移商汤网关；2026-09-20 商汤 key 整点 429/401 封禁两天，
+// 因三"provider"同网关同 key 无一处幸免、工作流又假绿，洞察断流无人发现——
+// 2026-09-22 起重建跨厂商容灾（Google → 商汤 → Cloudflare 三个独立基础设施）。
 const DAILY_QUOTA = 1200; // 2026-09-04 Phase 2：审核层 + 重写引入，高分文章多 1 次审核 LLM 调用，配额上调 800→1200
 // 导出供 index.ts 盲区回捞分池（TECH_SPEC §27.1）：近期队列与回捞共享此上限，需显式拆分额度
 // 2026-09-19 回调 50→30：实测单轮跑不完（150 标题回译在前、摘要在后），把每轮吞吐
@@ -265,10 +266,8 @@ export function parseModelJson(raw: string): Record<string, unknown> | null {
 
 export async function runModel(userContent: string): Promise<string | null> {
   try {
-    if ((process.env.LLM_PROVIDER ?? "sensenova").toLowerCase() === "workersai") {
-      return await runWorkersAi(SYSTEM_PROMPT, userContent, 1600);
-    }
-    // 默认走商汤网关 OpenAI 兼容层（sensenova/deepseek/glm，429 自动切换，见 llm.ts）
+    // 跨厂商容灾链：gemini → 商汤网关三模型 → workersai，429 逐个切换（见 llm.ts）。
+    // LLM_PROVIDER 可指定首选；=workersai 时链内自动剥离 response_format（CF 不支持 json 模式）
     return await llmChat(SYSTEM_PROMPT, userContent, { maxTokens: INSIGHT_MAX_TOKENS, json: true });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -701,17 +700,23 @@ export async function rewriteInsight(args: {
   }
 }
 
-export async function summarizePending(rows: SummarizableRow[]): Promise<number> {
-  const provider = (process.env.LLM_PROVIDER ?? "sensenova").toLowerCase();
-  const hasLlm =
-    provider === "workersai"
-      ? !!(process.env.CF_ACCOUNT_ID && process.env.CF_AI_API_TOKEN)
-      : !!(process.env.SENSENOVA_API_KEY);
+export interface SummarizeRunStats {
+  done: number;
+  failures: number;
+  noContent: number;
+}
+
+export async function summarizePending(rows: SummarizableRow[]): Promise<SummarizeRunStats> {
+  const hasLlm = !!(
+    process.env.GEMINI_API_KEY ||
+    process.env.SENSENOVA_API_KEY ||
+    (process.env.CF_ACCOUNT_ID && process.env.CF_AI_API_TOKEN)
+  );
   if (!hasLlm) {
     console.log(
-      "  [summarize] skipped (未配置 LLM provider：请设置 SENSENOVA_API_KEY，或将 LLM_PROVIDER=workersai 并配 CF_* 凭据)",
+      "  [summarize] skipped (未配置 LLM provider：GEMINI_API_KEY / SENSENOVA_API_KEY / CF_* 至少要有一个)",
     );
-    return 0;
+    return { done: 0, failures: 0, noContent: 0 };
   }
 
   const usedToday = await countSummariesToday();
@@ -721,7 +726,7 @@ export async function summarizePending(rows: SummarizableRow[]): Promise<number>
       `  [summarize] ⚠️ 每日配额 ${DAILY_QUOTA} 已用完（今日已生成 ${usedToday} 条），本轮跳过。` +
         " 需要提高配额请改 pipeline/src/summarize.ts 的 DAILY_QUOTA。",
     );
-    return 0;
+    return { done: 0, failures: 0, noContent: 0 };
   }
   console.log(
     `  [summarize] 今日已用 ${usedToday}/${DAILY_QUOTA}，剩余 ${remainingQuota} 条额度`,
@@ -871,12 +876,12 @@ export async function summarizePending(rows: SummarizableRow[]): Promise<number>
   }
 
   console.log(
-    `  [summarize] provider=${process.env.LLM_PROVIDER ?? "sensenova"} summarized=${done} scored=${scored} failed=${failures} noContent=${noContent} quotaLeft=${remainingQuota}`,
+    `  [summarize] provider=${process.env.LLM_PROVIDER ?? "gemini"} summarized=${done} scored=${scored} failed=${failures} noContent=${noContent} quotaLeft=${remainingQuota}`,
   );
   if (reviewedCount > 0) {
     console.log(
       `  [review] 审核触发=${reviewedCount} 通过=${passCount} 改写=${rewriteCount} 未通过=${failCount}`,
     );
   }
-  return done;
+  return { done, failures, noContent };
 }

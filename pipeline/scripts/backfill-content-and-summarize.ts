@@ -145,7 +145,7 @@ async function main() {
     const shape = await getRecentWithoutSummary(hours, 30);
     console.log(`[backfill] ${shape.length} articles ready for LLM`);
 
-    const done = await summarizePending(shape);
+    const done = (await summarizePending(shape)).done;
     console.log(`[backfill] summarized ${done}`);
   } else if (dryRun) {
     console.log("[backfill] dry-run, no writes");

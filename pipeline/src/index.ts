@@ -122,7 +122,8 @@ async function main(): Promise<void> {
     const backlogQuota = Math.max(0, Math.min(backlog, MAX_PER_RUN - 10));
     const summarizable = await getRecentWithoutSummary(24, MAX_PER_RUN - backlogQuota);
     const backlogRows = await getSummaryBacklog(backlogQuota);
-    const summarized = await summarizePending([...summarizable, ...backlogRows]);
+    const sumStats = await summarizePending([...summarizable, ...backlogRows]);
+    const summarized = sumStats.done;
 
     // 多语补译（新摘要/洞察的外语译文）优先于老标题回译；预算不足则跳过，不影响洞察本身
     let summaryTranslated = 0;
@@ -155,6 +156,18 @@ async function main(): Promise<void> {
         `summaryTranslate=${summaryTranslated} insightTranslate=${insightsTranslated} titleTranslate=${titlesTranslated} ` +
         `titleBackfill=${backfillCount} elapsed=${elapsedSec}s budget_hit=${!withinBudget()}`,
     );
+
+    // 假绿修复（2026-09-22）：2026-09-20 商汤 key 封禁后，本工作流连续 48h 每轮
+    // 「5 连败即 break → exit 0」，Actions 全绿但洞察零产出，无人发现。
+    // 规则：队列有 LLM 可做的行（排除无正文行）、成功 0、且有 LLM 失败 → 判 LLM 链路故障，exit 1 报红。
+    const llmWork = sumStats.done + sumStats.failures;
+    if (llmWork > 0 && sumStats.done === 0) {
+      console.error(
+        `❌ [enrich-only] LLM 链路全挂：尝试 ${llmWork} 次全部失败（failures=${sumStats.failures}）。` +
+          " 请检查各 provider key 限额/封禁（日志中 [llm] 行含具体状态码）。",
+      );
+      process.exit(1);
+    }
     return;
   }
 
