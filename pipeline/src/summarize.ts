@@ -1,6 +1,7 @@
 import { countSummariesToday, markSummarized, getRelatedByContent, getSameEventContext } from "./db";
 import type { SummarizeResultV3 } from "./db";
 import { llmChat } from "./llm";
+import { applyMistakes } from "./translate";
 
 // 容灾链（见 llm.ts）：Gemini Flash-Lite（Google，免费 key）为主力，
 // 商汤网关三模型（sensenova/deepseek/glm，共用 SENSENOVA_API_KEY）与 Workers AI 兜底。
@@ -29,6 +30,8 @@ const SYSTEM_PROMPT = `你是 AIHOT 平台的首席 AI 行业分析师与主编�
 ❌ 把标题换一种方式说一遍（"XXX 发布了 YYY"）
 ❌ 让五个板块互相说同一件事
 ❌ 用空泛套话（"对 AI 行业意义重大"、"值得关注"、"具有重要意义"）充当洞察
+
+【术语硬性规则】LLM / LLMs 一律写作「大语言模型」，严禁译作「法学硕士」「法学博士」；品牌与产品名（OpenAI、Claude、Gemini、GPT 等）保留英文原文，不得音译。
 
 === 一、五板块各自回答不同的问题（严格区分，绝不可混淆）===
 
@@ -347,7 +350,9 @@ function cleanInsightText(s: string | null): string | null {
   let t = s.trim();
   // 去掉开头语言/字段标签前缀：中文/英文/英语/English/EN/En/描述/Description/Desc + 可选空格 + 中英文冒号（大小写不敏感）
   t = t.replace(/^(中文|英文|英语|English|EN|En|描述|Description|Desc)\s*[:：]\s*/i, "");
-  return t;
+  // 误译兜底：洞察由模型直接生成、不走翻译通道，术语表反向表在此统一清洗
+  // （zh 表只含中文串，对 *_en 字段无副作用）。
+  return applyMistakes(t, "zh");
 }
 
 /** 分类短标签大小写规范化：首字母大写（保留空格与连字符），保护已知缩写与品牌名，与读取层一致。 */

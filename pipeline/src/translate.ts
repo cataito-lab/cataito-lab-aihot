@@ -39,6 +39,12 @@ const MISTAKES: Mistakes = GLOSSARY_RAW._mistakes ?? {};
 
 const GLOSSARY_LOCALES = new Set(["zh", "ja", "es", "fr"]);
 
+/** zh 标题翻译通道历史上用 "zh-CN"，而术语表/误译表键名是 "zh"，
+ *  四道防护入口必须归一，否则 zh 全链路静默失去保护（2026-09 法学硕士事故根因）。 */
+function glossaryLocale(target: string): string {
+  return target === "zh-CN" ? "zh" : target;
+}
+
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -49,10 +55,11 @@ function escapeRegExp(s: string): string {
  * 因不会进入此分支，由 LLM 提示词保障不被翻译。
  */
 function applyGlossary(text: string, target: string): string {
-  if (!GLOSSARY_LOCALES.has(target)) return text;
+  const loc = glossaryLocale(target);
+  if (!GLOSSARY_LOCALES.has(loc)) return text;
   let out = text;
   for (const [canonical, forms] of Object.entries(GLOSSARY)) {
-    const wanted = forms[target];
+    const wanted = forms[loc];
     if (!wanted || wanted === canonical) continue;
     out = out.replace(new RegExp(escapeRegExp(canonical), "gi"), wanted);
   }
@@ -60,9 +67,10 @@ function applyGlossary(text: string, target: string): string {
 }
 
 /** 误译安全网：把 gtx 等机械通道产出的固定错误译法替换回正确形式。
- *  按错误形式长度降序替换，避免「智能代理」被「代理」类短词条抢先截断。 */
-function applyMistakes(text: string, target: string): string {
-  const table = MISTAKES[target];
+ *  按错误形式长度降序替换，避免「智能代理」被「代理」类短词条抢先截断。
+ *  导出供洞察生成侧（summarize.ts）复用——生成文本不走翻译通道，同样需要兜底。 */
+export function applyMistakes(text: string, target: string): string {
+  const table = MISTAKES[glossaryLocale(target)];
   if (!table) return text;
   let out = text;
   for (const wrong of Object.keys(table).sort((a, b) => b.length - a.length)) {
@@ -75,12 +83,13 @@ function applyMistakes(text: string, target: string): string {
  *  分两组：固定译法（canonical → 译法）与保留原文（品牌/习惯术语不翻译，
  *  如 Claude 不得译成「克劳德」、Agent 习惯保留英文）。 */
 function glossaryPrompt(target: string): string {
-  if (!GLOSSARY_LOCALES.has(target)) return "";
+  const loc = glossaryLocale(target);
+  if (!GLOSSARY_LOCALES.has(loc)) return "";
   const fixed: string[] = [];
   const keep: string[] = [];
   for (const [canonical, forms] of Object.entries(GLOSSARY)) {
     if (canonical.startsWith("_")) continue;
-    const wanted = forms[target];
+    const wanted = forms[loc];
     if (!wanted) continue;
     if (wanted === canonical) {
       if (/[A-Za-z]/.test(canonical)) keep.push(`  - ${canonical}`);
@@ -118,12 +127,13 @@ interface ProtectedText {
 }
 
 function protectTerms(text: string, target: string): ProtectedText {
-  if (!GLOSSARY_LOCALES.has(target)) {
+  const loc = glossaryLocale(target);
+  if (!GLOSSARY_LOCALES.has(loc)) {
     return { masked: text, restore: (t) => t };
   }
   const entries = Object.entries(GLOSSARY)
     .filter(([canonical]) => canonical.length >= 2)
-    .map(([canonical, forms]) => ({ canonical, wanted: forms[target] ?? canonical }))
+    .map(([canonical, forms]) => ({ canonical, wanted: forms[loc] ?? canonical }))
     .sort((a, b) => b.canonical.length - a.canonical.length);
 
   const found: string[] = [];
@@ -155,11 +165,12 @@ function protectTerms(text: string, target: string): ProtectedText {
 
 /** 品牌保全 QA：源文含「保留原文」品牌词而译文没有 → 视为该通道翻译失败。 */
 function lostProtectedBrands(source: string, out: string, target: string): string[] {
-  if (target !== "zh" && target !== "zh-CN" && target !== "ja") return [];
+  const loc = glossaryLocale(target);
+  if (loc !== "zh" && loc !== "ja") return [];
   const lost: string[] = [];
   for (const [canonical, forms] of Object.entries(GLOSSARY)) {
     if (!/[A-Za-z]{3,}/.test(canonical)) continue;
-    if (forms[target] !== canonical) continue;
+    if (forms[loc] !== canonical) continue;
     const re = new RegExp(escapeRegExp(canonical), "i");
     if (re.test(source) && !re.test(out)) lost.push(canonical);
   }
