@@ -1,5 +1,6 @@
 import { countSummariesToday, markSummarized, getRelatedByContent, getSameEventContext } from "./db";
 import type { SummarizeResultV3 } from "./db";
+import { MIN_BODY_CHARS } from "./enrich-content";
 import { llmChat } from "./llm";
 import { applyMistakes } from "./translate";
 
@@ -217,8 +218,11 @@ const REWRITE_SYSTEM_PROMPT = `你是 AIHOT 平台的首席 AI 行业分析师�
 
 const PROMO_TITLE_RE = /(直播|预告|优惠|报名|招聘|抽奖|优惠券|免费领)/;
 
-/** 正文低于此长度视为"无有效正文"——没有事实依据就不生成摘要（一切以事实为依据） */
-const MIN_CONTENT_CHARS = 80;
+/**
+ * 正文低于此长度视为"无有效正文"——没有事实依据就不生成摘要（一切以事实为依据）。
+ * 真源在 enrich-content.ts，抓取层用同一门槛决定是否回源补抓正文。
+ */
+const MIN_CONTENT_CHARS = MIN_BODY_CHARS;
 
 export interface SummarizableRow {
   id: string;
@@ -749,6 +753,7 @@ export async function summarizePending(rows: SummarizableRow[]): Promise<Summari
     if (done >= MAX_PER_RUN || remainingQuota <= 0) break;
 
     // 无有效正文 = 没有事实依据：不调用模型、不生成摘要（凭标题写摘要就是瞎猜）。
+    // 补抓正文在抓取层 C8 enrich 完成（enrich-content.ts 用同一门槛），此处不再重试。
     // 标记为已处理（无摘要无评分），前端按"未评分保底展示"规则照常显示标题。
     if (!row.content || row.content.length < MIN_CONTENT_CHARS) {
       await markSummarized(row.id, {

@@ -496,6 +496,14 @@ export interface SummarizeResultV3 {
   topicCategory?: string[] | null;     // JSON: string[]，与 category(Source) 正交
 }
 
+/** 回源页抓到的正文回写，供摘要链路与后续多语/聚类复用（避免重复抓取） */
+export async function setArticleContent(id: string, content: string): Promise<void> {
+  await getDb().execute({
+    sql: `UPDATE articles SET article_content = ? WHERE id = ?`,
+    args: [content, id],
+  });
+}
+
 export async function markSummarized(
   id: string,
   result: SummarizeResultV3,

@@ -243,7 +243,8 @@ async function main(): Promise<void> {
     return withIds.filter(({ id }) => !existing.has(id));
   })();
 
-  // C8 enrich：对 title-only 条目抓源文正文，让下游 LLM 摘要有正文可分析
+  // C8 enrich：正文缺失或短于 MIN_BODY_CHARS 的条目回源抓正文，让下游 LLM 摘要有正文可分析
+  // （中文 RSS 只给一句导语，判空放行不了它们）。--no-enrich 只跳过 LLM 阶段，本步骤照跑。
   const enriched = await enrichContent(newRows);
 
   const inserted = await insertArticles(

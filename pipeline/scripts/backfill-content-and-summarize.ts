@@ -1,8 +1,8 @@
 /**
  * backfill-content-and-summarize.ts
  *
- * 目的：对近期 article_content 为空且未摘要的文章，抓源文正文回写 DB，
- * 然后调 LLM 生成 5 维 AI 洞察。
+ * 目的：对近期正文过短（< MIN_BODY_CHARS）因而被摘要链路判为"无有效正文"的文章，
+ * 抓源文正文回写 DB，然后调 LLM 生成 5 维 AI 洞察。
  *
  * 触发方式：本地 dev 或 GitHub Actions（需要 TURSO_* + SENSENOVA_* / CF_* 凭证）。
  *
@@ -15,10 +15,12 @@
  * - 只处理近 --hours 内的文章，避免回补过老内容
  * - 跳过明确无独立正文的 URL（HN 评论页 / Twitter / Reddit 评论页）
  * - enrich 与 summarize 各跑一轮；summarize 走现有 quota 与 fallback 逻辑
+ * - 正文抓取逻辑与主链路共用 pipeline/src/enrich-content.ts，避免两处实现漂移
  */
 import "../src/env";
-import { getDb, getRecentWithoutSummary } from "../src/db";
+import { getDb, getRecentWithoutSummary, setArticleContent } from "../src/db";
 import { summarizePending } from "../src/summarize";
+import { fetchBody, shouldSkipUrl, MIN_BODY_CHARS } from "../src/enrich-content";
 
 function parseArgs() {
   let limit = 80;
@@ -34,89 +36,33 @@ function parseArgs() {
   return { limit, hours, dryRun };
 }
 
-const UA =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36 ai-news-pipeline/0.1";
-const SKIP_RE = new RegExp(
-  "^(https?:\\/\\/)?(news\\.ycombinator\\.com\\/item\\?id=|twitter\\.com\\/|x\\.com\\/|reddit\\.com\\/r\\/[^\\/]+\\/comments\\/)",
-);
-const MAX_BODY_CHARS = 1200;
-const FETCH_TIMEOUT_MS = 12000;
-
-function stripHtml(s: string): string {
-  return s
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function pickMainText(html: string): string {
-  const container =
-    html.match(/<(article|main)[^>]*>([\s\S]*?)<\/\1>/i)?.[2] ??
-    html.match(/<body[^>]*>([\s\S]*?)<\/body>/i)?.[2] ??
-    html;
-  const paras = container.match(/<p[^>]*>([\s\S]*?)<\/p>/gi) || [];
-  const texts = paras.map((p) => stripHtml(p)).filter((t) => t.length > 40);
-  let out = "";
-  for (const t of texts) {
-    if (out.length + t.length > MAX_BODY_CHARS) break;
-    out += t + " ";
-  }
-  if (out.length < 200) out = stripHtml(container).slice(0, MAX_BODY_CHARS);
-  return out.slice(0, MAX_BODY_CHARS).trim();
-}
-
-async function fetchBody(url: string): Promise<string | null> {
-  const deadline = Date.now() + FETCH_TIMEOUT_MS;
-  const controller = new AbortController();
-  setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": UA,
-        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
-      },
-      signal: controller.signal,
-    });
-    if (!res.ok) return null;
-    const html = (await res.text()) as string;
-    if (!html || html.length < 500) return null;
-    const text = pickMainText(html);
-    return text.length >= 80 ? text : null;
-  } catch {
-    return null;
-  }
-}
-
 async function main() {
   const { limit, hours, dryRun } = parseArgs();
   const cutoff = new Date(Date.now() - hours * 3_600_000).toISOString();
 
+  // 筛选条件是「正文缺失或短于生成门槛」，不只是 IS NULL/''：
+  // 中文 RSS 的 description 常见 20-79 字一句导语，只判空会整批漏掉。
+  // 同时必须带 summarized_at IS NULL：第二步走的就是这个谓词的队列查询，
+  // 否则会把存量黑洞行（已置 summarized_at、五维全 null）抓一遍正文却零条生成 = 假绿。
+  // 那批行要回炉得先决定是重置 summarized_at 还是新建重算入口，不在本脚本射程内。
   const rs = await getDb().execute({
     sql: `SELECT a.id, a.url
           FROM articles a
-          WHERE (a.article_content IS NULL OR a.article_content='')
+          WHERE (a.article_content IS NULL OR LENGTH(a.article_content) < ?)
+            AND a.summarized_at IS NULL
             AND a.url IS NOT NULL
             AND a.published_at >= ?
           ORDER BY a.published_at DESC
           LIMIT ?`,
-    args: [cutoff, limit],
+    args: [MIN_BODY_CHARS, cutoff, limit],
   });
   const rows = Array.from(rs.rows).map((r) => ({
     id: String(r.id),
     url: String(r.url),
   }));
-  console.log(`[backfill] ${rows.length} articles without content (cutoff=${cutoff})`);
+  console.log(`[backfill] ${rows.length} articles with short/missing content (cutoff=${cutoff}, minChars=${MIN_BODY_CHARS})`);
 
-  const toFetch = rows.filter((r) => !SKIP_RE.test(r.url));
+  const toFetch = rows.filter((r) => !shouldSkipUrl(r.url));
   console.log(`[backfill] ${toFetch.length} fetchable, ${rows.length - toFetch.length} skipped`);
 
   let enriched = 0;
@@ -129,10 +75,7 @@ async function main() {
       await Promise.all(batch.map(async (r) => {
         const body = await fetchBody(r.url);
         if (body) {
-          await getDb().execute({
-            sql: `UPDATE articles SET article_content = ? WHERE id = ?`,
-            args: [body, r.id],
-          });
+          await setArticleContent(r.id, body);
           enriched++;
         }
       }));

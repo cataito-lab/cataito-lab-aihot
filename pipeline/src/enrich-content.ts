@@ -1,15 +1,19 @@
 /**
- * C8 enrich：对 title-only 源（HN / Reddit / Twitter / Google News 等）的条目，
- * 抓取源文 URL 提取正文文本，回填到 RawItem.articleContent。
+ * C8 enrich：对正文不足以生成洞察的条目，抓取源文 URL 提取正文文本，
+ * 回填到 RawItem.articleContent。
+ *
+ * 触发条件（2026-09-22 放宽）：正文缺失**或短于 MIN_BODY_CHARS**。原先只判空，
+ * 而中文 RSS 普遍给非空但无用的碎片——实测量子位 description 仅 61 字导语、
+ * InfoQ 中文正文字段就是「点击查看原文>」7 个字符，非空所以从未触发抓取，
+ * 下游又被 summarize 的同一门槛判死 → 中文源洞察长期断供。
  *
  * 前置过滤（不抓取这些）：
- *   - 已有正文（例如 RSS 源）
+ *   - 已有足够正文
  *   - HN 评论页（news.ycombinator.com/item?id= 无独立正文）
  *   - Twitter/X 帖子（反爬 + 需 token）
  *   - Reddit 原生帖（r/.../comments/ 无独立正文，且反爬）
- *   - 已知只承载元数据的短 URL
  *
- * 只真正有独立正文的源（The Register / TechCrunch / Ars / Wired 等）才抓。
+ * 只真正有独立正文的源（The Register / TechCrunch / Ars / Wired 等）才抓得到。
  */
 import pLimit from "p-limit";
 import { httpFetch } from "./net";
@@ -18,8 +22,11 @@ import type { RawItem } from "./types";
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36 ai-news-pipeline/0.1";
 
+/** 可用正文下限：低于此长度既触发本层抓取，也是 summarize 拒绝生成洞察的门槛（单一真源） */
+export const MIN_BODY_CHARS = 80;
+
 /** 明确跳过正文抓取的 URL 模式 */
-function shouldSkipUrl(url: string): boolean {
+export function shouldSkipUrl(url: string): boolean {
   const lower = url.toLowerCase();
   if (lower.includes("news.ycombinator.com/item?id=")) return true;
   if (lower.startsWith("https://twitter.com/")) return true;
@@ -71,7 +78,7 @@ function pickMainText(html: string): string {
   return out.slice(0, MAX_BODY_CHARS).trim();
 }
 
-async function fetchBody(url: string): Promise<string | null> {
+export async function fetchBody(url: string): Promise<string | null> {
   try {
     const res = await httpFetch(url, {
       headers: {
@@ -85,7 +92,7 @@ async function fetchBody(url: string): Promise<string | null> {
     const html = (await res.text()) as string;
     if (!html || html.length < 500) return null;
     const text = pickMainText(html);
-    return text.length >= 80 ? text : null;
+    return text.length >= MIN_BODY_CHARS ? text : null;
   } catch {
     return null;
   }
@@ -94,7 +101,7 @@ async function fetchBody(url: string): Promise<string | null> {
 export async function enrichContent(items: Array<{ id: string; item: RawItem }>): Promise<Array<{ id: string; item: RawItem }>> {
   const rawItems = items.map((r) => r.item);
   const needsFetch = rawItems.filter(
-    (it) => !it.articleContent && it.url && !shouldSkipUrl(it.url),
+    (it) => (it.articleContent?.length ?? 0) < MIN_BODY_CHARS && it.url && !shouldSkipUrl(it.url),
   );
   if (needsFetch.length === 0) return items;
 
@@ -109,11 +116,14 @@ export async function enrichContent(items: Array<{ id: string; item: RawItem }>)
 
   let enriched = 0;
   for (const it of rawItems) {
-    if (!it.articleContent && it.url && map.has(it.url)) {
-      it.articleContent = map.get(it.url) ?? undefined;
-      if (it.articleContent) enriched++;
+    if ((it.articleContent?.length ?? 0) < MIN_BODY_CHARS && it.url && map.has(it.url)) {
+      const body = map.get(it.url);
+      if (body) {
+        it.articleContent = body;
+        enriched++;
+      }
     }
   }
-  console.log(`  [enrich] fetched=${enriched} of ${needsFetch.length} title-only items`);
+  console.log(`  [enrich] fetched=${enriched} of ${needsFetch.length} short/empty-content items`);
   return items;
 }
