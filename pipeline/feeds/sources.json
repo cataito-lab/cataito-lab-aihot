@@ -207,9 +207,9 @@
     "feedUrl": "https://www.ifanr.com/feed",
     "fetcher": "rss",
     "dedicated": false,
-    "enabled": true,
+    "enabled": false,
     "authority": 60,
-    "note": "通用科技源，靠 AI 关键词过滤"
+    "note": "2026-09-22 停用：非 AI 专属通稿源，近 14 天 10 条、均分 32、1 条洞察，过滤后仍是不相关条目却占 authority 60 污染榜单"
   },
   {
     "id": "sspai",
@@ -220,9 +220,9 @@
     "feedUrl": "https://sspai.com/feed",
     "fetcher": "rss",
     "dedicated": false,
-    "enabled": true,
+    "enabled": false,
     "authority": 60,
-    "note": "通用科技源，靠 AI 关键词过滤"
+    "note": "2026-09-22 停用：非 AI 专属通稿源，近 14 天仅 3 条、均分 26，AI 相关度全库最低"
   },
   {
     "id": "xinzhiyuan",
@@ -309,8 +309,9 @@
     "feedUrl": "https://www.reddit.com/r/LocalLLaMA/.rss",
     "fetcher": "reddit",
     "dedicated": true,
-    "enabled": true,
-    "authority": 65
+    "enabled": false,
+    "authority": 65,
+    "note": "2026-09-22 停用：近 14 天零产出——Actions runner IP 被 Reddit 边缘拦截，reddit fetcher 实际取不到条目。恢复需换 UA/代理或走自建桥"
   },
   {
     "id": "reddit-ml",
@@ -321,8 +322,9 @@
     "feedUrl": "https://www.reddit.com/r/MachineLearning/.rss",
     "fetcher": "reddit",
     "dedicated": true,
-    "enabled": true,
-    "authority": 65
+    "enabled": false,
+    "authority": 65,
+    "note": "2026-09-22 停用：同 reddit-localllama，近 14 天零产出（Reddit 对数据中心 IP 拦截）"
   },
   {
     "id": "meta-ai",
@@ -362,9 +364,9 @@
     "fetcher": "google-news",
     "gnQuery": "Stanford HAI",
     "dedicated": true,
-    "enabled": true,
+    "enabled": false,
     "authority": 85,
-    "note": "官方 RSS 经 Cloudflare 挑战页无法解析，改经 Google News RSS 桥接恢复抓取"
+    "note": "2026-09-22 停用：官方 RSS 经 Cloudflare 挑战页无法解析，改经 Google News RSS 桥接恢复抓取。近 14 天 9 条、均分 40.7、0 条 ≥70，桥接命中以大学活动通稿为主，对热榜无贡献"
   },
   {
     "id": "semianalysis",
@@ -696,9 +698,9 @@
     "fetcher": "google-news",
     "gnQuery": "LangChain blog agent",
     "dedicated": true,
-    "enabled": true,
+    "enabled": false,
     "authority": 80,
-    "note": "Agent 开发核心框架博客；直连 RSS 本机不通，改经 Google News RSS 桥接"
+    "note": "2026-09-22 停用：Agent 开发核心框架博客；直连 RSS 本机不通，改经 Google News RSS 桥接。桥接 gnQuery 近 14 天零命中（0 条入库、10 次抓取失败），保留配置待重写查询词后再评估"
   },
   {
     "id": "llamaindex",
@@ -710,9 +712,9 @@
     "fetcher": "google-news",
     "gnQuery": "LlamaIndex blog RAG",
     "dedicated": true,
-    "enabled": true,
+    "enabled": false,
     "authority": 75,
-    "note": "RAG / Agent 核心框架博客；直连 RSS 本机不通，改经 Google News RSS 桥接"
+    "note": "2026-09-22 停用：RAG / Agent 核心框架博客；直连 RSS 本机不通，改经 Google News RSS 桥接。桥接 gnQuery 近 14 天零命中（0 条入库、10 次抓取失败）"
   },
   {
     "id": "arxiv-cs-ai",
@@ -817,9 +819,9 @@
     "feedUrl": "https://blog.google/feed/",
     "fetcher": "rss",
     "dedicated": false,
-    "enabled": true,
+    "enabled": false,
     "authority": 100,
-    "note": "Google 通用博客（区别于 google-ai 分类 feed）"
+    "note": "2026-09-22 停用：Google 通用博客（区别于 google-ai 分类 feed）。近 14 天 0 条入库且 25 次抓取失败，AI 相关内容已由 google-ai / deepmind 覆盖"
   },
   {
     "id": "aws-machine-learning",
@@ -844,8 +846,61 @@
     "fetcher": "google-news",
     "gnQuery": "IBM Research blog AI quantum",
     "dedicated": true,
+    "enabled": false,
+    "authority": 90,
+    "note": "2026-09-22 停用：IBM Research 博客无公开 RSS（/feed /feed.xml 均 404），经 Google News RSS 桥接。桥接 gnQuery 近 14 天零命中（0 条入库、10 次抓取失败）"
+  },
+  {
+    "id": "google-research",
+    "name": "Google Research Blog",
+    "category": "official",
+    "lang": "en",
+    "siteUrl": "https://research.google/blog/",
+    "feedUrl": "https://research.google/blog/rss/",
+    "fetcher": "rss",
+    "dedicated": true,
+    "enabled": true,
+    "authority": 95,
+    "note": "2026-09-22 新增：与 google-ai（产品向分类 feed）、deepmind（实验室博客）是三个不同主体。本机 RSS 探活 200/78KB，Actions 环境待 observation"
+  },
+  {
+    "id": "microsoft-research",
+    "name": "Microsoft Research Blog",
+    "category": "official",
+    "lang": "en",
+    "siteUrl": "https://www.microsoft.com/en-us/research/",
+    "feedUrl": "https://www.microsoft.com/en-us/research/feed/",
+    "fetcher": "rss",
+    "dedicated": true,
     "enabled": true,
     "authority": 90,
-    "note": "IBM Research 博客无公开 RSS（/feed /feed.xml 均 404），经 Google News RSS 桥接"
+    "note": "2026-09-22 新增：走 www.microsoft.com 域名，与 2026-08-24 因 WAF 403 停用的 microsoft-ai（blogs.microsoft.com）不是同一拦截规则。本机探活 200/278KB"
+  },
+  {
+    "id": "apple-ml",
+    "name": "Apple Machine Learning Research",
+    "category": "official",
+    "lang": "en",
+    "siteUrl": "https://machinelearning.apple.com/research",
+    "feedUrl": "https://machinelearning.apple.com/rss.xml",
+    "fetcher": "rss",
+    "dedicated": true,
+    "enabled": true,
+    "authority": 88,
+    "note": "2026-09-22 新增：Apple ML 研究官方博客，更新低频但权威。本机探活 200/10KB"
+  },
+  {
+    "id": "leiphone",
+    "name": "雷峰网",
+    "category": "media-cn",
+    "lang": "zh",
+    "siteUrl": "https://www.leiphone.com/",
+    "feedUrl": "https://www.leiphone.com/feed",
+    "fetcher": "rss",
+    "dedicated": true,
+    "enabled": false,
+    "authority": 80,
+    "publishedAtTz": "Asia/Shanghai",
+    "note": "2026-09-22 入库待启用：中文 AI 垂直媒体，本机探活 200/442KB。暂不启用的原因——中文源 RSS 普遍只给导语（qbitai description 仅 61 字、infoq-cn 正文为「点击查看原文>」），会被 MIN_CONTENT_CHARS=80 判为无正文而不生成洞察；待中文正文链路方案定了再开"
   }
 ]
