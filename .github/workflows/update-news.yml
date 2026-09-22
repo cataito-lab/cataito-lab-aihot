@@ -54,7 +54,7 @@ jobs:
           # LLM provider：仅新入库标题即时翻译用（少量调用）。
           # 容灾链跨厂商：Gemini 免费档主力 → 商汤网关 → Workers AI 兜底（见 pipeline/src/llm.ts）
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_MODEL: ${{ secrets.GEMINI_MODEL || 'gemini-2.5-flash-lite' }}
+          GEMINI_MODEL: ${{ secrets.GEMINI_MODEL || 'gemini-3.5-flash-lite' }}
           SENSENOVA_API_KEY: ${{ secrets.SENSENOVA_API_KEY }}
           SENSENOVA_BASE_URL: ${{ secrets.SENSENOVA_BASE_URL || 'https://token.sensenova.cn/v1' }}
           SENSENOVA_MODEL: ${{ secrets.SENSENOVA_MODEL || 'deepseek-v4-flash' }}

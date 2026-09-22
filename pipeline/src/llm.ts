@@ -18,7 +18,7 @@ import { httpFetch } from "./net";
  *   LLM_PROVIDER        可选 "gemini"(默认) | "sensenova" | "deepseek" | "glm" | "workersai"
  *                       —— 指定首选，其余按默认顺序兜底
  *   GEMINI_API_KEY      Google AI Studio 免费 key（有则启用 gemini provider）
- *   GEMINI_MODEL        默认 gemini-2.5-flash-lite
+ *   GEMINI_MODEL        默认 gemini-3.5-flash-lite（2.5 系已对新用户下架，404）
  *   SENSENOVA_API_KEY   商汤网关 API key（token.sensenova.cn）
  *   SENSENOVA_BASE_URL  商汤网关 base_url（默认 https://token.sensenova.cn/v1）
  *   SENSENOVA_MODEL     商汤主力模型（默认 sensenova-6.8-flash-lite）
@@ -67,7 +67,7 @@ function buildProviderOrder(): Provider[] {
         name,
         apiKey: key,
         baseURL: GEMINI_BASE,
-        model: process.env.GEMINI_MODEL || "gemini-2.5-flash-lite",
+        model: process.env.GEMINI_MODEL || "gemini-3.5-flash-lite",
       });
       continue;
     }
