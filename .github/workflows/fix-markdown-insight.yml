@@ -1,0 +1,39 @@
+name: fix-markdown-insight
+
+# 手动触发：一次性清洗「markdown 报告泄漏」脏洞察（provider 忽略 json 模式时把整坨
+# markdown 当摘要落库的历史行）。脚本只回退脏行字段（清 summary + summarized_at + 多语列），
+# 不调用模型；正常 pipeline 与 translate 工作流会在后续调度里重新生成干净洞察。
+# 幂等：清洗后行不再命中，可安全重复触发。
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "只列出命中脏行，不写库"
+        required: false
+        default: "true"
+
+concurrency:
+  group: news-fix-markdown
+  cancel-in-progress: true
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Reset markdown-leaked insights
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: >-
+          npx tsx pipeline/scripts/fix-markdown-insight.ts
+          ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
