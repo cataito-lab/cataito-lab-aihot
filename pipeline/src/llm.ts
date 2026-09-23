@@ -11,8 +11,12 @@ import { httpFetch } from "./net";
  * 而 GitHub 工作流仍显示 success（假绿），洞察断流两天无人发现。
  * 因此容灾链必须跨厂商：Gemini（Google）与商汤网关互为独立单点。
  *
- * 任一 provider 限流(429) 时自动切换到下一个；全部 429 时抛出含 "429" 的错误，
+ * 任一 provider 限流(429) 时先按指数退避重试同一 provider（免费档限的是每分钟 RPM 而非当日
+ * 额度，摊平突发即可回血），重试用尽再切换下一个；全部 429 时抛出含 "429" 的错误，
  * 供 backfill-insight 的「连续 429 提前退出」逻辑使用（避免空跑烧额度）。
+ *
+ * 注（2026-09-23）：商汤网关 key 已撤除，当前容灾链实际只剩 Gemini + Workers AI 两个
+ * 独立低 RPM 免费档。退避重试正是为消除"两档同时被突发打限 → 全挂退出码 1"的脆弱点。
  *
  * 环境变量：
  *   LLM_PROVIDER        可选 "gemini"(默认) | "sensenova" | "deepseek" | "glm" | "workersai"
@@ -103,9 +107,26 @@ export interface LlmOptions {
   json?: boolean;
 }
 
+// 429 退避重试：免费档 provider（Gemini / Workers AI）限的是"每分钟请求数(RPM)"，
+// 而非当日总额度。批量摘要/翻译瞬间打满 RPM 时，日志会显示"当日额度还剩上千条却全 429"。
+// 遇 429 不立刻放弃当前 provider，而是指数退避等一会儿再重试同一 provider，给 RPM 窗口回血，
+// 摊平突发。非 429 错误（401/网络/空响应）无此必要，仍立刻切下一个 provider。
+const LLM_429_RETRIES = Number(process.env.LLM_429_RETRIES ?? 2); // 每个 provider 额外重试次数
+const LLM_429_BACKOFF_MS = Number(process.env.LLM_429_BACKOFF_MS ?? 10000);
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** 第 attempt 次重试的退避时长：base * 2^attempt + 0~2s 抖动（避免多路同步重试再次撞窗） */
+function backoffMs(attempt: number): number {
+  return LLM_429_BACKOFF_MS * Math.pow(2, attempt) + Math.floor(Math.random() * 2000);
+}
+
 /**
  * 调用聊天补全，自动跨 provider 容灾。
  * - 返回模型文本（已 trim）。
+ * - 单 provider 遇 429 时按 backoffMs 退避重试 LLM_429_RETRIES 次，仍限流才切换下一个。
  * - 全部 provider 失败时抛出错误；若所有失败均为 429 限流，错误信息含 "429"。
  */
 export async function llmChat(
@@ -132,53 +153,64 @@ export async function llmChat(
   let allRateLimited = true;
 
   for (const p of providers) {
-    try {
-      const body: Record<string, unknown> = { ...baseBody, model: p.model };
-      if (opts.json && !p.noJsonMode) body.response_format = { type: "json_object" };
-      const res = await httpFetch(`${p.baseURL}/chat/completions`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${p.apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(45000),
-      });
+    for (let attempt = 0; attempt <= LLM_429_RETRIES; attempt++) {
+      try {
+        const body: Record<string, unknown> = { ...baseBody, model: p.model };
+        if (opts.json && !p.noJsonMode) body.response_format = { type: "json_object" };
+        const res = await httpFetch(`${p.baseURL}/chat/completions`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${p.apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(45000),
+        });
 
-      if (res.status === 429) {
-        console.warn(`  [llm] ${p.name} 429 限流，切换下一个 provider`);
-        lastErr = new Error(`429 from ${p.name}`);
-        continue;
-      }
-      if (!res.ok) {
-        allRateLimited = false;
-        const detail = await res.text().catch(() => "");
-        // 打印具体 HTTP 状态和响应体前 300 字，避免被上层 catch 静默吞掉
-        console.warn(
-          `  [llm] ${p.name} HTTP ${res.status}: ${detail.slice(0, 300) || "<empty body>"}`,
-        );
-        lastErr = new Error(
-          `HTTP ${res.status} from ${p.name}${detail ? `: ${detail.slice(0, 200)}` : ""}`,
-        );
-        continue;
-      }
+        if (res.status === 429) {
+          lastErr = new Error(`429 from ${p.name}`);
+          if (attempt < LLM_429_RETRIES) {
+            const wait = backoffMs(attempt);
+            console.warn(
+              `  [llm] ${p.name} 429 限流，${Math.round(wait / 1000)}s 后重试 (${attempt + 1}/${LLM_429_RETRIES})`,
+            );
+            await sleep(wait);
+            continue; // 退避后重试同一 provider
+          }
+          console.warn(`  [llm] ${p.name} 429 限流，重试仍失败，切换下一个 provider`);
+          break; // 429 重试用尽 → 下一个 provider
+        }
+        if (!res.ok) {
+          allRateLimited = false;
+          const detail = await res.text().catch(() => "");
+          // 打印具体 HTTP 状态和响应体前 300 字，避免被上层 catch 静默吞掉
+          console.warn(
+            `  [llm] ${p.name} HTTP ${res.status}: ${detail.slice(0, 300) || "<empty body>"}`,
+          );
+          lastErr = new Error(
+            `HTTP ${res.status} from ${p.name}${detail ? `: ${detail.slice(0, 200)}` : ""}`,
+          );
+          break; // 非 429：重试同一 provider 无意义，直接下一个
+        }
 
-      const data = (await res.json()) as {
-        choices?: { message?: { content?: string } }[];
-      };
-      const text = data.choices?.[0]?.message?.content?.trim() ?? "";
-      if (!text) {
+        const data = (await res.json()) as {
+          choices?: { message?: { content?: string } }[];
+        };
+        const text = data.choices?.[0]?.message?.content?.trim() ?? "";
+        if (!text) {
+          allRateLimited = false;
+          lastErr = new Error(`empty response from ${p.name}`);
+          break;
+        }
+        return text;
+      } catch (err) {
         allRateLimited = false;
-        lastErr = new Error(`empty response from ${p.name}`);
-        continue;
+        lastErr = err instanceof Error ? err : new Error(String(err));
+        // 网络层异常（ETIMEDOUT / ECONNRESET / fetch failed 等）也会走这里，
+        // 之前完全静默导致排查困难；现在打印前 300 字，便于区分是网络问题还是别的问题。
+        console.warn(`  [llm] ${p.name} error: ${lastErr.message.slice(0, 300)}`);
+        break; // 网络异常不就地重试，交给下一个 provider
       }
-      return text;
-    } catch (err) {
-      allRateLimited = false;
-      lastErr = err instanceof Error ? err : new Error(String(err));
-      // 网络层异常（ETIMEDOUT / ECONNRESET / fetch failed 等）也会走这里，
-      // 之前完全静默导致排查困难；现在打印前 300 字，便于区分是网络问题还是别的问题。
-      console.warn(`  [llm] ${p.name} error: ${lastErr.message.slice(0, 300)}`);
     }
   }
 
