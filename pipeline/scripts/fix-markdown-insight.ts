@@ -22,18 +22,33 @@ import { looksLikeProseLeak } from "../src/summarize";
 
 const dry = process.argv.includes("--dry-run");
 
-// SQL 预筛（LIKE 粗筛）+ JS 端 looksLikeProseLeak 精判，避免误伤正常摘要。
-const PREFILTER = `summary IS NOT NULL AND (
-       summary LIKE '%###%'
-    OR summary LIKE '%insight_level%'
-    OR summary LIKE '%importance_score%'
-    OR summary LIKE '%impact_score%'
-    OR summary LIKE '%event_key%'
-    OR summary LIKE '%topic_category%'
-    OR summary LIKE '%forward_signal%'
-    OR summary LIKE '%why_it_matters%'
-    OR summary LIKE '%key_change%'
-  )`;
+// SQL 预筛（LIKE 粗筛，须为 looksLikeProseLeak 的超集）+ JS 端精判，避免误伤正常摘要。
+// 覆盖两类 provider 崩溃形态：① ### 分节 + 英文字段标签；② **加粗小标题** + 中文脚手架
+// （核心结论/实体字典/同一事件的不同信源报道…）+ 正文内嵌 ``` 代码块 + 裸 JSON 片段。
+const FENCE = "```";
+const PREFILTER_LIKE: string[] = [
+  "summary LIKE '%###%'",
+  `summary LIKE '%${FENCE}%'`,
+  "summary LIKE '%**%'",
+  'summary LIKE \'%{ "%\'',
+  'summary LIKE \'%"object"%\'',
+  "summary LIKE '%insight_level%'",
+  "summary LIKE '%importance_score%'",
+  "summary LIKE '%impact_score%'",
+  "summary LIKE '%event_key%'",
+  "summary LIKE '%topic_category%'",
+  "summary LIKE '%forward_signal%'",
+  "summary LIKE '%why_it_matters%'",
+  "summary LIKE '%key_change%'",
+  "summary LIKE '%实体字典%'",
+  "summary LIKE '%同一事件的不同信源报道%'",
+  "summary LIKE '%核心结论%'",
+  "summary LIKE '%为什么重要%'",
+  "summary LIKE '%影响谁%'",
+  "summary LIKE '%后续看点%'",
+  "summary LIKE '%避免照抄%'",
+];
+const PREFILTER = `summary IS NOT NULL AND (\n    ${PREFILTER_LIKE.join("\n    OR ")}\n  )`;
 
 interface CandidateRow {
   id: string;

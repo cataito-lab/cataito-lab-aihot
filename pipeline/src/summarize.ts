@@ -280,11 +280,20 @@ export function parseModelJson(raw: string): Record<string, unknown> | null {
 export function looksLikeProseLeak(raw: string): boolean {
   const t = raw.trim();
   if (!t) return false;
-  if (t.startsWith("```")) return true; // 代码块围栏
+  if (t.includes("```")) return true; // 代码块围栏（任意位置，含正文中间嵌 ```rust）
+  if (/\*\*[^*\n]+\*\*/.test(t)) return true; // markdown 加粗小标题 **核心结论**（正常洞察是纯文本，绝不该有 **）
   if (/^#{1,6}\s/m.test(t)) return true; // markdown 标题（### 1. …）
   if (/\|\s*:?-{2,}:?\s*\|/.test(t)) return true; // markdown 表格分隔行
+  if (/\{\s*"[^"]+"\s*:/.test(t)) return true; // 裸 JSON 片段 { "object": ... }
   // 内部字段标签泄漏：正常洞察不会出现这些下划线标识符
   if (/\b(event_key|insight_level|importance_score|impact_score|topic_category|key_change|why_it_matters|forward_signal)\b/.test(t)) return true;
+  // 提示词脚手架被模型连锅复述：中文小标题 / Fact-Inference-Speculation 三段式 / 我注入的上下文标题
+  if (
+    /(实体字典|同一事件的不同信源报道|核心结论|为什么重要|影响谁|后续看点|避免照抄|措辞.{0,6}视角|Fact\s*\/\s*Inference\s*\/\s*Speculation|\bfact\s*[:：]|\binference\s*[:：]|\bspeculation\s*[:：])/.test(
+      t,
+    )
+  )
+    return true;
   return false;
 }
 
