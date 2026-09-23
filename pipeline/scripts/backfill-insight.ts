@@ -18,7 +18,7 @@
 import "../src/env";
 import pLimit from "p-limit";
 import { getDb, markSummarized, ensureSchema } from "../src/db";
-import { runModel, parseModelJson, computeResult, buildInsightUserContent } from "../src/summarize";
+import { runModel, parseModelJson, computeResult, buildInsightUserContent, looksLikeProseLeak } from "../src/summarize";
 import { clusterEvents } from "../src/cluster";
 
 const MAX_CALLS = Number(process.env.BACKFILL_INSIGHT_MAX ?? 400);
@@ -86,7 +86,10 @@ async function processOne(r: PendingRow): Promise<'ok' | 'fail' | '429' | 'skip'
     }
     const parsed = parseModelJson(raw);
     const looksLikeJson = raw.trimStart().startsWith("{");
-    const fallback = !parsed && !looksLikeJson ? raw : null;
+    // provider 忽略 json 模式时模型吐 markdown 报告，不许当摘要落库；判 fail 留待下轮重试
+    const proseLeak = !parsed && looksLikeProseLeak(raw);
+    if (proseLeak) console.warn(`  [insight] ${r.id}: 非 JSON 的结构化散文泄漏，本轮不落库`);
+    const fallback = !parsed && !looksLikeJson && !proseLeak ? raw : null;
     const result = computeResult(row, parsed, fallback);
     if (result.summary == null) {
       console.warn(`  [insight] ${r.id}: no usable summary in response`);

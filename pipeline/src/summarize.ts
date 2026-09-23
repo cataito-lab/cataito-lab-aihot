@@ -271,6 +271,23 @@ export function parseModelJson(raw: string): Record<string, unknown> | null {
   }
 }
 
+/**
+ * 判断模型输出是否为「未走 JSON 的结构化散文泄漏」——provider 忽略 response_format 时，
+ * 模型会把 JSON schema 渲染成 markdown 报告（### 分节、字段标签、表格），甚至把注入的
+ * 同事件背景素材连锅吐出。这类文本绝不能当纯摘要落库（否则整坨 markdown 直接上页面）。
+ * 命中即视为本次生成失败、留待下轮换 provider 重试。
+ */
+export function looksLikeProseLeak(raw: string): boolean {
+  const t = raw.trim();
+  if (!t) return false;
+  if (t.startsWith("```")) return true; // 代码块围栏
+  if (/^#{1,6}\s/m.test(t)) return true; // markdown 标题（### 1. …）
+  if (/\|\s*:?-{2,}:?\s*\|/.test(t)) return true; // markdown 表格分隔行
+  // 内部字段标签泄漏：正常洞察不会出现这些下划线标识符
+  if (/\b(event_key|insight_level|importance_score|impact_score|topic_category|key_change|why_it_matters|forward_signal)\b/.test(t)) return true;
+  return false;
+}
+
 export async function runModel(userContent: string): Promise<string | null> {
   try {
     // 跨厂商容灾链：gemini → 商汤网关三模型 → workersai，429 逐个切换（见 llm.ts）。
@@ -797,7 +814,12 @@ export async function summarizePending(rows: SummarizableRow[]): Promise<Summari
       // 兼容降级：非 JSON 输出按纯文本摘要处理（旧版行为）；
       // 但形似 JSON 的残缺输出（截断/格式损坏）不许当摘要——整串 JSON 显示给用户就是事故，留待下轮重试
       const looksLikeJson = raw!.trimStart().startsWith("{");
-      const fallback = !parsed && !looksLikeJson ? raw! : null;
+      // provider 忽略 JSON 模式时模型会吐 markdown 报告，同样不许当摘要落库（否则 ### 分节直接上页面）
+      const proseLeak = !parsed && looksLikeProseLeak(raw!);
+      if (proseLeak) {
+        console.warn(`  [summarize] ${row.id}: 非 JSON 的结构化散文泄漏（provider 未遵守 json 模式），本轮不落库、留待重试`);
+      }
+      const fallback = !parsed && !looksLikeJson && !proseLeak ? raw! : null;
       const result = computeResult(row, parsed, fallback);
       const valid = result.summary != null;
       if (!valid) {
