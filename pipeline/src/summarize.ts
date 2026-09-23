@@ -547,12 +547,11 @@ export async function buildInsightUserContent(row: SummarizableRow): Promise<str
   parts.push(`正文摘录：${row.content}`);
 
   // Phase 3b（2026-09-04）：注入"同事件多源报道" + 实体字典摘要
-  // 逻辑：从 getRelatedByContent 结果中识别共享同一 event_key 的文章作为"同事件"，
-  // 聚合实体字典让模型知道"围绕哪些实体深挖"。
+  // A 方案（2026-09-23）：getSameEventContext 现在只在确有同事件多源（≥2 篇共享 event_key）
+  // 时返回文章，泛词/子串匹配捞来的"相关"文章不再注入——它们会被模型连锅复述造成串台。
   try {
     const ctx = await getSameEventContext(row.content || row.title || "", row.id);
     if (ctx.sameEventArticles.length > 0) {
-      const isTrueMultiSource = ctx.sameEventArticles.length >= 2;
       const lines = ctx.sameEventArticles
         .map((r) => {
           const when = r.publishedAt ? r.publishedAt.slice(0, 10) : "";
@@ -562,9 +561,8 @@ export async function buildInsightUserContent(row: SummarizableRow): Promise<str
           return `- ${when}${src} 《${t}》${kc}`;
         })
         .join("\n");
-      const heading = isTrueMultiSource
-        ? "【同一事件的不同信源报道】以下报道与当前文章共享同一 event_key，是同一事件的多信源覆盖。请**交叉分析**：不同信源的措辞、视角、细节有何差异？哪些是新增信息？避免照抄任何一篇的表述，也不要把不同信源拼成看似客观的复述。"
-        : "【相关内容背景】以下是与当前文章共享实体的相关文章（非严格同事件），仅供你对比\"增量\"与\"新意\"时参考；不要照抄其表述。";
+      const heading =
+        "【同一事件的不同信源报道】以下报道与当前文章共享同一 event_key，是同一事件的多信源覆盖。请**交叉分析**：不同信源的措辞、视角、细节有何差异？哪些是新增信息？避免照抄任何一篇的表述，也不要把不同信源拼成看似客观的复述。";
       parts.push(`${heading}\n${lines}`);
 
       if (ctx.entityAggregation.length > 0) {

@@ -1168,8 +1168,14 @@ export async function getSameEventContext(
     }
   }
 
-  const sameEvent = topKey ? enriched.filter((e) => e.eventKey === topKey) : enriched.slice(0, 3);
-  const picked = topCount >= 2 ? sameEvent : enriched.slice(0, 3);
+  // A 方案（2026-09-23 串台事故复盘）：仅当确有"同事件多源"（≥2 篇共享同一 event_key）
+  // 时才注入背景。泛词/子串匹配捞来的"相关"文章（如 OpenAI 标准的新闻里混入小米、Wired 考古）
+  // 会被模型连锅复述进洞察，造成正文与标题串台。没有真同事件就返回空，宁可不注入背景。
+  if (!topKey || topCount < 2) {
+    return { sameEventArticles: [], entityAggregation: [], totalCount: related.length };
+  }
+
+  const picked = enriched.filter((e) => e.eventKey === topKey);
 
   // 聚合实体（去重保序，最多 15 个）
   const entitySet = new Set<string>();
