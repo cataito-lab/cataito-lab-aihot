@@ -773,6 +773,23 @@ export async function summarizePending(rows: SummarizableRow[]): Promise<Summari
   let rewriteCount = 0;    // Phase 2：FAIL 后重写条数
   let failCount = 0;       // Phase 2：最终未通过条数
 
+  // 连续失败熔断：LLM 链路整体不可用时不再逐条空撞（单条成本 = 各 provider 退避之和，
+  // 2026-09-24 实测可达 80s）。旧判定只在 catch 分支且用累计值，"空响应"分支直接绕过它，
+  // 所以一轮能在 70 分钟预算里空转 29 次；现在三条失败路径统一计数，成功即复位。
+  const failCircuit = Number(process.env.LLM_FAIL_CIRCUIT ?? 5);
+  let consecutiveFailures = 0;
+  const markFailure = (): boolean => {
+    failures++;
+    consecutiveFailures++;
+    if (consecutiveFailures >= failCircuit) {
+      console.warn(
+        `  [summarize] 连续 ${consecutiveFailures} 条失败，判定 LLM 链路不可用，本轮提前收尾`,
+      );
+      return true;
+    }
+    return false;
+  };
+
   for (const row of rows) {
     if (done >= MAX_PER_RUN || remainingQuota <= 0) break;
 
@@ -813,7 +830,7 @@ export async function summarizePending(rows: SummarizableRow[]): Promise<Summari
       if (!parsed && !raw) {
         // 模型返回空内容：不计入配额、不标记已处理，留待下轮重试
         console.warn(`  [summarize] ${row.id}: empty response, skipped`);
-        failures++;
+        if (markFailure()) break;
         await sleep(100);
         continue;
       }
@@ -832,7 +849,7 @@ export async function summarizePending(rows: SummarizableRow[]): Promise<Summari
       if (!valid) {
         // 无法从输出中提取摘要：不标记，留待重试
         console.warn(`  [summarize] ${row.id}: no usable summary in response, skipped`);
-        failures++;
+        if (markFailure()) break;
         await sleep(100);
         continue;
       }
@@ -902,12 +919,12 @@ export async function summarizePending(rows: SummarizableRow[]): Promise<Summari
 
       await markSummarized(row.id, result);
       done++;
+      consecutiveFailures = 0;
       remainingQuota--;
       if (result.final != null) scored++;
     } catch (err) {
       console.warn(`  [summarize] ${row.id}: ${err instanceof Error ? err.message : err}`);
-      failures++;
-      if (failures >= 5) break;
+      if (markFailure()) break;
       await sleep(100);
       continue;
     }

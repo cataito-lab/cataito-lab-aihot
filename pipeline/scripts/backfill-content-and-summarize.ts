@@ -18,7 +18,7 @@
  * - 正文抓取逻辑与主链路共用 pipeline/src/enrich-content.ts，避免两处实现漂移
  */
 import "../src/env";
-import { getDb, getRecentWithoutSummary, setArticleContent } from "../src/db";
+import { getDb, getSummaryTier, setArticleContent } from "../src/db";
 import { summarizePending } from "../src/summarize";
 import { fetchBody, shouldSkipUrl, MIN_BODY_CHARS } from "../src/enrich-content";
 
@@ -85,7 +85,7 @@ async function main() {
 
   // 第二步：对已 enriched 的文章调 LLM 摘要（复用既有查询函数，类型对齐）
   if (!dryRun && enriched > 0) {
-    const shape = await getRecentWithoutSummary(hours, 30);
+    const shape = await getSummaryTier({ newerThanHours: hours, limit: 30 });
     console.log(`[backfill] ${shape.length} articles ready for LLM`);
 
     const done = (await summarizePending(shape)).done;

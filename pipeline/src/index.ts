@@ -19,13 +19,14 @@ import {
   saveTitleTranslations,
   applyTranslationUpdates,
   getUntranslated,
-  getRecentWithoutSummary,
+  getSummaryTier,
   getSummaryBacklog,
   getSourceHealth,
   markSourceOutcomes,
 } from "./db";
 import { translatePending } from "./translate";
 import { summarizePending, MAX_PER_RUN } from "./summarize";
+import { llmQuotaBreakerOpen } from "./llm";
 import { enrichContent } from "./enrich-content";
 import { translateSummariesPending } from "./summary-translate";
 import { translateInsightsPending } from "./insight-translate";
@@ -33,6 +34,11 @@ import { translateTitlesPending } from "./title-translate";
 import { clusterEvents } from "./cluster";
 import { decodeEntities, sanitizeTitle } from "./text";
 import type { FetchResult, RawItem, SourceDef } from "./types";
+
+/** 摘要在途窗口：published_at 超过它就不再是"正常队列"，改由盲区回捞兜住 */
+const SUMMARY_WINDOW_H = 24;
+/** 首屏保鲜层：近这么多小时内的文章最新优先，额度占在途队列的 60% */
+const FRESH_WINDOW_H = Number(process.env.ENRICH_FRESH_WINDOW_H ?? 6);
 
 function parseArgs(): {
   windowHours: number;
@@ -118,24 +124,49 @@ async function main(): Promise<void> {
     const withinBudget = () => Date.now() - startedAt < budgetMs;
 
     // === F2：顺序重排，摘要/洞察优先（用户可见的最新内容），存量标题回译放最后 ===
-    // 盲区回捞分池（TECH_SPEC §27.1）：回捞行追加尾部会在非空队列时永远轮不到，显式拆两池额度。
+    // 队列分三层（2026-09-24，TECH_SPEC §27.4 修订）：免费档额度每天只够产出约 1 小时的量，
+    // 原先整条队列严格先进先出，缺口全部砸在队尾＝最新文章上，前端首屏连续 23 小时空白
+    // （实测最后一条洞察停在 24h 前发布的文章）。现在：
+    //   层1 近 FRESH_WINDOW_H 小时：最新优先，保首屏保鲜；
+    //   层2 窗口内更早的（到 24h）：最旧优先，保证没有文章会滑出窗口而永久漏评；
+    //   层3 超窗盲区回捞（>36h，§27.1）：独立额度，不与在途队列抢。
+    // 层1 没吃饱时额度自动让给层2。
     const backlogQuota = Math.max(0, Math.min(backlog, MAX_PER_RUN - 10));
-    const summarizable = await getRecentWithoutSummary(24, MAX_PER_RUN - backlogQuota);
+    const liveQuota = MAX_PER_RUN - backlogQuota;
+    const freshQuota = Math.ceil(liveQuota * 0.6);
+    const freshRows = await getSummaryTier({
+      newerThanHours: FRESH_WINDOW_H,
+      limit: freshQuota,
+      order: "desc",
+    });
+    const restRows = await getSummaryTier({
+      newerThanHours: SUMMARY_WINDOW_H,
+      olderThanHours: FRESH_WINDOW_H,
+      limit: liveQuota - freshRows.length,
+      order: "asc",
+    });
     const backlogRows = await getSummaryBacklog(backlogQuota);
-    const sumStats = await summarizePending([...summarizable, ...backlogRows]);
+    const queueRows = [...freshRows, ...restRows, ...backlogRows];
+    const sumStats = await summarizePending(queueRows);
     const summarized = sumStats.done;
 
     // 多语补译（新摘要/洞察的外语译文）优先于老标题回译；预算不足则跳过，不影响洞察本身
     let summaryTranslated = 0;
     let insightsTranslated = 0;
     let titlesTranslated = 0;
-    if (withinBudget()) summaryTranslated = await translateSummariesPending();
-    if (withinBudget()) insightsTranslated = await translateInsightsPending();
-    if (withinBudget()) titlesTranslated = await translateTitlesPending();
+    // 熔断开启＝当日额度已耗尽（见 llm.ts），后续每个阶段都只会必败，跳过以把本轮从
+    // 70 分钟压到几分钟，也就不再堵住并发组导致后续 run 被系统 cancelled（满屏假失败）。
+    const breakerOpen = llmQuotaBreakerOpen();
+    if (breakerOpen) {
+      console.warn("  [enrich-only] LLM 熔断中（当日额度已耗尽），跳过补译/回译阶段");
+    }
+    if (!breakerOpen && withinBudget()) summaryTranslated = await translateSummariesPending();
+    if (!breakerOpen && withinBudget()) insightsTranslated = await translateInsightsPending();
+    if (!breakerOpen && withinBudget()) titlesTranslated = await translateTitlesPending();
 
     // 存量英文标题→中文回译（非紧急的旧标题译名）放最后，150→60：不再挤占摘要时间预算
     let backfillCount = 0;
-    if (withinBudget()) {
+    if (!breakerOpen && withinBudget()) {
       const backfill = await getUntranslated(60);
       backfillCount = backfill.length;
       if (backfill.length > 0) {
@@ -152,7 +183,7 @@ async function main(): Promise<void> {
     }
     const elapsedSec = Math.round((Date.now() - startedAt) / 1000);
     console.log(
-      `\n[enrich-only] summarize=${summarized}/${summarizable.length}+${backlogRows.length}(backlog) ` +
+      `\n[enrich-only] summarize=${summarized}/${freshRows.length}(fresh)+${restRows.length}(rest)+${backlogRows.length}(backlog) ` +
         `summaryTranslate=${summaryTranslated} insightTranslate=${insightsTranslated} titleTranslate=${titlesTranslated} ` +
         `titleBackfill=${backfillCount} elapsed=${elapsedSec}s budget_hit=${!withinBudget()}`,
     );
@@ -287,7 +318,9 @@ async function main(): Promise<void> {
   }
 
   if (!noEnrich) {
-    const summarizable = await getRecentWithoutSummary(windowHours, 40);
+    // 本地/手动全量运行才走这条内联路径（Actions 已拆成 --no-enrich + --enrich-only），
+    // 保持先进先出即可，不必分层。
+    const summarizable = await getSummaryTier({ newerThanHours: windowHours, limit: 40 });
     await summarizePending(summarizable);
     await translateSummariesPending();
     await translateInsightsPending();

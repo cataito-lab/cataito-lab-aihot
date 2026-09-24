@@ -396,21 +396,40 @@ function dbVal(v: unknown): string | number | null {
   return JSON.stringify(v);
 }
 
-export async function getRecentWithoutSummary(
-  windowHours: number,
-  limit: number,
-): Promise<SummarizableArticleRow[]> {
-  const cutoff = new Date(Date.now() - windowHours * 3_600_000).toISOString();
-  const rs = await getDb().execute({
-    // oldest-first（TECH_SPEC §27.4）：日增 > 消化量时 DESC 会让队尾文章拖到超窗永久漏评
-    // （实测曾积到 18 天前）；先进先出保证每篇在窗口内被消费，回捞退回兜底角色
-    sql: `SELECT a.id, a.title, a.title_zh, s.name AS source_name,
-                 a.article_content, COALESCE(s.authority, 60) AS authority
-          FROM articles a JOIN sources s ON s.id = a.source_id
-          WHERE a.summary IS NULL AND a.summarized_at IS NULL AND a.published_at >= ?
-          ORDER BY a.published_at ASC, a.id ASC LIMIT ?`,
-    args: [cutoff, limit],
-  });
+/**
+ * 摘要队列分层取数：published_at 落在 [now-newerThanHours, now-olderThanHours) 内、
+ * 仍未摘要（summary IS NULL AND summarized_at IS NULL）的行。
+ *
+ * order 决定层内优先级，两层配用（见 index.ts --enrich-only）：
+ * - "desc"：最新优先。免费档额度每天只够产出约 1 小时的量，若整条队列都是先进先出，
+ *   缺口 100% 落在队尾＝最新文章上，前端首屏会连续 23 小时看不到任何洞察
+ *   （2026-09-24 实测：最后一条洞察对应的发布时间停在 24h 前）。
+ * - "asc"：最旧优先（TECH_SPEC §27.4）。日增 > 消化量时 DESC 会让队尾文章拖到超窗
+ *   永久漏评（实测曾积到 18 天前），所以窗口内较早的那一层必须先进先出。
+ *
+ * olderThanHours 省略或 0 表示不设下界。
+ */
+export async function getSummaryTier(opts: {
+  newerThanHours: number;
+  olderThanHours?: number;
+  limit: number;
+  order?: "asc" | "desc";
+}): Promise<SummarizableArticleRow[]> {
+  if (opts.limit <= 0) return [];
+  const args: (string | number)[] = [
+    new Date(Date.now() - opts.newerThanHours * 3_600_000).toISOString(),
+  ];
+  let sql = `SELECT a.id, a.title, a.title_zh, s.name AS source_name,
+                   a.article_content, COALESCE(s.authority, 60) AS authority
+            FROM articles a JOIN sources s ON s.id = a.source_id
+            WHERE a.summary IS NULL AND a.summarized_at IS NULL AND a.published_at >= ?`;
+  if (opts.olderThanHours && opts.olderThanHours > 0) {
+    sql += ` AND a.published_at < ?`;
+    args.push(new Date(Date.now() - opts.olderThanHours * 3_600_000).toISOString());
+  }
+  sql += ` ORDER BY a.published_at ${opts.order === "desc" ? "DESC" : "ASC"}, a.id ASC LIMIT ?`;
+  args.push(opts.limit);
+  const rs = await getDb().execute({ sql, args });
   return rs.rows.map((row) => ({
     id: String(row.id),
     title: String(row.title),
