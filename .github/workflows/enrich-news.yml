@@ -50,15 +50,18 @@ jobs:
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
-          # LLM 容灾链（跨厂商，2026-09-22 重建）：Gemini 免费档主力 →
-          # 商汤网关三模型(token.sensenova.cn) → Cloudflare Workers AI 兜底，详见 pipeline/src/llm.ts
+          # LLM 容灾链（2026-09-23 起）：Gemini 免费档主力 → Cloudflare Workers AI 兜底。
+          # 商汤网关 key 已撤除；两档免费额度按太平洋零点（UTC 07:00）重置，因此每天通常
+          # 只有重置后约一小时能真正产出洞察，其余时间由 llm.ts 的熔断快速收尾。
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ secrets.GEMINI_MODEL || 'gemini-3.5-flash-lite' }}
           SENSENOVA_API_KEY: ${{ secrets.SENSENOVA_API_KEY }}
           SENSENOVA_BASE_URL: ${{ secrets.SENSENOVA_BASE_URL || 'https://token.sensenova.cn/v1' }}
           SENSENOVA_MODEL: ${{ secrets.SENSENOVA_MODEL || 'deepseek-v4-flash' }}
           LLM_PROVIDER: ${{ secrets.LLM_PROVIDER || 'gemini' }}
-          # Cloudflare Workers AI 兜底（链尾，需 CF_* 凭据）
+          # Cloudflare Workers AI 兜底（链尾，需 CF_* 凭据）。模型必须显式钉：
+          # 该跳此前跑在未声明的代码默认模型上、且只有 45s 超时，等于从未真正兜到底。
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CF_AI_API_TOKEN: ${{ secrets.CF_AI_API_TOKEN }}
+          CF_AI_MODEL: ${{ secrets.CF_AI_MODEL || '@cf/meta/llama-3.1-70b-instruct' }}
         run: npx tsx pipeline/src/index.ts --enrich-only
