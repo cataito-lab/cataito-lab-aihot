@@ -213,7 +213,7 @@
   "Agent": {
     "en": "Agent",
     "zh": "Agent",
-    "ja": "Agent",
+    "ja": "エージェント",
     "es": "Agent",
     "fr": "Agent"
   },
@@ -347,7 +347,9 @@
     "zh": {
       "克劳德": "Claude",
       "AI 代理": "AI Agent",
+      "AI智能体": "AI Agent",
       "智能代理": "Agent",
+      "智能体": "Agent",
       "开放人工智能": "OpenAI",
       "流氓特工": "失控 Agent",
       "AI 代理开发者": "AI Agent 开发者",
