@@ -1,0 +1,39 @@
+name: fix-future-published-at
+
+# 手动触发：一次性回炉「published_at 晚于 fetched_at」的历史行（信源预写未来 pubDate，
+# 而 INSERT OR IGNORE 让首个错误时间戳永久冻结 → 该条一直钉在 Latest 顶部并显示未来时刻）。
+# 写入侧钳制已在 pipeline/src/db.ts 的 insertArticles 生效，本工作流只清理存量。
+# 不调用模型、不产生额度消耗。幂等：修正后行不再命中，可安全重复触发。
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "只列出命中行，不写库"
+        required: false
+        default: "true"
+
+concurrency:
+  group: news-fix-future-time
+  cancel-in-progress: true
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Clamp future published_at to fetched_at
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: >-
+          npx tsx pipeline/scripts/fix-future-published-at.ts
+          ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
