@@ -267,6 +267,15 @@ export interface NewArticleRow {
   articleContent?: string;
 }
 
+/** 信源可能给"还没发生"的发布时间：CMS 把定时发布的稿子提前塞进 feed 并预写未来 pubDate
+ *  （OpenAI News 实测领先 19–47 小时）。而 INSERT OR IGNORE 会让首个错误时间戳永久冻结
+ *  （重抓不刷新），后果是这条新闻一直钉在 Latest 顶部、右侧还渲染成 "just now"。
+ *  新闻时间线里"未来发布"没有信息量，钳制到抓取时刻：最多偏早，不会偏晚。 */
+export function clampPublishedAt(publishedAt: string, fetchedAt: string): string {
+  const t = Date.parse(publishedAt);
+  return Number.isFinite(t) && t > Date.parse(fetchedAt) ? fetchedAt : publishedAt;
+}
+
 export async function insertArticles(rows: NewArticleRow[]): Promise<number> {
   if (rows.length === 0) return 0;
   const now = new Date().toISOString();
@@ -281,7 +290,7 @@ export async function insertArticles(rows: NewArticleRow[]): Promise<number> {
       r.url,
       // 防御：author 若被上游解析成对象/数组等非字符串类型，一律置 null（SQLite 拒绝绑定其他类型）
       typeof r.author === "string" ? r.author : null,
-      r.publishedAt,
+      clampPublishedAt(r.publishedAt, now),
       now,
       r.sourceTimezone ?? "UTC",
       r.estimated ? 1 : 0,
