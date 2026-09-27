@@ -3,7 +3,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Header } from "@/components/header";
 import { getEvent } from "@/lib/news";
-import type { EventMember } from "@/lib/types";
+import { DegradedNote } from "@/components/degraded-note";
+import type { EventDetail, EventMember } from "@/lib/types";
 import { pickTitle } from "@/lib/i18n";
 import { pickField, pickSummary } from "@/lib/localize";
 
@@ -36,7 +37,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale, key } = await params;
   const t = await getTranslations({ locale, namespace: "event" });
-  const event = await getEvent(key);
+  let event: EventDetail | null;
+  try {
+    event = await getEvent(key);
+  } catch (err) {
+    // 元数据阶段读库失败同样不能抛 500：返回空对象继承 layout 的默认 metadata
+    console.error(`[event/${key}] generateMetadata 读库失败:`, err);
+    return {};
+  }
   if (!event) return { title: t("notFoundTitle") };
   const title = pickTitle(event, locale).primary || "AI 事件";
   const raw = locale === "zh" ? event.summary : locale === "en" ? event.summaryEn : null;
@@ -138,7 +146,30 @@ export default async function EventPage({
   setRequestLocale(locale);
   const t = await getTranslations("event");
   const tArticle = await getTranslations("article");
-  const event = await getEvent(key);
+  // 读库失败与「事件不存在」必须分开：把数据库抖动渲染成 not-found 页面，
+  // 会让爬虫以为该 URL 已失效而掉收录。
+  let event: EventDetail | null = null;
+  let degraded = false;
+  try {
+    event = await getEvent(key);
+  } catch (err) {
+    degraded = true;
+    console.error(`[event/${key}] 读取失败，降级渲染:`, err);
+  }
+
+  if (degraded) {
+    return (
+      <>
+        <Header />
+        <main className="site-main">
+          <DegradedNote />
+          <div className="event-detail card">
+            <Link href="/" className="event-back">{t("backHome")}</Link>
+          </div>
+        </main>
+      </>
+    );
+  }
 
   if (!event) {
     return (

@@ -3,10 +3,11 @@ import { Header } from "@/components/header";
 import { BriefingPanel } from "@/components/briefing-panel";
 import { NewsFeed } from "@/components/news-feed";
 import { TzNote } from "@/components/tz-note";
-import { getBriefMeta, listArticles } from "@/lib/news";
+import { getBriefMeta, listArticles, emptyBriefMeta, emptyFeedPage } from "@/lib/news";
+import { DegradedNote } from "@/components/degraded-note";
 import { withFreshness } from "@/lib/article-utils";
 import { pickTitle } from "@/lib/i18n";
-import type { FeedFilters } from "@/lib/types";
+import type { BriefMeta, FeedFilters, FeedPage } from "@/lib/types";
 
 export const runtime = "edge";
 
@@ -47,7 +48,19 @@ export default async function HomePage(
     topicCategory: urlTopic,
   };
 
-  const [page, meta] = await Promise.all([listArticles(filters), getBriefMeta()]);
+  // 数据库不可达时降级渲染空时间线（200 + 提示），而不是抛 500 把整站打成错误页——
+  // 2026-09-26 Turso 读封锁期间，5 个语言的所有页面连续 5xx，收录直接受冲击。
+  let page: FeedPage;
+  let meta: BriefMeta;
+  let degraded = false;
+  try {
+    [page, meta] = await Promise.all([listArticles(filters), getBriefMeta()]);
+  } catch (err) {
+    degraded = true;
+    page = emptyFeedPage();
+    meta = emptyBriefMeta();
+    console.error("[home] 数据读取失败，降级渲染空时间线:", err);
+  }
   const items = withFreshness(page.items);
   const feedKey = `${urlCategory ?? ""}|${filters.sourceId ?? ""}|${filters.q ?? ""}|${filters.hours ?? ""}|${urlSort}|${urlTopic ?? ""}`;
 
@@ -58,15 +71,20 @@ export default async function HomePage(
     description: ts("description"),
     url: `https://aihot.cataito.com/${locale}`,
     inLanguage: locale,
-    mainEntity: {
-      "@type": "ItemList",
-      itemListElement: items.slice(0, 30).map((a, i) => ({
-        "@type": "ListItem",
-        position: i + 1,
-        name: pickTitle(a, locale).primary,
-        url: a.url,
-      })),
-    },
+    // 降级时不输出空 ItemList：给爬虫一个空列表比不给更糟
+    ...(degraded
+      ? {}
+      : {
+          mainEntity: {
+            "@type": "ItemList",
+            itemListElement: items.slice(0, 30).map((a, i) => ({
+              "@type": "ListItem",
+              position: i + 1,
+              name: pickTitle(a, locale).primary,
+              url: a.url,
+            })),
+          },
+        }),
   };
   const orgJsonLd = {
     "@context": "https://schema.org",
@@ -97,6 +115,7 @@ export default async function HomePage(
       />
       <Header activeCategory={urlCategory} q={filters.q} activeTopic={urlTopic} sourcesCount={meta.sourcesEnabled} />
       <main className="site-main">
+        {degraded && <DegradedNote />}
         <BriefingPanel meta={meta} />
 
         {(filters.q || filters.sourceId || filters.category || filters.topicCategory) && (

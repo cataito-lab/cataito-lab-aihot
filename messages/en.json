@@ -2,7 +2,8 @@
   "site": {
     "title": "AI Hot Takes - Global AI News Timeline",
     "titleSuffix": "AI Hot Takes",
-    "description": "Real-time aggregation and summaries of global AI news from official blogs, English and Chinese media, and community discussions, ordered as a chronological timeline with verifiable sources."
+    "description": "Real-time aggregation and summaries of global AI news from official blogs, English and Chinese media, and community discussions, ordered as a chronological timeline with verifiable sources.",
+    "dbOutage": "The news database is temporarily unreachable, so the timeline is empty right now. Pages stay online and keep their addresses — please try again shortly."
   },
   "brand": {
     "name": "AI Hot Takes"

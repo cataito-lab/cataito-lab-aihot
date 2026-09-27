@@ -6,6 +6,8 @@ import { DailyDateNav } from "@/components/daily-date-nav";
 import { TzNote } from "@/components/tz-note";
 import { ArticleItem } from "@/components/article-item";
 import { getDailyArticles, getDailyDates } from "@/lib/news";
+import type { DailyDateRow } from "@/lib/news";
+import { DegradedNote } from "@/components/degraded-note";
 import { pickTitle } from "@/lib/i18n";
 import type { FeedArticle } from "@/lib/types";
 
@@ -48,8 +50,15 @@ export default async function DailyPage({ params }: Props) {
 
   const t = await getTranslations("daily");
   const ta = await getTranslations("article");
-  const items: FeedArticle[] = await getDailyArticles(date);
-  const dates = await getDailyDates(30);
+  let items: FeedArticle[] = [];
+  let dates: DailyDateRow[] = [];
+  let degraded = false;
+  try {
+    [items, dates] = await Promise.all([getDailyArticles(date), getDailyDates(30)]);
+  } catch (err) {
+    degraded = true;
+    console.error(`[daily/${date}] 读取失败，降级渲染:`, err);
+  }
 
   const catLabel = (cat: string): string =>
     cat === "official"
@@ -70,15 +79,20 @@ export default async function DailyPage({ params }: Props) {
     url: `${SITE_URL}/${locale}/daily/${date}`,
     inLanguage: locale,
     datePublished: `${date}T00:00:00.000Z`,
-    mainEntity: {
-      "@type": "ItemList",
-      itemListElement: items.slice(0, 50).map((a, i) => ({
-        "@type": "ListItem",
-        position: i + 1,
-        name: pickTitle(a, locale).primary,
-        url: a.url,
-      })),
-    },
+    // 降级时不输出空 ItemList，也不要在读不到数据时断言「当日无内容」
+    ...(degraded
+      ? {}
+      : {
+          mainEntity: {
+            "@type": "ItemList",
+            itemListElement: items.slice(0, 50).map((a, i) => ({
+              "@type": "ListItem",
+              position: i + 1,
+              name: pickTitle(a, locale).primary,
+              url: a.url,
+            })),
+          },
+        }),
   };
 
   return (
@@ -89,6 +103,7 @@ export default async function DailyPage({ params }: Props) {
       />
       <Header />
       <main className="site-main">
+        {degraded && <DegradedNote />}
         <section className="animate-fade-up">
           <h1 className="text-2xl font-bold">
             {t("title")} <span className="font-mono">{date}</span>
@@ -109,7 +124,7 @@ export default async function DailyPage({ params }: Props) {
         </section>
 
         <section className="mt-8">
-          {items.length === 0 ? (
+          {!degraded && items.length === 0 ? (
             <p className="py-24 text-center text-fg-muted">{t("noData")}</p>
           ) : (
             <ol className="relative ml-0 flex flex-col gap-5">

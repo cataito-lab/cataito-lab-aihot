@@ -4,6 +4,8 @@ import { Link } from "@/i18n/navigation";
 import { Header } from "@/components/header";
 import { ArticleItem } from "@/components/article-item";
 import { getEntityArticles } from "@/lib/news";
+import { DegradedNote } from "@/components/degraded-note";
+import type { FeedArticle } from "@/lib/types";
 
 const SITE_URL = "https://aihot.cataito.com";
 
@@ -45,22 +47,30 @@ export default async function EntityPage({
   setRequestLocale(locale);
   const entity = decodeURIComponent(name);
   const t = await getTranslations("entity");
-  const items = await getEntityArticles(entity);
+  let items: FeedArticle[] = [];
+  let degraded = false;
+  try {
+    items = await getEntityArticles(entity);
+  } catch (err) {
+    degraded = true;
+    console.error(`[entity/${entity}] 读取失败，降级渲染:`, err);
+  }
 
   return (
     <>
       <Header />
       <main className="site-main">
+        {degraded && <DegradedNote />}
         <Link href="/" className="event-back">
           {t("back")}
         </Link>
 
         <div className="entity-head">
           <h1 className="entity-title">{t("title", { name: entity })}</h1>
-          <p className="entity-count">{t("count", { n: items.length })}</p>
+          {!degraded && <p className="entity-count">{t("count", { n: items.length })}</p>}
         </div>
 
-        {items.length > 0 ? (
+        {degraded ? null : items.length > 0 ? (
           <ul className="feed-list">
             {items.map((a, i) => (
               <ArticleItem key={a.id} article={a} index={i} />

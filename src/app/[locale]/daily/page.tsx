@@ -4,6 +4,8 @@ import { Header } from "@/components/header";
 import { DailyDateNav } from "@/components/daily-date-nav";
 import { TzNote } from "@/components/tz-note";
 import { getDailyDates } from "@/lib/news";
+import type { DailyDateRow } from "@/lib/news";
+import { DegradedNote } from "@/components/degraded-note";
 
 export const runtime = "edge";
 
@@ -33,12 +35,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function DailyIndexPage({ params }: Props) {
   const { locale } = await params;
   const t = await getTranslations("daily");
-  const dates = await getDailyDates(30);
+  let dates: DailyDateRow[] = [];
+  let degraded = false;
+  try {
+    dates = await getDailyDates(30);
+  } catch (err) {
+    degraded = true;
+    console.error("[daily] 存档日期读取失败，降级渲染:", err);
+  }
 
   return (
     <>
       <Header />
       <main className="site-main">
+        {degraded && <DegradedNote />}
         <section className="animate-fade-up">
           <h1 className="text-2xl font-bold">{t("archive")}</h1>
           <p className="mt-2 text-fg-muted text-sm">{t("description")}</p>
