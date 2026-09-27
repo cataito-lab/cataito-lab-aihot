@@ -80,6 +80,26 @@ const SCHEMA_STATEMENTS = [
     title_zh TEXT NOT NULL,
     created_at TEXT NOT NULL
   )`,
+  // 实体规范化表（2026-09-26 读放大治理）：替代「articles 全表 × json_each(entities) 逐行展开」。
+  // 旧写法每次调用读量 ≈ 全表行数 × 每行实体数（实测 2 万行库约 18 万行读/次），
+  // 是本月 Turso rows-read 爆掉的第一元凶；改为本表后按 entity 主键定位，只读命中行。
+  // entity 存小写用于匹配，label 存首次出现的原形用于 sitemap 与实体页 URL（避免 slug 大小写漂移）。
+  `CREATE TABLE IF NOT EXISTS article_entities (
+    entity TEXT NOT NULL,
+    label TEXT NOT NULL,
+    article_id TEXT NOT NULL,
+    published_at TEXT NOT NULL,
+    PRIMARY KEY (entity, article_id)
+  ) WITHOUT ROWID`,
+  `CREATE INDEX IF NOT EXISTS idx_ae_article ON article_entities (article_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_ae_published ON article_entities (published_at, entity)`,
+  // 库内 TTL 缓存：字典类聚合若按「每个新进程算一次」计，Actions 每 10 分钟一轮 = 144 次/天全表聚合，
+  // 单这一项就能吃满月度读额度，故必须把结果落到库里跨进程复用。
+  `CREATE TABLE IF NOT EXISTS pipeline_cache (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )`,
 ];
 
 const FTS_TRIGRAM_DDL = `CREATE VIRTUAL TABLE IF NOT EXISTS articles_fts USING fts5(
@@ -98,6 +118,18 @@ const TRIGGER_DDLS = [
     DELETE FROM articles_fts WHERE article_id = old.id;
     INSERT INTO articles_fts(title, title_zh, article_id)
     VALUES (new.title, COALESCE(new.title_zh, ''), new.id);
+  END`,
+  // 实体表由触发器自动维护，写入路径无需感知（entities 只在洞察阶段被赋值，插入时恒为 NULL）。
+  // published_at 也在触发列内：修未来时间戳的一次性脚本会改它，不能让表里留下旧值。
+  `CREATE TRIGGER IF NOT EXISTS articles_entities_au AFTER UPDATE OF entities, published_at ON articles BEGIN
+    DELETE FROM article_entities WHERE article_id = old.id;
+    INSERT OR IGNORE INTO article_entities (entity, label, article_id, published_at)
+      SELECT DISTINCT lower(j.value), CAST(j.value AS TEXT), new.id, new.published_at
+      FROM json_each(CASE WHEN json_valid(new.entities) THEN new.entities ELSE '[]' END) j
+      WHERE j.value IS NOT NULL;
+  END`,
+  `CREATE TRIGGER IF NOT EXISTS articles_entities_ad AFTER DELETE ON articles BEGIN
+    DELETE FROM article_entities WHERE article_id = old.id;
   END`,
 ];
 
@@ -198,6 +230,18 @@ export async function ensureSchema(): Promise<void> {
   await getDb().execute("CREATE INDEX IF NOT EXISTS idx_articles_insight_pass ON articles (insight_pass)");
   await getDb().execute("CREATE INDEX IF NOT EXISTS idx_articles_insight_reviewed ON articles (insight_reviewed)");
   await getDb().execute("CREATE INDEX IF NOT EXISTS idx_articles_event ON articles (event_id)");
+  // 首页 ?sort=importance 按 COALESCE(importance_score, score_final) 排序，表达式无索引时
+  // 每次访问都要全表扫 + 临时 B 树排序；建成表达式索引后可按 LIMIT 提前停止。
+  await getDb().execute(
+    "CREATE INDEX IF NOT EXISTS idx_articles_importance ON articles (COALESCE(importance_score, score_final) DESC, published_at DESC, id DESC)",
+  );
+  // /api/health 的「最后一次洞察产出时间」被外部监控每 10 分钟打一次，原先 MAX(summarized_at)
+  // WHERE summary IS NOT NULL 是全表扫。建成部分索引后该查询退化为取索引首行。
+  // 谓词必须是 summary IS NOT NULL：被标记已处理但无摘要的行 summarized_at 有值而 summary 为空，
+  // 若按 summarized_at 建索引会把「没产出」误报成「刚产出」。
+  await getDb().execute(
+    "CREATE INDEX IF NOT EXISTS idx_articles_last_insight ON articles (summarized_at DESC) WHERE summary IS NOT NULL",
+  );
   await ensureColumn("sources", "authority", "authority INTEGER");
   await ensureColumn("sources", "fail_streak", "fail_streak INTEGER NOT NULL DEFAULT 0");
   await ensureColumn("sources", "next_attempt_at", "next_attempt_at TEXT");
@@ -1040,19 +1084,96 @@ let entityDictionaryCache: string[] | null = null;
 let entityDictionaryCachedAt = 0;
 const ENTITY_DICTIONARY_TTL_MS = 60 * 60 * 1000;
 
+// 字典类聚合必须跨进程复用：Actions 每 10 分钟起一个新进程，进程内缓存在新进程里一律失效，
+// 等于每天 144 次全量聚合——单这一项就能吃满月度读额度。落到 pipeline_cache 后按 TTL 收敛到每天几次。
+const PIPELINE_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+
+async function readPipelineCache<T>(key: string): Promise<T | null> {
+  const rs = await getDb().execute({
+    sql: "SELECT value, updated_at FROM pipeline_cache WHERE key = ?",
+    args: [key],
+  });
+  const row = rs.rows[0];
+  if (!row) return null;
+  if (Date.now() - new Date(String(row.updated_at)).getTime() > PIPELINE_CACHE_TTL_MS) return null;
+  try {
+    return JSON.parse(String(row.value)) as T;
+  } catch {
+    return null;
+  }
+}
+
+async function writePipelineCache(key: string, value: unknown): Promise<void> {
+  await getDb().execute({
+    sql: `INSERT INTO pipeline_cache (key, value, updated_at) VALUES (?, ?, ?)
+          ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+    args: [key, JSON.stringify(value), new Date().toISOString()],
+  });
+}
+
+// 首页 meta（总数 / 24h 数 / 分类计数）原本是每次页面访问都在 articles 上跑 2 次全表聚合，
+// 按 1 万行估算 = 每次访问 2~3 万行读；首页流量单独就能吃满月度额度。
+// 这些数字本来就是「随内容更新」的展示型统计，改成每轮 pipeline 预算一次、前端读 1 行。
+export const SITE_META_CACHE_KEY = "site_meta";
+
+export interface SiteMetaSnapshot {
+  updatedAt: string | null;
+  total: number;
+  last24h: number;
+  sourcesEnabled: number;
+  categoryCounts: { id: string; count: number }[];
+  computedAt: string;
+}
+
+export async function refreshSiteMeta(): Promise<SiteMetaSnapshot> {
+  const db = await getDb();
+  const totalRs = await db.execute("SELECT COUNT(*) AS n FROM articles");
+  const dayRs = await db.execute({
+    sql: "SELECT COUNT(*) AS n FROM articles WHERE published_at >= ?",
+    args: [new Date(Date.now() - 24 * 3_600_000).toISOString()],
+  });
+  const catRs = await db.execute(`
+    SELECT s.category AS cat, COUNT(a.id) AS n
+    FROM sources s LEFT JOIN articles a ON a.source_id = s.id
+    GROUP BY s.category`);
+  const srcRs = await db.execute("SELECT COUNT(*) AS n FROM sources WHERE enabled = 1");
+  const logRs = await db.execute(
+    "SELECT finished_at FROM fetch_logs WHERE ok = 1 AND finished_at IS NOT NULL ORDER BY started_at DESC LIMIT 1",
+  );
+  const snapshot: SiteMetaSnapshot = {
+    updatedAt: logRs.rows[0] ? String(logRs.rows[0].finished_at) : null,
+    total: Number(totalRs.rows[0]?.n ?? 0),
+    last24h: Number(dayRs.rows[0]?.n ?? 0),
+    sourcesEnabled: Number(srcRs.rows[0]?.n ?? 0),
+    categoryCounts: catRs.rows.map((row) => ({ id: String(row.cat), count: Number(row.n) })),
+    computedAt: new Date().toISOString(),
+  };
+  await writePipelineCache(SITE_META_CACHE_KEY, snapshot);
+  return snapshot;
+}
+
 /**
- * 返回近期文章中出现频次最高的实体（已小写化）。带模块级缓存，避免每条文章重复全表聚合。
+ * 返回近期文章中出现频次最高的实体（已小写化）。
+ * 三级复用：进程内缓存 → pipeline_cache 行 → article_entities 窄表聚合。
+ * 不再走「articles 全表 × json_each 展开」。
  */
 export async function getEntityDictionary(days = 30, max = 300): Promise<string[]> {
   const now = Date.now();
   if (entityDictionaryCache && now - entityDictionaryCachedAt < ENTITY_DICTIONARY_TTL_MS) {
     return entityDictionaryCache;
   }
+  const key = `entity_dictionary:${days}:${max}`;
+  const cached = await readPipelineCache<string[]>(key);
+  if (cached && cached.length > 0) {
+    entityDictionaryCache = cached;
+    entityDictionaryCachedAt = now;
+    return cached;
+  }
   const since = new Date(Date.now() - days * 86400000).toISOString();
   const rs = await getDb().execute({
-    sql: `SELECT lower(value) AS e
-          FROM articles, json_each(entities)
-          WHERE published_at >= ? AND json_valid(entities) AND value IS NOT NULL
+    sql: `SELECT entity AS e
+          FROM article_entities
+          WHERE published_at >= ?
           GROUP BY e
           ORDER BY COUNT(*) DESC
           LIMIT ?`,
@@ -1060,6 +1181,12 @@ export async function getEntityDictionary(days = 30, max = 300): Promise<string[
   });
   entityDictionaryCache = rs.rows.map((r) => String(r.e));
   entityDictionaryCachedAt = now;
+  if (entityDictionaryCache.length === 0) {
+    // article_entities 尚未回填时字典为空，同事件召回会静默降级——必须在日志里可见。
+    console.warn("[entity] 字典为空：请先跑 pipeline/scripts/backfill-article-entities.ts");
+    return entityDictionaryCache;
+  }
+  await writePipelineCache(key, entityDictionaryCache);
   return entityDictionaryCache;
 }
 
@@ -1100,16 +1227,13 @@ export async function getRelatedByContent(
   const rs = await getDb().execute({
     sql: `SELECT a.id AS id, a.title AS title, a.title_zh AS title_zh,
                  a.key_change AS key_change, a.published_at AS published_at
-          FROM articles a
-          WHERE a.id != ?
-            AND json_valid(a.entities)
-            AND EXISTS (
-              SELECT 1 FROM json_each(a.entities) j
-              WHERE lower(j.value) IN (${placeholders})
-            )
+          FROM article_entities ae
+          JOIN articles a ON a.id = ae.article_id
+          WHERE ae.entity IN (${placeholders})
+            AND a.id != ?
           ORDER BY a.published_at DESC
           LIMIT ?`,
-    args: [excludeId, ...matched, limit],
+    args: [...matched, excludeId, limit],
   });
 
   return rs.rows.map((r) => ({

@@ -23,6 +23,7 @@ import {
   getSummaryBacklog,
   getSourceHealth,
   markSourceOutcomes,
+  refreshSiteMeta,
 } from "./db";
 import { translatePending } from "./translate";
 import { summarizePending, MAX_PER_RUN } from "./summarize";
@@ -350,6 +351,8 @@ async function main(): Promise<void> {
     translateOk: translateStats?.ok,
     translateFailed: translateStats?.failed,
   });
+  // 首页统计快照：每轮预算一次，替代前端每次访问的全表聚合（读额度治理，见 db.ts refreshSiteMeta）
+  await refreshSiteMeta().catch((e) => console.warn("[meta] 刷新首页统计快照失败:", e));
   console.log(
     `\n[pipeline] seen=${totalSeen} candidates=${withIds.length} inserted=${inserted} failedFeeds=${failedFeeds.length}`,
   );

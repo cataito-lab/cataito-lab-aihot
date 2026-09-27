@@ -1,0 +1,43 @@
+name: backfill-article-entities
+
+# 手动触发：一次性回填实体规范化表 article_entities（读额度治理改造的前置步骤）。
+# 背景：实体召回原为「articles 全表 × json_each(entities) 逐行展开」，每篇洞察调用一次，
+# 是 2026-09-26 Turso rows-read 爆到 653M/500M、整站读被封的第一元凶。改造后召回走
+# article_entities 主键，但触发器只覆盖后续写入，存量行必须靠本工作流入表，否则
+# 同事件召回静默降级为空（日志会打 [entity] 字典为空 警告）。
+# 不调用模型、不产生 LLM 额度。幂等：INSERT OR IGNORE，可安全重复触发。
+#
+# 上线顺序：本工作流必须先于前端改版生效之前跑完（见 docs/OPERATIONS.md §读放大治理）。
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "只报规模，不写库"
+        required: false
+        default: "true"
+
+concurrency:
+  group: news-backfill-entities
+  cancel-in-progress: true
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Backfill article_entities
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: >-
+          npx tsx pipeline/scripts/backfill-article-entities.ts
+          ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}

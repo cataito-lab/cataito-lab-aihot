@@ -347,6 +347,15 @@ function escapeLike(input: string): string {
   return input.replace(/[\\%_]/g, (c) => `\\${c}`);
 }
 
+/** 数据库读失败时的降级空值：让页面渲染出带提示的空壳（200）而不是整站 500。 */
+export function emptyFeedPage(): FeedPage {
+  return { items: [], nextCursor: null };
+}
+
+export function emptyBriefMeta(): BriefMeta {
+  return { updatedAt: null, total: 0, last24h: 0, sourcesEnabled: 0, categoryCounts: [] };
+}
+
 export async function listArticles(
   filters: FeedFilters,
   cursor?: string,
@@ -490,10 +499,14 @@ export interface DailyDateRow {
 /** 最近 N 天有内容的日期及条数（存档索引用） */
 export async function getDailyDates(limit = 30): Promise<DailyDateRow[]> {
   const db = await getDb();
+  // 必须带时间窗：无 WHERE 时这是对整张 articles 的全表聚合，而 /daily/[date] 每次访问都调它。
+  // 多留 30 天余量，保证有内容日期不足 limit 时结果与全表口径一致。
   const rs = await db.execute({
     sql: `SELECT substr(published_at, 1, 10) AS d, COUNT(*) AS n
-          FROM articles GROUP BY d ORDER BY d DESC LIMIT ?`,
-    args: [limit],
+          FROM articles
+          WHERE published_at >= datetime('now', ?)
+          GROUP BY d ORDER BY d DESC LIMIT ?`,
+    args: [`-${limit + 30} days`, limit],
   });
   return rs.rows.map((row) => ({
     date: String(row.d),
@@ -527,6 +540,29 @@ export async function getDailyArticles(date: string): Promise<FeedArticle[]> {
 }
 
 export async function getBriefMeta(): Promise<BriefMeta> {  const db = await getDb();
+
+  // 首页每次访问都跑 2 次全表聚合，是本月 Turso 读额度爆掉的第二元凶（1 万行 ≈ 每访问 2~3 万行读）。
+  // 统计改由 pipeline 每轮预算一次写入 pipeline_cache，这里只读 1 行；
+  // 表尚未创建或行为空（首次部署、pipeline 还没跑过）才回退现场计算，宁可多读也不能把首页打挂。
+  try {
+    const cached = await db.execute({
+      sql: "SELECT value FROM pipeline_cache WHERE key = 'site_meta'",
+      args: [],
+    });
+    const row = cached.rows[0];
+    if (row) {
+      const parsed = JSON.parse(String(row.value)) as Partial<BriefMeta>;
+      return {
+        updatedAt: parsed.updatedAt ?? null,
+        total: Number(parsed.total ?? 0),
+        last24h: Number(parsed.last24h ?? 0),
+        sourcesEnabled: Number(parsed.sourcesEnabled ?? 0),
+        categoryCounts: parsed.categoryCounts ?? [],
+      };
+    }
+  } catch {
+    // 忽略：回退到现场统计
+  }
 
   const totalRs = await db.execute("SELECT COUNT(*) AS n FROM articles");
   const dayRs = await db.execute({
@@ -666,11 +702,11 @@ export async function getEntityArticles(name: string, limit = 200): Promise<Feed
                  a.impact, a.impact_en, a.category AS ai_category, a.category_en AS ai_category_en, a.importance_score,
                  a.entities,
                  a.event_id, e.summary AS event_summary, e.event_key AS event_key
-          FROM articles a
+          FROM article_entities ae
+          JOIN articles a ON a.id = ae.article_id
           JOIN sources s ON s.id = a.source_id
           LEFT JOIN events e ON e.id = a.event_id
-          WHERE json_valid(a.entities)
-            AND EXISTS (SELECT 1 FROM json_each(a.entities) j WHERE lower(j.value) = lower(?))
+          WHERE ae.entity = lower(?)
           ORDER BY a.published_at DESC
           LIMIT ?`,
     args: [name, limit],
@@ -692,11 +728,10 @@ export async function listEventKeys(limit = 200): Promise<string[]> {
 export async function listEntityNames(limit = 100): Promise<string[]> {
   const db = await getDb();
   const rs = await db.execute({
-    sql: `SELECT j.value AS name, COUNT(*) AS n
-          FROM articles a,
-               json_each(CASE WHEN json_valid(a.entities) THEN a.entities ELSE '[]' END) j
-          WHERE a.published_at >= datetime('now', '-30 days')
-          GROUP BY j.value
+    sql: `SELECT MAX(ae.label) AS name, COUNT(*) AS n
+          FROM article_entities ae
+          WHERE ae.published_at >= datetime('now', '-30 days')
+          GROUP BY ae.entity
           HAVING COUNT(*) >= 2
           ORDER BY n DESC, name ASC
           LIMIT ?`,

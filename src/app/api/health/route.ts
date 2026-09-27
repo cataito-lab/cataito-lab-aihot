@@ -37,8 +37,10 @@ export async function GET() {
 
     // summarized_at 同样以 toISOString() 写入；只认 summary 非空的行，
     // 无正文被标记为「已处理但无摘要」的行（summary IS NULL）不算洞察产出。
+    // 写成 ORDER BY ... LIMIT 1 而非 MAX()：配合 idx_articles_last_insight 部分索引，
+    // 取索引首行即停，不再全表扫（本查询被外部监控每 10 分钟打一次）。
     const ins = await db.execute({
-      sql: "SELECT MAX(summarized_at) AS last_at FROM articles WHERE summary IS NOT NULL",
+      sql: "SELECT summarized_at AS last_at FROM articles WHERE summary IS NOT NULL AND summarized_at IS NOT NULL ORDER BY summarized_at DESC LIMIT 1",
       args: [],
     });
     const lastInsightAt = ins.rows[0]?.last_at ? String(ins.rows[0].last_at) : null;
