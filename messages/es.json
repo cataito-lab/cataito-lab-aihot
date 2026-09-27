@@ -3,7 +3,11 @@
     "title": "AI Noticias - Cronología de noticias sobre IA",
     "titleSuffix": "AI Noticias",
     "description": "Agregación y resúmenes en tiempo real de las noticias globales de IA: blogs oficiales, medios en inglés y chino y discusiones comunitarias, en formato cronológico con fuentes verificables.",
-    "dbOutage": "La base de datos de noticias no es accesible por ahora, así que la cronología está vacía. Las páginas siguen en línea con las mismas direcciones; inténtalo de nuevo en unos minutos."
+    "dbOutage": "La base de datos de noticias no es accesible por ahora, así que es posible que falte contenido o que no esté actualizado. Las páginas siguen en línea con las mismas direcciones; inténtalo de nuevo en unos minutos."
+  },
+  "emergency": {
+    "note": "Instantánea en vivo tomada directamente de las fuentes mientras la base de datos no está disponible: solo titulares y enlaces, sin análisis de IA ni traducciones por ahora.",
+    "generated": "instantánea {time}"
   },
   "brand": {
     "name": "AI Noticias"

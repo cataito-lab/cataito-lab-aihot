@@ -3,7 +3,11 @@
     "title": "AI Actualités - Chronologie des actualités IA",
     "titleSuffix": "AI Actualités",
     "description": "Agrégation et résumés en temps réel de l'actualité mondiale de l'IA : blogs officiels, médias anglophones et sinophones, discussions communautaires, en chronologie avec sources vérifiables.",
-    "dbOutage": "La base de données d'actualités est momentanément injoignable : la chronologie est vide. Les pages restent en ligne avec les mêmes adresses — réessayez dans quelques minutes."
+    "dbOutage": "La base de données d'actualités est momentanément injoignable : une partie du contenu peut manquer ou ne pas être à jour. Les pages restent en ligne avec les mêmes adresses — réessayez dans quelques minutes."
+  },
+  "emergency": {
+    "note": "Instantané pris directement à la source pendant l'indisponibilité de la base de données : titres et liens seulement, sans analyse IA ni traductions pour l'instant.",
+    "generated": "instantané {time}"
   },
   "brand": {
     "name": "AI Actualités"

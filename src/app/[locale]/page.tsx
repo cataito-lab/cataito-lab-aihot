@@ -4,7 +4,9 @@ import { BriefingPanel } from "@/components/briefing-panel";
 import { NewsFeed } from "@/components/news-feed";
 import { TzNote } from "@/components/tz-note";
 import { getBriefMeta, listArticles, emptyBriefMeta, emptyFeedPage } from "@/lib/news";
+import { emergencyItems } from "@/lib/emergency-feed";
 import { DegradedNote } from "@/components/degraded-note";
+import { EmergencyFeedList } from "@/components/emergency-feed-list";
 import { withFreshness } from "@/lib/article-utils";
 import { pickTitle } from "@/lib/i18n";
 import type { BriefMeta, FeedFilters, FeedPage } from "@/lib/types";
@@ -62,6 +64,8 @@ export default async function HomePage(
     console.error("[home] 数据读取失败，降级渲染空时间线:", err);
   }
   const items = withFreshness(page.items);
+  // 库读不到时，退回构建时抓取的信源快照（无洞察、无多语），而不是给访客一个空白时间线
+  const emergency = degraded ? emergencyItems() : [];
   const feedKey = `${urlCategory ?? ""}|${filters.sourceId ?? ""}|${filters.q ?? ""}|${filters.hours ?? ""}|${urlSort}|${urlTopic ?? ""}`;
 
   const jsonLd = {
@@ -143,14 +147,18 @@ export default async function HomePage(
           </div>
         )}
 
-        <section className="animate-fade-up">
-          <NewsFeed
-            key={feedKey}
-            initialItems={items}
-            initialCursor={page.nextCursor}
-            filters={filters}
-          />
-        </section>
+        {degraded && emergency.length > 0 ? (
+          <EmergencyFeedList items={emergency} locale={locale} />
+        ) : (
+          <section className="animate-fade-up">
+            <NewsFeed
+              key={feedKey}
+              initialItems={items}
+              initialCursor={page.nextCursor}
+              filters={filters}
+            />
+          </section>
+        )}
       </main>
       <footer className="pb-10 pt-6 border-t border-line/60">
         <p className="text-center text-xs text-fg-muted">

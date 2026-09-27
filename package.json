@@ -4,8 +4,10 @@
     "private": true,
     "scripts": {
         "dev": "next dev",
+        "prebuild": "npx tsx pipeline/scripts/emergency-snapshot.ts || true",
         "build": "next build",
         "start": "next start",
+        "snapshot": "tsx pipeline/scripts/emergency-snapshot.ts",
         "lint": "eslint",
         "pages:build": "npx @cloudflare/next-on-pages@1.13.16",
         "pipeline": "tsx pipeline/src/index.ts",
