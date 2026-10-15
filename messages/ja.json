@@ -108,6 +108,10 @@
   },
   "home": {
     "timeline": "タイムライン",
+    "picksTitle": "今日の注目ニュース",
+    "picksSubtitle": "注目すべき AI 業界の動き",
+    "streamTitle": "最新ニュース",
+    "streamSubtitle": "AI 業界の新着情報を時系列でチェック",
     "entries": "件",
     "footerBrand": "AI 速報",
     "footerNote": "— が提供する",

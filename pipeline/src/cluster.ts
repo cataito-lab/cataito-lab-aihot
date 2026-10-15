@@ -71,6 +71,35 @@ interface SingletonUnit {
   publishedAt: string;
 }
 
+type SingletonGroup = { canonical: SingletonUnit; members: SingletonUnit[] };
+
+/** 按标题完整链接成组：候选必须与组内每篇报道相似，且组内时间差不超过上限。 */
+export function groupSingletonUnits(units: SingletonUnit[]): SingletonGroup[] {
+  const sorted = [...units].sort((x, y) => (y.scoreFinal ?? 0) - (x.scoreFinal ?? 0));
+  const groups: SingletonGroup[] = [];
+
+  for (const u of sorted) {
+    const uTime = Date.parse(u.publishedAt);
+    let target: SingletonGroup | null = null;
+    for (const g of groups) {
+      const all = [g.canonical, ...g.members];
+      if (all.some((m) => m.sourceId === u.sourceId)) continue; // 同源标题撞车多半是系列文，不合
+      if (!all.every((m) => titleSimilarity(u, m) >= TRIGRAM_THRESHOLD)) continue;
+      const withinTimeWindow = all.every((m) => {
+        const memberTime = Date.parse(m.publishedAt);
+        return Number.isFinite(uTime) && Number.isFinite(memberTime)
+          && Math.abs(memberTime - uTime) / 3_600_000 <= MAX_TIME_DIFF_HOURS;
+      });
+      if (!withinTimeWindow) continue;
+      target = g;
+      break;
+    }
+    if (target) target.members.push(u);
+    else groups.push({ canonical: u, members: [] });
+  }
+  return groups;
+}
+
 /** 合并单源事件：按分数贪心成组（组内不得同源、须标题相似且时间接近），
  *  组员并入正主事件后删除被吸收的单源事件行。返回被并入的文章数。 */
 export async function mergeSingletonEvents(): Promise<number> {
@@ -79,24 +108,7 @@ export async function mergeSingletonEvents(): Promise<number> {
   );
   if (units.length < 2) return 0;
 
-  const sorted = [...units].sort((x, y) => (y.scoreFinal ?? 0) - (x.scoreFinal ?? 0));
-  const groups: Array<{ canonical: SingletonUnit; members: SingletonUnit[] }> = [];
-
-  for (const u of sorted) {
-    const uTime = Date.parse(u.publishedAt);
-    let target: (typeof groups)[number] | null = null;
-    for (const g of groups) {
-      const all = [g.canonical, ...g.members];
-      if (all.some((m) => m.sourceId === u.sourceId)) continue; // 同源标题撞车多半是系列文，不合
-      if (!all.some((m) => titleSimilarity(u, m) >= TRIGRAM_THRESHOLD)) continue;
-      const dtHours = Math.abs(Date.parse(g.canonical.publishedAt) - uTime) / 3_600_000;
-      if (dtHours > MAX_TIME_DIFF_HOURS) continue;
-      target = g;
-      break;
-    }
-    if (target) target.members.push(u);
-    else groups.push({ canonical: u, members: [] });
-  }
+  const groups = groupSingletonUnits(units);
 
   let merged = 0;
   for (const g of groups) {

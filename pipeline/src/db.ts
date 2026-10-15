@@ -929,10 +929,16 @@ export async function getPendingInsightTranslations(
   const selectParts: string[] = ["id"];
   const conditions: string[] = [];
   for (const c of INSIGHT_TRANSLATE_CONFIG) {
-    selectParts.push(`COALESCE(${c.srcEn}, ${c.srcZh}) AS ${c.field}_src`);
+    selectParts.push(
+      `COALESCE(NULLIF(${c.srcEn}, ''), NULLIF(${c.srcZh}, '')) AS ${c.field}_src`,
+    );
     for (const lang of ["ja", "es", "fr"] as const) {
-      selectParts.push(`${c.cols[lang]} IS NULL AS ${c.field}_need_${lang}`);
-      conditions.push(`${c.cols[lang]} IS NULL`);
+      const missing = `(${c.cols[lang]} IS NULL OR ${c.cols[lang]} = '')`;
+      const hasSource =
+        `((${c.srcEn} IS NOT NULL AND ${c.srcEn} != '') OR ` +
+        `(${c.srcZh} IS NOT NULL AND ${c.srcZh} != ''))`;
+      selectParts.push(`${missing} AS ${c.field}_need_${lang}`);
+      conditions.push(`(${missing} AND ${hasSource})`);
     }
   }
   const rs = await getDb().execute({

@@ -108,6 +108,10 @@
   },
   "home": {
     "timeline": "Cronología",
+    "picksTitle": "Selección de hoy",
+    "picksSubtitle": "Cambios de la industria de IA que merecen atención",
+    "streamTitle": "Últimas noticias",
+    "streamSubtitle": "Sigue las novedades de IA a medida que llegan",
     "entries": "entradas",
     "footerBrand": "AI Noticias",
     "footerNote": "— parte de",

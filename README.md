@@ -2,7 +2,7 @@
 
 公开的 AI 行业新闻聚合站：**https://aihot.cataito.com**
 
-GitHub Actions 定时抓取中英文 AI 信源（清单 64 个，启用 37 个） → 标题自动翻译、重点新闻 AI 摘要（商汤网关 OpenAI 兼容层，多免费模型自动容灾）→ 写入 Turso 云数据库 → Next.js 按事件时间倒序展示。
+GitHub Actions 定时抓取中英文 AI 信源（清单 68 个，启用 31 个） → 标题自动翻译、重点新闻 AI 摘要（商汤网关 OpenAI 兼容层，多免费模型自动容灾）→ 写入 Turso 云数据库 → Next.js 按事件时间倒序展示。
 
 ## 功能
 

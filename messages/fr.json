@@ -108,6 +108,10 @@
   },
   "home": {
     "timeline": "Chronologie",
+    "picksTitle": "À retenir aujourd’hui",
+    "picksSubtitle": "Les évolutions de l’IA qui méritent votre attention",
+    "streamTitle": "Actualités en direct",
+    "streamSubtitle": "Suivez les nouveautés de l’IA au fil de leur arrivée",
     "entries": "entrées",
     "footerBrand": "AI Actualités",
     "footerNote": "— fait partie de",

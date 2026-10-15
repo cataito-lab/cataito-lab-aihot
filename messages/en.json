@@ -108,6 +108,10 @@
   },
   "home": {
     "timeline": "Timeline",
+    "picksTitle": "Today’s picks",
+    "picksSubtitle": "AI industry developments worth your attention",
+    "streamTitle": "Live updates",
+    "streamSubtitle": "Follow new AI industry coverage as it arrives",
     "entries": "entries",
     "footerBrand": "AI Hot Takes",
     "footerNote": "— part of",

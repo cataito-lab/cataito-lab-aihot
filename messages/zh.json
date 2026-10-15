@@ -108,6 +108,10 @@
   },
   "home": {
     "timeline": "时间线",
+    "picksTitle": "今日精选",
+    "picksSubtitle": "值得关注的 AI 行业变化",
+    "streamTitle": "实时动态",
+    "streamSubtitle": "按时间追踪 AI 行业新消息",
     "entries": "条",
     "footerBrand": "AI 热点简报",
     "footerNote": "— 属于",
