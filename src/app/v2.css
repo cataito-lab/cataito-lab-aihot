@@ -640,6 +640,10 @@
   background: #f3f6f3;
 }
 
+[data-theme="light"] .home-main .time-marker {
+  background: #f3f6f3;
+}
+
 .home-main > .hero-section {
   margin-bottom: 32px;
   padding: 0 2px 22px;
