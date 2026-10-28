@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations, useLocale } from "next-intl";
-import { CalendarBlank } from "@phosphor-icons/react";
+import { CalendarBlank, Newspaper } from "@phosphor-icons/react";
 import type { BriefMeta } from "@/lib/types";
 import { useMounted } from "@/lib/use-mounted";
 import { formatNumber, formatCompactNumber } from "@/lib/format";
@@ -77,6 +77,11 @@ export function BriefingPanel({ meta }: Props) {
         >
           <CalendarBlank size={14} aria-hidden />
           {t("dailyLink")}
+        </a>
+        {/* /v2 试运营入口（头版编辑台）：ghost 线框弱于主胶囊，不抢视觉 */}
+        <a href={`/${locale}/v2`} className="hero-v2-link">
+          <Newspaper size={14} aria-hidden />
+          {t("tryV2")}
         </a>
       </div>
     </section>
