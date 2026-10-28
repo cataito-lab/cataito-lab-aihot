@@ -193,6 +193,10 @@
     "briefsSubtitle": "近 48 小时 · 按重要度",
     "wireTitle": "电报栏",
     "wireSubtitle": "全部信源 · 按时间",
-    "archive": "往期"
+    "archive": "往期",
+    "watchTitle": "持续关注",
+    "watchSubtitle": "多信源报道中",
+    "insightsTitle": "AI 洞察流",
+    "insightsSubtitle": "近 48 小时 · 全部带分析"
   }
 }

@@ -193,6 +193,10 @@
     "briefsSubtitle": "Last 48h · by importance",
     "wireTitle": "The Wire",
     "wireSubtitle": "All sources · chronological",
-    "archive": "Back issues"
+    "archive": "Back issues",
+    "watchTitle": "Developing",
+    "watchSubtitle": "Multiple sources reporting",
+    "insightsTitle": "AI Insight Stream",
+    "insightsSubtitle": "Last 48h · all with analysis"
   }
 }

@@ -193,6 +193,10 @@
     "briefsSubtitle": "48 dernières heures · par importance",
     "wireTitle": "Le Fil",
     "wireSubtitle": "Toutes sources · chronologique",
-    "archive": "Numéros précédents"
+    "archive": "Numéros précédents",
+    "watchTitle": "À suivre",
+    "watchSubtitle": "Plusieurs sources",
+    "insightsTitle": "Flux d'analyses IA",
+    "insightsSubtitle": "48 dernières h · tout avec analyse"
   }
 }

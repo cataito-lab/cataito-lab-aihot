@@ -193,6 +193,10 @@
     "briefsSubtitle": "直近48時間 · 重要度順",
     "wireTitle": "ワイヤー",
     "wireSubtitle": "全ソース · 時系列",
-    "archive": "バックナンバー"
+    "archive": "バックナンバー",
+    "watchTitle": "追跡中",
+    "watchSubtitle": "複数ソースが報道",
+    "insightsTitle": "AI 洞察ストリーム",
+    "insightsSubtitle": "過去48時間 · 分析付きのみ"
   }
 }

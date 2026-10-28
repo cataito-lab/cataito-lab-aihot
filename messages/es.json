@@ -193,6 +193,10 @@
     "briefsSubtitle": "Últimas 48 h · por importancia",
     "wireTitle": "El Cable",
     "wireSubtitle": "Todas las fuentes · cronológico",
-    "archive": "Números anteriores"
+    "archive": "Números anteriores",
+    "watchTitle": "En seguimiento",
+    "watchSubtitle": "Varias fuentes informando",
+    "insightsTitle": "Flujo de análisis IA",
+    "insightsSubtitle": "Últimas 48 h · todo con análisis"
   }
 }
