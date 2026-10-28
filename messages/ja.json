@@ -185,6 +185,13 @@
     "empty": "まだ何もありません",
     "endOfStream": "最後まで読みました",
     "picksEmpty": "直近48時間の高価値インサイトはありません。下の速報フィードをご覧ください",
-    "eventReports": "{n}社が報道"
+    "eventReports": "{n}社が報道",
+    "tagline": "リアルタイム AI 速報",
+    "lead": "トップストーリー",
+    "briefsTitle": "重要ニュース",
+    "briefsSubtitle": "直近48時間 · 重要度順",
+    "wireTitle": "ワイヤー",
+    "wireSubtitle": "全ソース · 時系列",
+    "archive": "バックナンバー"
   }
 }

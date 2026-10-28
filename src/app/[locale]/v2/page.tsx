@@ -1,12 +1,18 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { PickCard } from "@/components/v2/pick-card";
-import { V2Stream } from "@/components/v2/v2-stream";
+import { FpNav } from "@/components/v2/fp-nav";
+import { FpLead, FpBriefs } from "@/components/v2/fp-front";
+import { FpWire } from "@/components/v2/fp-wire";
 import { getDailyTop, getStreamLite } from "@/lib/news-v2";
-import { getBriefMeta } from "@/lib/news";
-import { formatDateTime, formatNumber } from "@/lib/format";
 
 export const runtime = "edge";
+
+/** 白名单校验：只接受 sources.category 的四个合法值，其余一律视为「全部」 */
+const VALID_CATEGORIES = new Set(["official", "media-cn", "media-en", "community"]);
+
+interface V2SearchParams {
+  category?: string | string[];
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("v2");
@@ -19,65 +25,66 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function V2Page({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<V2SearchParams>;
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const [top, stream, meta, tV2, tBriefing] = await Promise.all([
-    getDailyTop({ hours: 48, limit: 16 }),
-    getStreamLite(undefined, 40, 168),
-    getBriefMeta(),
+  const sp = await searchParams;
+  const raw = Array.isArray(sp.category) ? sp.category[0] : sp.category;
+  const category = raw && VALID_CATEGORIES.has(raw) ? raw : undefined;
+  const categories = category ? [category] : undefined;
+
+  const [top, stream, tV2] = await Promise.all([
+    getDailyTop({ hours: 48, limit: 4, categories }),
+    getStreamLite(undefined, 40, 168, categories),
     getTranslations("v2"),
-    getTranslations("briefing"),
   ]);
 
+  const lead = top.items[0];
+  const briefs = top.items.slice(1);
+
   return (
-    <main className="v2-main">
-      <section className="v2-hero">
-        <h1>{tV2("heroTitle")}</h1>
-        <span className="v2-hero-meta">
-          {tBriefing("updated")}{" "}
-          {meta.updatedAt ? formatDateTime(meta.updatedAt, locale) : "—"} ·{" "}
-          <b>{formatNumber(meta.last24h, locale)}</b> {tBriefing("last24h")} ·{" "}
-          <b>{formatNumber(meta.sourcesEnabled, locale)}</b> {tBriefing("sources")}
-        </span>
-      </section>
-
-      <section className="v2-section">
-        <div className="v2-section-head">
-          <h2>{tV2("picksTitle")}</h2>
-          <span>{tV2("picksSubtitle")}</span>
-        </div>
-        {top.items.length === 0 ? (
-          <div className="v2-empty">{tV2("picksEmpty")}</div>
+    <>
+      <FpNav locale={locale} activeCategory={category} />
+      {/* key 的双重作用：切换分类时重挂载触发 fp-enter 进场动画，同时重置 FpWire 的客户端列表状态 */}
+      <main className="fp-main" key={category ?? "all"}>
+        {lead ? (
+          <>
+            <FpLead
+              article={lead}
+              locale={locale}
+              eventSources={
+                lead.eventId ? top.eventSourceCounts.get(lead.eventId) : undefined
+              }
+            />
+            {briefs.length > 0 && (
+              <>
+                <hr className="fp-rule" />
+                <FpBriefs items={briefs} locale={locale} />
+              </>
+            )}
+            <hr className="fp-rule" />
+          </>
         ) : (
-          <div className="v2-picks">
-            {top.items.map((article, i) => (
-              <PickCard
-                key={article.id}
-                article={article}
-                locale={locale}
-                rank={i + 1}
-                eventSources={
-                  article.eventId
-                    ? top.eventSourceCounts.get(article.eventId)
-                    : undefined
-                }
-              />
-            ))}
-          </div>
+          <div className="fp-empty">{tV2("picksEmpty")}</div>
         )}
-      </section>
 
-      <section className="v2-section">
-        <div className="v2-section-head">
-          <h2>{tV2("streamTitle")}</h2>
-          <span>{tV2("streamSubtitle")}</span>
-        </div>
-        <V2Stream initialItems={stream.items} initialCursor={stream.nextCursor} />
-      </section>
-    </main>
+        <section>
+          <div className="fp-sec-hd">
+            <span className="l">{tV2("wireTitle")}</span>
+            <span className="r">{tV2("wireSubtitle")}</span>
+          </div>
+          <FpWire
+            initialItems={stream.items}
+            initialCursor={stream.nextCursor}
+            category={category}
+          />
+        </section>
+      </main>
+    </>
   );
 }

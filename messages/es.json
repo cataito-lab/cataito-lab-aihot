@@ -185,6 +185,13 @@
     "empty": "Aún no hay nada",
     "endOfStream": "Has llegado al final",
     "picksEmpty": "Sin análisis de alto valor en las últimas 48 h — mira el directo",
-    "eventReports": "{n} fuentes reportan"
+    "eventReports": "{n} fuentes reportan",
+    "tagline": "Actualidad de IA en tiempo real",
+    "lead": "Titular",
+    "briefsTitle": "Breves",
+    "briefsSubtitle": "Últimas 48 h · por importancia",
+    "wireTitle": "El Cable",
+    "wireSubtitle": "Todas las fuentes · cronológico",
+    "archive": "Números anteriores"
   }
 }

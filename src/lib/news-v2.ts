@@ -76,10 +76,16 @@ export async function getDailyTop(options?: {
   hours?: number;
   limit?: number;
   minImportance?: number;
+  /** 版面分类过滤（sources.category），如 ["official"]；不传 = 全部 */
+  categories?: string[];
 }): Promise<{ items: FeedArticle[]; eventSourceCounts: Map<string, number> }> {
-  const { hours = 48, limit = 16, minImportance = 55 } = options ?? {};
+  const { hours = 48, limit = 16, minImportance = 55, categories } = options ?? {};
   const db = await getDb();
   const cutoff = new Date(Date.now() - hours * 3_600_000).toISOString();
+  const catFilter =
+    categories && categories.length > 0
+      ? ` AND s.category IN (${categories.map(() => "?").join(", ")})`
+      : "";
 
   // 每事件可能有多条成员报道，多取 2 倍候选再去重截断；
   // 列集与 news.ts listArticles 对齐，保证 toFeedArticle 可直接复用
@@ -102,10 +108,10 @@ export async function getDailyTop(options?: {
     WHERE a.published_at >= ?
       AND a.importance_score IS NOT NULL
       AND a.importance_score >= ?
-      AND a.key_change IS NOT NULL
+      AND a.key_change IS NOT NULL${catFilter}
     ORDER BY a.importance_score DESC, a.published_at DESC, a.id DESC
     LIMIT ?`,
-    args: [cutoff, minImportance, limit * 3],
+    args: [cutoff, minImportance, ...(categories ?? []), limit * 3],
   });
 
   const eventSourceCounts = new Map<string, number>();
@@ -147,6 +153,7 @@ export async function getStreamLite(
   cursor?: string,
   limit = 40,
   hours = 168,
+  categories?: string[],
 ): Promise<StreamPage> {
   const db = await getDb();
   const where: string[] = ["(a.score_final IS NULL OR a.score_final >= ?)"];
@@ -154,6 +161,10 @@ export async function getStreamLite(
   if (hours > 0) {
     where.push("a.published_at >= ?");
     args.push(new Date(Date.now() - hours * 3_600_000).toISOString());
+  }
+  if (categories && categories.length > 0) {
+    where.push(`s.category IN (${categories.map(() => "?").join(", ")})`);
+    args.push(...categories);
   }
   const decoded = decodeTimeCursor(cursor);
   if (decoded) {

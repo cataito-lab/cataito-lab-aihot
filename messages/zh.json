@@ -185,6 +185,13 @@
     "empty": "暂无内容",
     "endOfStream": "已经到底了",
     "picksEmpty": "近 48 小时暂无高价值洞察，先看看下面的动态流",
-    "eventReports": "{n} 家信源报道"
+    "eventReports": "{n} 家信源报道",
+    "tagline": "实时 AI 热点",
+    "lead": "头条",
+    "briefsTitle": "要闻",
+    "briefsSubtitle": "近 48 小时 · 按重要度",
+    "wireTitle": "电报栏",
+    "wireSubtitle": "全部信源 · 按时间",
+    "archive": "往期"
   }
 }

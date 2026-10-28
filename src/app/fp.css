@@ -1,0 +1,663 @@
+/* ============================================================
+   FP（Front Page）「头版编辑台」样式
+   独立 --fp-* 令牌命名空间；纯墨色无彩色，层级靠字重/规线/留白。
+   主题走 html[data-theme]：默认暗色，[data-theme="light"] 覆盖令牌。
+   仅被 [locale]/v2 路由引用，不影响线上首页（.home- 与 .v2- 前缀的样式）。
+   ============================================================ */
+
+.fp-root {
+  --fp-paper: #131210;
+  --fp-ink: #e9e7e0;
+  --fp-sub: #a39e93;
+  --fp-faint: #6b675e;
+  --fp-rule: rgba(233, 231, 224, 0.16);
+  --fp-strong: #e9e7e0;
+  --fp-serif: Georgia, "Noto Serif SC", "Songti SC", serif;
+  --fp-mono: var(--font-jetbrains), ui-monospace, "SF Mono", Menlo, monospace;
+  --fp-sans: var(--font-inter), "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+
+  flex: 1;
+  width: 100%;
+  min-height: 100vh;
+  background: var(--fp-paper);
+  color: var(--fp-ink);
+  font-family: var(--fp-sans);
+}
+
+[data-theme="light"] .fp-root {
+  --fp-paper: #fbfaf7;
+  --fp-ink: #1c1b17;
+  --fp-sub: #6e6a61;
+  --fp-faint: #9a968c;
+  --fp-rule: rgba(28, 27, 23, 0.14);
+  --fp-strong: #1c1b17;
+}
+
+/* ---------- Masthead ---------- */
+
+.fp-mast {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 28px clamp(16px, 4vw, 32px) 0;
+}
+
+.fp-mast-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fp-brand {
+  font-family: var(--fp-serif);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--fp-ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.fp-badge {
+  font-family: var(--fp-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fp-sub);
+  border: 1px solid var(--fp-rule);
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.fp-mast-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.fp-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  width: 32px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  color: var(--fp-sub);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.fp-icon-btn:hover,
+.fp-icon-btn.is-active {
+  color: var(--fp-ink);
+}
+
+.fp-lang-wrap {
+  position: relative;
+}
+
+.fp-lang-menu {
+  position: absolute;
+  right: 0;
+  top: 38px;
+  z-index: 101;
+  min-width: 150px;
+  background: var(--fp-paper);
+  border: 1px solid var(--fp-rule);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.35);
+  padding: 5px;
+}
+
+.fp-lang-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--fp-sub);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.fp-lang-item:hover {
+  color: var(--fp-ink);
+}
+
+.fp-lang-item[data-active="true"] {
+  color: var(--fp-ink);
+  font-weight: 600;
+}
+
+.fp-link-ghost {
+  font-size: 12.5px;
+  color: var(--fp-sub);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--fp-rule);
+  white-space: nowrap;
+}
+
+.fp-link-ghost:hover {
+  color: var(--fp-ink);
+}
+
+.fp-mast-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  margin-top: 8px;
+  font-family: var(--fp-mono);
+  font-size: 11px;
+  color: var(--fp-faint);
+}
+
+.fp-mast-sub .fp-tagline {
+  font-family: var(--fp-sans);
+  font-size: 12.5px;
+  color: var(--fp-sub);
+}
+
+.fp-mast-date {
+  margin-left: auto;
+}
+
+/* ---------- 规线 ---------- */
+
+.fp-rule-dbl {
+  border: 0;
+  border-top: 2px solid var(--fp-strong);
+  border-bottom: 1px solid var(--fp-strong);
+  height: 4px;
+  margin: 14px 0 0;
+}
+
+.fp-rule {
+  border: 0;
+  border-top: 1px solid var(--fp-rule);
+  margin: 26px 0 0;
+}
+
+/* ---------- 版面导航（分类 + 往期） ---------- */
+
+.fp-nav {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 9px clamp(16px, 4vw, 32px) 10px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--fp-rule);
+  font-family: var(--fp-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+}
+
+.fp-nav-cats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+}
+
+.fp-nav-link {
+  position: relative;
+  color: var(--fp-sub);
+  text-decoration: none;
+  padding-bottom: 1px;
+  transition: color 0.15s ease;
+}
+
+/* 活跃下划线用 ::after + scaleX：分类切换时 SSR 只更新 data-active 属性，
+   transition 在新旧活跃项上分别播放（一个收起、一个展开），形成平滑过渡 */
+.fp-nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  border-bottom: 1px solid var(--fp-ink);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.18s ease;
+}
+
+.fp-nav-link:hover {
+  color: var(--fp-ink);
+}
+
+.fp-nav-link[data-active="true"] {
+  color: var(--fp-ink);
+  font-weight: 600;
+}
+
+.fp-nav-link[data-active="true"]::after {
+  transform: scaleX(1);
+}
+
+.fp-nav-archive {
+  flex: none;
+  color: var(--fp-sub);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.fp-nav-archive:hover {
+  color: var(--fp-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- 主区 ---------- */
+
+.fp-main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 4vw, 32px) 72px;
+}
+
+/* ---------- 栏目头 ---------- */
+
+.fp-sec-hd {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--fp-rule);
+  margin: 22px 0 4px;
+}
+
+.fp-sec-hd .l {
+  font-family: var(--fp-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fp-ink);
+}
+
+.fp-sec-hd .r {
+  font-family: var(--fp-mono);
+  font-size: 11px;
+  color: var(--fp-faint);
+  white-space: nowrap;
+}
+
+/* ---------- 头条 ---------- */
+
+.fp-lead {
+  padding-top: 22px;
+}
+
+.fp-lead-eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  font-family: var(--fp-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fp-ink);
+}
+
+.fp-lead-eyebrow .dim {
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--fp-faint);
+}
+
+.fp-lead-title {
+  margin: 10px 0 6px;
+  font-family: var(--fp-serif);
+  font-size: clamp(24px, 3.4vw, 32px);
+  font-weight: 700;
+  line-height: 1.32;
+  letter-spacing: 0.005em;
+}
+
+.fp-lead-title a {
+  color: var(--fp-ink);
+  text-decoration: none;
+}
+
+.fp-lead-title a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+}
+
+.fp-lead-orig {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fp-sub);
+}
+
+.fp-lead-lede {
+  margin: 0 0 14px;
+  max-width: 44em;
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--fp-ink);
+}
+
+.fp-lead-insight {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px 20px;
+  padding-top: 12px;
+  border-top: 1px solid var(--fp-rule);
+}
+
+.fp-ins .k {
+  margin-bottom: 4px;
+  font-family: var(--fp-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fp-sub);
+}
+
+.fp-ins .v {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--fp-sub);
+}
+
+.fp-lead-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-top: 14px;
+  font-family: var(--fp-mono);
+  font-size: 11px;
+  color: var(--fp-faint);
+}
+
+.fp-lead-foot a {
+  color: var(--fp-sub);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--fp-rule);
+}
+
+.fp-lead-foot a:hover {
+  color: var(--fp-ink);
+  text-decoration-color: var(--fp-ink);
+}
+
+/* ---------- 要闻 ---------- */
+
+.fp-briefs {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: brief;
+}
+
+.fp-brief {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--fp-rule);
+}
+
+.fp-brief:last-child {
+  border-bottom: 0;
+}
+
+.fp-brief-rank {
+  flex: none;
+  font-family: var(--fp-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fp-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.fp-brief-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.fp-brief-title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.fp-brief-title a {
+  color: var(--fp-ink);
+  text-decoration: none;
+}
+
+.fp-brief-title a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.fp-brief-meta {
+  margin-top: 3px;
+  font-family: var(--fp-mono);
+  font-size: 11px;
+  color: var(--fp-faint);
+}
+
+.fp-brief-meta .sc {
+  color: var(--fp-sub);
+  font-weight: 600;
+}
+
+/* ---------- 电报栏 ---------- */
+
+.fp-wire-hour {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 2px;
+  font-family: var(--fp-mono);
+  font-size: 11px;
+  color: var(--fp-faint);
+  letter-spacing: 0.06em;
+}
+
+.fp-wire-hour::before,
+.fp-wire-hour::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--fp-rule);
+}
+
+.fp-wire-item {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.fp-wire-time {
+  flex: none;
+  width: 42px;
+  font-family: var(--fp-mono);
+  font-size: 11.5px;
+  color: var(--fp-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.fp-wire-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--fp-ink);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fp-wire-title:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.fp-wire-side {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--fp-mono);
+  font-size: 10.5px;
+  color: var(--fp-faint);
+  white-space: nowrap;
+}
+
+.fp-wire-side a {
+  color: var(--fp-sub);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--fp-rule);
+}
+
+.fp-wire-side a:hover {
+  color: var(--fp-ink);
+}
+
+.fp-wire-score {
+  color: var(--fp-sub);
+  font-weight: 600;
+  min-width: 18px;
+  text-align: right;
+}
+
+.fp-wire-foot {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0 4px;
+}
+
+.fp-load-btn {
+  font-family: var(--fp-mono);
+  font-size: 12px;
+  color: var(--fp-sub);
+  background: none;
+  border: 1px solid var(--fp-rule);
+  border-radius: 999px;
+  padding: 8px 22px;
+  cursor: pointer;
+}
+
+.fp-load-btn:hover:not(:disabled) {
+  color: var(--fp-ink);
+  border-color: var(--fp-strong);
+}
+
+.fp-load-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.fp-empty {
+  padding: 36px 16px;
+  text-align: center;
+  color: var(--fp-faint);
+  font-size: 13px;
+}
+
+/* ---------- 页脚 ---------- */
+
+.fp-foot {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 18px clamp(16px, 4vw, 32px) 40px;
+  font-family: var(--fp-mono);
+  font-size: 11px;
+  color: var(--fp-faint);
+  border-top: 1px solid var(--fp-rule);
+}
+
+/* ---------- 过渡动画 ---------- */
+
+/* 分类切换时 main 以 key 重挂载触发本动画；load more 不重挂载，不受影响 */
+@keyframes fp-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.fp-main {
+  animation: fp-enter 0.24s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fp-main {
+    animation: none;
+  }
+
+  .fp-nav-link,
+  .fp-nav-link::after {
+    transition: none;
+  }
+}
+
+/* ---------- 窄屏 ---------- */
+
+@media (max-width: 640px) {
+  .fp-mast {
+    padding-top: 18px;
+  }
+
+  .fp-brand {
+    font-size: 20px;
+  }
+
+  .fp-mast-date {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .fp-lead-insight {
+    grid-template-columns: 1fr;
+  }
+
+  .fp-nav {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 7px;
+  }
+
+  .fp-nav-cats {
+    gap: 4px 12px;
+  }
+
+  .fp-wire-title {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .fp-wire-side .src {
+    display: none;
+  }
+}

@@ -185,6 +185,13 @@
     "empty": "Nothing here yet",
     "endOfStream": "You've reached the end",
     "picksEmpty": "No high-value insights in the last 48h — check the live wire below",
-    "eventReports": "{n} sources reporting"
+    "eventReports": "{n} sources reporting",
+    "tagline": "Real-time AI hot takes",
+    "lead": "Top Story",
+    "briefsTitle": "Briefs",
+    "briefsSubtitle": "Last 48h · by importance",
+    "wireTitle": "The Wire",
+    "wireSubtitle": "All sources · chronological",
+    "archive": "Back issues"
   }
 }
