@@ -17,16 +17,22 @@ function pickKeyChange(a: FeedArticle, locale: string): string | null {
   );
 }
 
-/** importance_score 决定排版层级 */
-function rankOf(score: number | null | undefined): "tier1" | "tier2" | "tier3" {
-  if ((score ?? 0) >= 88) return "tier1";
-  if ((score ?? 0) >= 80) return "tier2";
-  return "tier3";
+/** 头条标记：importance ≥ 88 的条目加粗，字号与其他条目一致 */
+function rankOf(score: number | null | undefined): string {
+  return (score ?? 0) >= 88 ? "fp-card-lead" : "";
 }
+
+/** 信源分类 → header 命名空间下的文案 key */
+const CAT_KEYS = {
+  official: "official",
+  "media-cn": "mediaCn",
+  "media-en": "mediaEn",
+  community: "community",
+} as const;
 
 /**
  * 主 Feed：全部有完整 AI 洞察的文章平铺展示，每条给完整三格。
- * importance_score 决定字号层级（tier1 头条 / tier2 重要 / tier3 标准）。
+ * 标题字号统一，层次只靠字重区分。
  */
 export async function FpFeed({
   items,
@@ -37,7 +43,12 @@ export async function FpFeed({
   locale: string;
   eventSourceCounts: Map<string, number>;
 }) {
-  const tArticle = await getTranslations("article");
+  const [tArticle, tV2, tFeed, tHeader] = await Promise.all([
+    getTranslations("article"),
+    getTranslations("v2"),
+    getTranslations("feed"),
+    getTranslations("header"),
+  ]);
 
   const triples = items.map((a) => {
     const kc = pickKeyChange(a, locale);
@@ -69,14 +80,17 @@ export async function FpFeed({
         const triple = triples[i];
 
         return (
-          <article className={`fp-card fp-card-${rank}`} key={a.id}>
+          <article className={`fp-card ${rank}`} key={a.id}>
             <header className="fp-card-head">
               <div className="fp-card-meta">
                 <span className="fp-card-src">{a.sourceName}</span>
+                {a.category && a.category in CAT_KEYS && (
+                  <span className="fp-card-cat">{tHeader(CAT_KEYS[a.category as keyof typeof CAT_KEYS])}</span>
+                )}
                 {score != null && <span className="fp-card-score">{formatScore(score, locale)}</span>}
                 {n != null && n > 1 && a.eventKey && (
                   <Link href={`/event/${a.eventKey}`} className="fp-card-event">
-                    {n} 家报道
+                    {tV2("eventReports", { n })}
                   </Link>
                 )}
                 <span className="fp-card-time">{formatRelativeTime(a.publishedAt, locale)}</span>
@@ -118,7 +132,7 @@ export async function FpFeed({
 
             <footer className="fp-card-foot">
               <a href={a.url} target="_blank" rel="noopener noreferrer">{tArticle("verify")}</a>
-              {internal && <Link href={href}>查看完整事件</Link>}
+              {internal && <Link href={href}>{tFeed("viewEvent")}</Link>}
             </footer>
           </article>
         );

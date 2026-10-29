@@ -36,7 +36,7 @@
 /* ---------- Masthead ---------- */
 
 .fp-mast {
-  max-width: 760px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 28px clamp(16px, 4vw, 32px) 0;
 }
@@ -188,7 +188,7 @@
 /* ---------- 版面导航（分类 + 往期） ---------- */
 
 .fp-nav {
-  max-width: 760px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 9px clamp(16px, 4vw, 32px) 10px;
   display: flex;
@@ -259,9 +259,92 @@
 /* ---------- 主区 ---------- */
 
 .fp-main {
-  max-width: 760px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 0 clamp(16px, 4vw, 32px) 72px;
+}
+
+/* ---------- 三栏：归档｜洞察主栏｜电报 ---------- */
+
+.fp-3col {
+  display: grid;
+  grid-template-columns: 176px minmax(0, 1fr) 336px;
+  grid-template-areas: "left center right";
+  gap: 0 32px;
+  align-items: start;
+  padding-top: 8px;
+}
+
+.fp-3col-left {
+  grid-area: left;
+  position: sticky;
+  top: 24px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding-right: 16px;
+  border-right: 1px solid var(--fp-rule);
+}
+
+.fp-3col-left::-webkit-scrollbar {
+  display: none;
+}
+
+.fp-3col-center {
+  grid-area: center;
+  min-width: 0;
+}
+
+.fp-3col-right {
+  grid-area: right;
+  position: sticky;
+  top: 24px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding-left: 16px;
+  border-left: 1px solid var(--fp-rule);
+}
+
+.fp-3col-right::-webkit-scrollbar {
+  display: none;
+}
+
+/* 右栏窄：电报改为「分组时刻 + 可换行标题 + 元信息」块式排版
+   逐条时刻由小时分组头承担，不再重复，标题占满整栏宽度 */
+.fp-3col-right .fp-sec-hd {
+  margin-top: 12px;
+}
+
+.fp-3col-right .fp-sec-hd .r {
+  white-space: normal;
+  text-align: right;
+}
+
+.fp-3col-right .fp-wire-item {
+  display: block;
+  padding: 7px 0;
+}
+
+.fp-3col-right .fp-wire-time {
+  display: none;
+}
+
+.fp-3col-right .fp-wire-title {
+  display: block;
+  font-size: 13.5px;
+  line-height: 1.5;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.fp-3col-right .fp-wire-side {
+  margin-top: 3px;
+}
+
+.fp-3col-right .fp-wire-side .src {
+  display: none;
 }
 
 /* ---------- Feed：全部有完整 AI 洞察的文章平铺展示 ---------- */
@@ -286,28 +369,18 @@
   border-bottom: 0;
 }
 
-/* 头条 tier1：importance ≥ 88 */
-.fp-card-tier1 .fp-card-title {
+/* 标题字号统一 17px；层次只靠字重区分，不做字号跳档 */
+.fp-card-title {
   font-family: var(--fp-serif);
-  font-size: clamp(26px, 4vw, 36px);
-  font-weight: 700;
-  line-height: 1.3;
-  letter-spacing: -0.01em;
-}
-
-/* 重要 tier2：importance 80-87 */
-.fp-card-tier2 .fp-card-title {
-  font-family: var(--fp-serif);
-  font-size: clamp(20px, 2.8vw, 26px);
-  font-weight: 700;
-  line-height: 1.35;
-}
-
-/* 标准 tier3：importance < 80 */
-.fp-card-tier3 .fp-card-title {
-  font-size: 16.5px;
+  font-size: 17px;
   font-weight: 600;
-  line-height: 1.5;
+  line-height: 1.45;
+  letter-spacing: 0.005em;
+}
+
+/* 头条（importance ≥ 88）仅加粗，字号与其他条目一致 */
+.fp-card-lead .fp-card-title {
+  font-weight: 700;
 }
 
 .fp-card-title a {
@@ -339,6 +412,14 @@
   font-family: var(--fp-sans);
   font-weight: 600;
   color: var(--fp-sub);
+}
+
+.fp-card-meta .fp-card-cat {
+  color: var(--fp-faint);
+  border: 1px solid var(--fp-rule);
+  border-radius: 3px;
+  padding: 0 5px;
+  line-height: 1.5;
 }
 
 .fp-card-meta .fp-card-score {
@@ -385,11 +466,6 @@
   border-top: 1px solid var(--fp-rule);
 }
 
-/* tier3 条目（importance 最低的一档）洞察用两列，避免窄列浪费 */
-.fp-card-tier3 .fp-card-insight {
-  grid-template-columns: repeat(2, 1fr);
-}
-
 .fp-ins {
   min-width: 0;
 }
@@ -433,20 +509,43 @@
   text-underline-offset: 3px;
 }
 
-/* ---------- 电报速报区（页面底部次要补充） ---------- */
+/* ---------- 左栏：历史归档 ---------- */
 
-.fp-wire-section {
-  margin-top: 32px;
-  padding-top: 20px;
-  border-top: 2px solid var(--fp-strong);
+.fp-archive .fp-sec-hd {
+  margin-top: 0;
 }
 
-.fp-wire-section .fp-wire-title {
-  font-size: 14px;
+.fp-archive-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.fp-wire-section .fp-wire-title .src {
+.fp-archive-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 0;
+  font-family: var(--fp-mono);
+  font-size: 11.5px;
+  color: var(--fp-sub);
+  text-decoration: none;
+}
+
+.fp-archive-item:hover {
+  color: var(--fp-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.fp-archive-item .d {
+  white-space: nowrap;
+}
+
+.fp-archive-item .n {
   color: var(--fp-faint);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---------- 栏目头（各板块通用） ---------- */
@@ -595,7 +694,7 @@
 /* ---------- 页脚 ---------- */
 
 .fp-foot {
-  max-width: 760px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 18px clamp(16px, 4vw, 32px) 40px;
   font-family: var(--fp-mono);
@@ -633,7 +732,62 @@
   }
 }
 
+/* ---------- 中屏：三栏塌为两栏（≤1280px 起逐步收窄，≤1100px 掉归档） ---------- */
+
+@media (max-width: 1280px) {
+  .fp-3col {
+    grid-template-columns: 152px minmax(0, 1fr) 300px;
+    gap: 0 24px;
+  }
+}
+
+/* 归档栏先让位：内容与电报优先，归档沉到底部 */
+@media (max-width: 1100px) {
+  .fp-3col {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-areas:
+      "center right"
+      "left left";
+    gap: 28px 24px;
+  }
+
+  .fp-3col-left {
+    position: static;
+    padding-right: 0;
+    border-right: 0;
+    padding-top: 20px;
+    border-top: 1px solid var(--fp-rule);
+  }
+
+  .fp-archive-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 0 20px;
+  }
+}
+
 /* ---------- 窄屏 ---------- */
+
+@media (max-width: 780px) {
+  .fp-3col {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "center"
+      "right"
+      "left";
+  }
+
+  .fp-3col-right {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    padding-left: 0;
+    border-left: 0;
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 2px solid var(--fp-strong);
+  }
+}
 
 @media (max-width: 640px) {
   .fp-mast {
@@ -668,5 +822,11 @@
 
   .fp-wire-side .src {
     display: none;
+  }
+
+  /* 手机窄屏洞察三格改单列，避免每列过窄无法断行 */
+  .fp-card-insight {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 }

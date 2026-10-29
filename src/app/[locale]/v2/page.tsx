@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { FpNav } from "@/components/v2/fp-nav";
 import { FpFeed } from "@/components/v2/fp-front";
 import { FpWire } from "@/components/v2/fp-wire";
+import { FpArchive } from "@/components/v2/fp-archive";
 import { getDailyTop, getStreamLite } from "@/lib/news-v2";
 
 export const runtime = "edge";
@@ -49,12 +50,23 @@ export default async function V2Page({
       {/* key 切分类时重挂载触发 fp-enter 进场动画，同时重置 FpWire 客户端列表状态 */}
       <main className="fp-main" key={category ?? "all"}>
         {top.items.length > 0 ? (
-          <>
-            {/* 主栏：全部 24 条有完整 AI 洞察的文章，平铺展示 */}
-            <FpFeed items={top.items} locale={locale} eventSourceCounts={top.eventSourceCounts} />
+          <div className="fp-3col">
+            {/* 左栏：历史归档 */}
+            <aside className="fp-3col-left">
+              <FpArchive locale={locale} />
+            </aside>
 
-            {/* 次栏：电报速报（无洞察，全量实时动态） */}
-            <section className="fp-wire-section">
+            {/* 中栏：全部有完整 AI 洞察的文章 */}
+            <div className="fp-3col-center">
+              <FpFeed
+                items={top.items}
+                locale={locale}
+                eventSourceCounts={top.eventSourceCounts}
+              />
+            </div>
+
+            {/* 右栏：电报速报 */}
+            <aside className="fp-3col-right">
               <div className="fp-sec-hd">
                 <span className="l">{tV2("wireTitle")}</span>
                 <span className="r">{tV2("wireSubtitle")}</span>
@@ -64,8 +76,8 @@ export default async function V2Page({
                 initialCursor={stream.nextCursor}
                 category={category}
               />
-            </section>
-          </>
+            </aside>
+          </div>
         ) : (
           <div className="fp-empty">{tV2("picksEmpty")}</div>
         )}
