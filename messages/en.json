@@ -185,7 +185,7 @@
     "loading": "Loading…",
     "empty": "Nothing here yet",
     "endOfStream": "You've reached the end",
-    "picksEmpty": "No high-value insights in the last 48h — check the live wire below",
+    "picksEmpty": "No high-value insights in the last 24h — check the live wire below",
     "eventReports": "{n} sources reporting",
     "tagline": "Real-time AI hot takes",
     "lead": "Top Story",

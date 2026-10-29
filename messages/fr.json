@@ -185,7 +185,7 @@
     "loading": "Chargement…",
     "empty": "Rien pour le moment",
     "endOfStream": "Vous êtes arrivé à la fin",
-    "picksEmpty": "Pas d'analyse de haut valeur ces 48 dernières heures — voir le fil direct",
+    "picksEmpty": "Pas d'analyse de haut valeur ces 24 dernières heures — voir le fil direct",
     "eventReports": "{n} sources couvrent l'actu",
     "tagline": "L'actu IA en temps réel",
     "lead": "À la une",

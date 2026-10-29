@@ -39,7 +39,7 @@ export default async function V2Page({
   const categories = category ? [category] : undefined;
 
   const [top, stream, tV2] = await Promise.all([
-    getDailyTop({ hours: 48, limit: 24, categories }),
+    getDailyTop({ hours: 24, limit: 24, categories }),
     getStreamLite(undefined, 40, 168, categories),
     getTranslations("v2"),
   ]);
