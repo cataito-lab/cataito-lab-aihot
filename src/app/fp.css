@@ -36,7 +36,7 @@
 /* ---------- Masthead ---------- */
 
 .fp-mast {
-  max-width: 1080px;
+  max-width: 760px;
   margin: 0 auto;
   padding: 28px clamp(16px, 4vw, 32px) 0;
 }
@@ -188,7 +188,7 @@
 /* ---------- 版面导航（分类 + 往期） ---------- */
 
 .fp-nav {
-  max-width: 1080px;
+  max-width: 760px;
   margin: 0 auto;
   padding: 9px clamp(16px, 4vw, 32px) 10px;
   display: flex;
@@ -259,35 +259,197 @@
 /* ---------- 主区 ---------- */
 
 .fp-main {
-  max-width: 1080px;
+  max-width: 760px;
   margin: 0 auto;
   padding: 0 clamp(16px, 4vw, 32px) 72px;
 }
 
-/* ---------- 双栏栅格（>900px 生效，窄屏落回单栏） ---------- */
+/* ---------- Feed：全部有完整 AI 洞察的文章平铺展示 ---------- */
 
-.fp-cols {
+.fp-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-top: 12px;
+}
+
+.fp-card {
+  padding: 22px 0;
+  border-bottom: 1px solid var(--fp-rule);
+}
+
+.fp-card:first-child {
+  padding-top: 16px;
+}
+
+.fp-card:last-child {
+  border-bottom: 0;
+}
+
+/* 头条 tier1：importance ≥ 88 */
+.fp-card-tier1 .fp-card-title {
+  font-family: var(--fp-serif);
+  font-size: clamp(26px, 4vw, 36px);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+/* 重要 tier2：importance 80-87 */
+.fp-card-tier2 .fp-card-title {
+  font-family: var(--fp-serif);
+  font-size: clamp(20px, 2.8vw, 26px);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+/* 标准 tier3：importance < 80 */
+.fp-card-tier3 .fp-card-title {
+  font-size: 16.5px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.fp-card-title a {
+  color: var(--fp-ink);
+  text-decoration: none;
+}
+
+.fp-card-title a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.fp-card-head {
+  margin-bottom: 8px;
+}
+
+.fp-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-bottom: 6px;
+  font-family: var(--fp-mono);
+  font-size: 11px;
+  color: var(--fp-faint);
+  letter-spacing: 0.02em;
+}
+
+.fp-card-meta .fp-card-src {
+  font-family: var(--fp-sans);
+  font-weight: 600;
+  color: var(--fp-sub);
+}
+
+.fp-card-meta .fp-card-score {
+  color: var(--fp-ink);
+  font-weight: 700;
+}
+
+.fp-card-meta .fp-card-event {
+  color: var(--fp-sub);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--fp-rule);
+}
+
+.fp-card-meta .fp-card-event:hover {
+  color: var(--fp-ink);
+  text-decoration-color: var(--fp-ink);
+}
+
+.fp-card-orig {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fp-sub);
+}
+
+.fp-card-lede {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.78;
+  letter-spacing: 0.01em;
+  color: var(--fp-ink);
+  text-align: justify;
+  hyphens: auto;
+}
+
+/* 洞察三格 */
+.fp-card-insight {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-  gap: 0 40px;
-  align-items: start;
-  margin-top: 8px;
-  padding-top: 26px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px 20px;
+  margin-top: 14px;
+  padding-top: 14px;
   border-top: 1px solid var(--fp-rule);
 }
 
-/* 栏间竖规线（报纸分栏的气质）：padding 外扩一半 gap 再负 margin 拉回，使规线落在栏距正中 */
-.fp-cols > *:first-child {
-  padding-right: 20px;
-  border-right: 1px solid var(--fp-rule);
-  margin-right: -20px;
+/* tier3 条目（importance 最低的一档）洞察用两列，避免窄列浪费 */
+.fp-card-tier3 .fp-card-insight {
+  grid-template-columns: repeat(2, 1fr);
 }
 
-.fp-cols .fp-sec-hd {
-  margin-top: 0;
+.fp-ins {
+  min-width: 0;
 }
 
-/* ---------- 栏目头 ---------- */
+.fp-ins .k {
+  margin-bottom: 4px;
+  font-family: var(--fp-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fp-sub);
+}
+
+.fp-ins .v {
+  font-size: 13.5px;
+  line-height: 1.72;
+  letter-spacing: 0.01em;
+  color: var(--fp-sub);
+  text-align: justify;
+  hyphens: auto;
+}
+
+.fp-card-foot {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  font-family: var(--fp-mono);
+  font-size: 11px;
+  color: var(--fp-faint);
+}
+
+.fp-card-foot a {
+  color: var(--fp-sub);
+  text-decoration: none;
+}
+
+.fp-card-foot a:hover {
+  color: var(--fp-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- 电报速报区（页面底部次要补充） ---------- */
+
+.fp-wire-section {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 2px solid var(--fp-strong);
+}
+
+.fp-wire-section .fp-wire-title {
+  font-size: 14px;
+}
+
+.fp-wire-section .fp-wire-title .src {
+  color: var(--fp-faint);
+}
+
+/* ---------- 栏目头（各板块通用） ---------- */
 
 .fp-sec-hd {
   display: flex;
@@ -314,341 +476,6 @@
   color: var(--fp-faint);
   white-space: nowrap;
 }
-
-/* ---------- 头条（双栏：左标题摘要，右洞察纵列） ---------- */
-
-.fp-lead {
-  padding-top: 22px;
-}
-
-.fp-lead-cols {
-  display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-  gap: 0 36px;
-  align-items: start;
-}
-
-.fp-lead-eyebrow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 10px;
-  font-family: var(--fp-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--fp-ink);
-}
-
-.fp-lead-eyebrow .dim {
-  font-weight: 400;
-  letter-spacing: 0.02em;
-  text-transform: none;
-  color: var(--fp-faint);
-}
-
-.fp-lead-title {
-  margin: 10px 0 6px;
-  font-family: var(--fp-serif);
-  font-size: clamp(24px, 3.4vw, 32px);
-  font-weight: 700;
-  line-height: 1.32;
-  letter-spacing: 0.005em;
-}
-
-.fp-lead-title a {
-  color: var(--fp-ink);
-  text-decoration: none;
-}
-
-.fp-lead-title a:hover {
-  text-decoration: underline;
-  text-decoration-thickness: 1.5px;
-  text-underline-offset: 4px;
-}
-
-.fp-lead-orig {
-  margin: 0 0 12px;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--fp-sub);
-}
-
-/* 正文两端对齐：中文天然逐字对齐，西文靠 hyphens 断词避免大空洞 */
-.fp-lead-lede {
-  margin: 0 0 14px;
-  font-size: 15px;
-  line-height: 1.78;
-  letter-spacing: 0.01em;
-  color: var(--fp-ink);
-  text-align: justify;
-  hyphens: auto;
-}
-
-/* 双栏布局中洞察改纵列，左缘规线与标题区分隔 */
-.fp-lead-insight {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  padding: 2px 0 0 24px;
-  border-left: 1px solid var(--fp-rule);
-}
-
-.fp-ins .k {
-  margin-bottom: 5px;
-  font-family: var(--fp-mono);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--fp-sub);
-}
-
-.fp-ins .v {
-  font-size: 13.5px;
-  line-height: 1.72;
-  letter-spacing: 0.01em;
-  color: var(--fp-sub);
-  text-align: justify;
-  hyphens: auto;
-}
-
-.fp-lead-foot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 12px;
-  margin-top: 14px;
-  font-family: var(--fp-mono);
-  font-size: 11px;
-  color: var(--fp-faint);
-}
-
-.fp-lead-foot a {
-  color: var(--fp-sub);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-color: var(--fp-rule);
-}
-
-.fp-lead-foot a:hover {
-  color: var(--fp-ink);
-  text-decoration-color: var(--fp-ink);
-}
-
-/* ---------- 要闻 ---------- */
-
-.fp-briefs {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  counter-reset: brief;
-}
-
-.fp-brief {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--fp-rule);
-}
-
-.fp-brief:last-child {
-  border-bottom: 0;
-}
-
-.fp-brief-rank {
-  flex: none;
-  font-family: var(--fp-mono);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--fp-ink);
-  font-variant-numeric: tabular-nums;
-}
-
-.fp-brief-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.fp-brief-title {
-  font-size: 15.5px;
-  font-weight: 600;
-  line-height: 1.5;
-}
-
-.fp-brief-title a {
-  color: var(--fp-ink);
-  text-decoration: none;
-}
-
-.fp-brief-title a:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-/* 要闻的洞察摘录（关键变化一段，两行截断） */
-.fp-brief-excerpt {
-  margin: 5px 0 0;
-  font-size: 13.5px;
-  line-height: 1.72;
-  letter-spacing: 0.01em;
-  color: var(--fp-sub);
-  text-align: justify;
-  hyphens: auto;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.fp-brief-meta {
-  margin-top: 5px;
-  font-family: var(--fp-mono);
-  font-size: 11px;
-  color: var(--fp-faint);
-}
-
-.fp-brief-meta .sc {
-  color: var(--fp-sub);
-  font-weight: 600;
-}
-
-/* ---------- 持续关注（多源事件） ---------- */
-
-.fp-watch {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.fp-watch-item {
-  padding: 12px 0;
-  border-bottom: 1px solid var(--fp-rule);
-}
-
-.fp-watch-item:first-child {
-  padding-top: 10px;
-}
-
-.fp-watch-item:last-child {
-  border-bottom: 0;
-}
-
-.fp-watch-title {
-  font-size: 14.5px;
-  font-weight: 600;
-  line-height: 1.5;
-}
-
-.fp-watch-title a {
-  color: var(--fp-ink);
-  text-decoration: none;
-}
-
-.fp-watch-title a:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.fp-watch-excerpt {
-  margin: 5px 0 0;
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--fp-sub);
-  text-align: justify;
-  hyphens: auto;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.fp-watch-meta {
-  margin-top: 6px;
-  font-family: var(--fp-mono);
-  font-size: 11px;
-  color: var(--fp-faint);
-}
-
-.fp-watch-meta a {
-  color: var(--fp-sub);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-color: var(--fp-rule);
-}
-
-.fp-watch-meta a:hover {
-  color: var(--fp-ink);
-}
-
-/* ---------- AI 洞察流 ---------- */
-
-.fp-insights {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.fp-insight-item {
-  padding: 11px 0;
-  border-bottom: 1px solid var(--fp-rule);
-}
-
-.fp-insight-item:first-child {
-  padding-top: 10px;
-}
-
-.fp-insight-item:last-child {
-  border-bottom: 0;
-}
-
-.fp-insight-head {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-}
-
-.fp-insight-time {
-  flex: none;
-  font-family: var(--fp-mono);
-  font-size: 11px;
-  color: var(--fp-faint);
-  white-space: nowrap;
-}
-
-.fp-insight-title {
-  flex: 1;
-  min-width: 0;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.5;
-}
-
-.fp-insight-title a {
-  color: var(--fp-ink);
-  text-decoration: none;
-}
-
-.fp-insight-title a:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.fp-insight-excerpt {
-  margin: 4px 0 0;
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--fp-sub);
-  text-align: justify;
-  hyphens: auto;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
 /* ---------- 电报栏 ---------- */
 
 .fp-wire-hour {
@@ -768,7 +595,7 @@
 /* ---------- 页脚 ---------- */
 
 .fp-foot {
-  max-width: 1080px;
+  max-width: 760px;
   margin: 0 auto;
   padding: 18px clamp(16px, 4vw, 32px) 40px;
   font-family: var(--fp-mono);
@@ -803,38 +630,6 @@
   .fp-nav-link,
   .fp-nav-link::after {
     transition: none;
-  }
-}
-
-/* ---------- 中屏：双栏栅格塌缩为单栏（≤900px） ---------- */
-
-@media (max-width: 900px) {
-  .fp-cols {
-    grid-template-columns: 1fr;
-  }
-
-  .fp-cols > *:first-child {
-    padding-right: 0;
-    border-right: 0;
-    margin-right: 0;
-  }
-
-  .fp-lead-cols {
-    grid-template-columns: 1fr;
-  }
-
-  .fp-lead-insight {
-    margin-top: 14px;
-    padding: 12px 0 0;
-    border-left: 0;
-    border-top: 1px solid var(--fp-rule);
-  }
-}
-
-/* 双栏生效（>900px）时侧栏电报栏偏窄，隐藏信源名换取标题空间 */
-@media (min-width: 901px) {
-  .fp-cols-wire .fp-wire-side .src {
-    display: none;
   }
 }
 

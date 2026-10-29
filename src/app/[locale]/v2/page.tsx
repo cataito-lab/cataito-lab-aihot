@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { FpNav } from "@/components/v2/fp-nav";
-import { FpLead, FpBriefs, FpWatch, FpInsights } from "@/components/v2/fp-front";
+import { FpFeed } from "@/components/v2/fp-front";
 import { FpWire } from "@/components/v2/fp-wire";
 import { getDailyTop, getStreamLite } from "@/lib/news-v2";
 
@@ -16,7 +16,6 @@ interface V2SearchParams {
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("v2");
-  // 原型页：不进索引、不进 sitemap
   return {
     title: t("badge"),
     robots: { index: false, follow: false },
@@ -44,62 +43,32 @@ export default async function V2Page({
     getTranslations("v2"),
   ]);
 
-  // 候选池三层切分（同一查询，零算法改动）：
-  // top4 头条+要闻 → 多源事件进「持续关注」→ 剩余按时间进「AI 洞察流」
-  const lead = top.items[0];
-  const briefs = top.items.slice(1, 4);
-  const rest = top.items.slice(4);
-  const watch = rest
-    .filter((a) => a.eventId && (top.eventSourceCounts.get(a.eventId) ?? 0) >= 2)
-    .slice(0, 3);
-  const watchIds = new Set(watch.map((a) => a.id));
-  const insights = rest
-    .filter((a) => !watchIds.has(a.id))
-    .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
-    .slice(0, 8);
-
   return (
     <>
       <FpNav locale={locale} activeCategory={category} />
-      {/* key 的双重作用：切换分类时重挂载触发 fp-enter 进场动画，同时重置 FpWire 的客户端列表状态 */}
+      {/* key 切分类时重挂载触发 fp-enter 进场动画，同时重置 FpWire 客户端列表状态 */}
       <main className="fp-main" key={category ?? "all"}>
-        {lead ? (
-          <FpLead
-            article={lead}
-            locale={locale}
-            eventSources={
-              lead.eventId ? top.eventSourceCounts.get(lead.eventId) : undefined
-            }
-          />
+        {top.items.length > 0 ? (
+          <>
+            {/* 主栏：全部 24 条有完整 AI 洞察的文章，平铺展示 */}
+            <FpFeed items={top.items} locale={locale} eventSourceCounts={top.eventSourceCounts} />
+
+            {/* 次栏：电报速报（无洞察，全量实时动态） */}
+            <section className="fp-wire-section">
+              <div className="fp-sec-hd">
+                <span className="l">{tV2("wireTitle")}</span>
+                <span className="r">{tV2("wireSubtitle")}</span>
+              </div>
+              <FpWire
+                initialItems={stream.items}
+                initialCursor={stream.nextCursor}
+                category={category}
+              />
+            </section>
+          </>
         ) : (
           <div className="fp-empty">{tV2("picksEmpty")}</div>
         )}
-
-        {(briefs.length > 0 || watch.length > 0) && (
-          <div className={briefs.length > 0 && watch.length > 0 ? "fp-cols" : undefined}>
-            {briefs.length > 0 ? <FpBriefs items={briefs} locale={locale} /> : <div />}
-            <FpWatch
-              items={watch}
-              locale={locale}
-              eventSourceCounts={top.eventSourceCounts}
-            />
-          </div>
-        )}
-
-        <div className={insights.length > 0 ? "fp-cols fp-cols-wire" : undefined}>
-          <FpInsights items={insights} locale={locale} />
-          <section>
-            <div className="fp-sec-hd">
-              <span className="l">{tV2("wireTitle")}</span>
-              <span className="r">{tV2("wireSubtitle")}</span>
-            </div>
-            <FpWire
-              initialItems={stream.items}
-              initialCursor={stream.nextCursor}
-              category={category}
-            />
-          </section>
-        </div>
       </main>
     </>
   );
